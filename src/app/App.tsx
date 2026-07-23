@@ -9,6 +9,7 @@ import PendingRiders from "./pages/PendingRiders";
 type Page = "login" | "register" | "dashboard" | "active-riders" | "pending-riders";
 
 const ROLES = ["Admin", "Operator", "Help Desk", "Driver", "Dispatcher", "Finance"];
+const API_LOGIN_URL = import.meta.env.VITE_API_LOGIN_URL ?? "http://localhost:3000/auth/login";
 
 // ─── Register ──────────────────────────────────────────────────
 function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
@@ -126,14 +127,50 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
 // ─── Login ─────────────────────────────────────────────────────
 function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
   const [showPw, setShowPw] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => { setLoading(false); onNavigate("dashboard"); }, 1500);
+
+    try {
+      const response = await fetch(API_LOGIN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText || "Login failed");
+      }
+
+      onNavigate("dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to sign in");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -144,8 +181,8 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
         <p className="text-sm mb-7" style={{ color: "var(--muted-foreground)" }}>Welcome back. Enter your credentials to continue.</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <FieldInput id="username" label="Username or phone" placeholder="e.g. 03xx-xxxxxxx"
-            value={username} onChange={setUsername} autoComplete="username" />
+          <FieldInput id="email" label="Email address" type="email" placeholder="you@example.com"
+            value={email} onChange={setEmail} autoComplete="email" />
 
           <FieldInput id="password" label="Password" type={showPw ? "text" : "password"}
             placeholder="Enter your password" value={password} onChange={setPassword} autoComplete="current-password">
@@ -155,6 +192,8 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </FieldInput>
+
+          {error && <p className="text-sm text-red-500" style={{ color: "#ef4444" }}>{error}</p>}
 
           <button type="submit" disabled={loading}
             className="w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 mt-1"

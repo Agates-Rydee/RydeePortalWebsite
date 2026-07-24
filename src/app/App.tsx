@@ -9,8 +9,8 @@ import PendingRiders from "./pages/PendingRiders";
 type Page = "login" | "register" | "dashboard" | "active-riders" | "pending-riders";
 
 const ROLES = ["Admin", "Operator", "Help Desk", "Driver", "Dispatcher", "Finance"];
-const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/auth/login";
-const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/auth/register";
+const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/operator/login";
+const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/register/operator";
 
 // ─── Register ──────────────────────────────────────────────────
 function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {

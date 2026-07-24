@@ -3,17 +3,23 @@ import { Eye, EyeOff } from "lucide-react";
 import logoUrl from "../imports/Logo.png";
 import { Bg, Logo, cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput, FieldInput, Spinner } from "./components/shared";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import ActiveRiders from "./pages/ActiveRiders";
 import PendingRiders from "./pages/PendingRiders";
 
-type Page = "login" | "register" | "dashboard" | "active-riders" | "pending-riders";
+type Page = "login" | "register" | "dashboard" | "admin-dashboard" | "admin-register" | "active-riders" | "pending-riders";
+
+interface AuthUser {
+  name?: string;
+  role: string;
+}
 
 const ROLES = ["Admin", "Operator", "Help Desk", "Driver", "Dispatcher", "Finance"];
 const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/operator/login";
 const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/register/operator";
 
 // ─── Register ──────────────────────────────────────────────────
-function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
+function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p: Page) => void; showRole?: boolean; onBack?: () => void }) {
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -59,7 +65,7 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
       <Logo subtitle="Create your Rydee account" />
       <div className="w-full rounded-2xl p-8" style={cardStyle}>
         <div className="flex items-center gap-3 mb-1">
-          <button onClick={() => onNavigate("login")} className="p-1.5 rounded-lg transition-colors duration-150"
+          <button onClick={() => onBack ? onBack() : onNavigate("login")} className="p-1.5 rounded-lg transition-colors duration-150"
             style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "#17a882"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--muted-foreground)"; }}>
@@ -67,7 +73,9 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
           </button>
-          <h2 className="text-xl font-semibold" style={{ color: "var(--card-foreground)" }}>Register</h2>
+          <h2 className="text-xl font-semibold" style={{ color: "var(--card-foreground)" }}>
+            {showRole ? "Register New User" : "Register"}
+          </h2>
         </div>
         <p className="text-sm mb-7 ml-8" style={{ color: "var(--muted-foreground)" }}>Fill in the details below to get started.</p>
 
@@ -77,21 +85,23 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
           <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx" value={form.phone} onChange={set("phone")} autoComplete="tel" />
 
           {/* Role */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="reg-role" className="text-sm font-medium" style={{ color: "#2d5045" }}>Role</label>
-            <select id="reg-role" value={form.role} onChange={(e) => set("role")(e.target.value)} required
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 appearance-none"
-              style={{
-                ...inputBase,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a8070' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", paddingRight: "2.5rem",
-                color: form.role ? "var(--card-foreground)" : "#5a8070",
-              }}
-              onFocus={focusInput} onBlur={blurInput}>
-              <option value="" disabled>Select a role…</option>
-              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
+          {showRole && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="reg-role" className="text-sm font-medium" style={{ color: "#2d5045" }}>Role</label>
+              <select id="reg-role" value={form.role} onChange={(e) => set("role")(e.target.value)} required
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 appearance-none"
+                style={{
+                  ...inputBase,
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a8070' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", paddingRight: "2.5rem",
+                  color: form.role ? "var(--card-foreground)" : "#5a8070",
+                }}
+                onFocus={focusInput} onBlur={blurInput}>
+                <option value="" disabled>Select a role…</option>
+                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Password */}
           <FieldInput id="reg-password" label="Password" type={showPw ? "text" : "password"}
@@ -152,7 +162,7 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
 }
 
 // ─── Login ─────────────────────────────────────────────────────
-function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
+function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser) => void }) {
   const [showPw, setShowPw] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -190,7 +200,9 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
         throw new Error(errorText || response.statusText || "Login failed");
       }
 
-      onNavigate("dashboard");
+      const data = await response.json();
+      const role: string = data.role ?? data.user?.role ?? "";
+      onNavigate(role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard", { name: data.name ?? data.user?.name, role });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
@@ -251,7 +263,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
 }
 
 // ─── Auth shell (login / register) ────────────────────────────
-function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page) => void }) {
+function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, user?: AuthUser) => void }) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -271,9 +283,31 @@ function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page) => 
 // ─── Root ──────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState<Page>("login");
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  if (page === "active-riders") return <ActiveRiders onBack={() => setPage("dashboard")} />;
-  if (page === "pending-riders") return <PendingRiders onBack={() => setPage("dashboard")} />;
-  if (page === "dashboard") return <Dashboard onNavigate={(p) => setPage(p as Page)} onLogout={() => setPage("login")} />;
-  return <AuthShell page={page} onNavigate={setPage} />;
+  const navigate = (p: Page, user?: AuthUser) => {
+    if (user) setAuthUser(user);
+    setPage(p);
+  };
+
+  const logout = () => { setAuthUser(null); setPage("login"); };
+  const backToAdminDash = () => setPage("admin-dashboard");
+
+  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard")} />;
+  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard")} />;
+  if (page === "admin-register") return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
+      <Bg />
+      <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center">
+        <RegisterView onNavigate={navigate} showRole onBack={backToAdminDash} />
+        <p className="mt-8 text-xs text-center" style={{ color: "#5a8070" }}>
+          Rydee · Karachi, Pakistan &nbsp;·&nbsp; Electric mobility for everyone
+        </p>
+      </div>
+    </div>
+  );
+  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} adminName={authUser?.name} />;
+  if (page === "dashboard") return <Dashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} />;
+  return <AuthShell page={page} onNavigate={navigate} />;
 }

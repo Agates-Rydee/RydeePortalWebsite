@@ -9,24 +9,49 @@ import PendingRiders from "./pages/PendingRiders";
 type Page = "login" | "register" | "dashboard" | "active-riders" | "pending-riders";
 
 const ROLES = ["Admin", "Operator", "Help Desk", "Driver", "Dispatcher", "Finance"];
-const API_LOGIN_URL = import.meta.env.VITE_API_LOGIN_URL ?? "http://localhost:3000/auth/login";
+const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/auth/login";
+const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/auth/register";
 
 // ─── Register ──────────────────────────────────────────────────
 function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
-  const [form, setForm] = useState({ username: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pwMismatch, setPwMismatch] = useState(false);
+  const [error, setError] = useState("");
 
   const set = (field: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [field]: v }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (form.password !== form.confirmPassword) { setPwMismatch(true); return; }
     setPwMismatch(false);
     setLoading(true);
-    setTimeout(() => { setLoading(false); onNavigate("login"); }, 1800);
+    try {
+      const response = await fetch(API_REGISTER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+          role: form.role,
+        }),
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText || "Registration failed");
+      }
+      onNavigate("login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to register. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,7 +72,7 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
         <p className="text-sm mb-7 ml-8" style={{ color: "var(--muted-foreground)" }}>Fill in the details below to get started.</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <FieldInput id="reg-username" label="Username" placeholder="Choose a username" value={form.username} onChange={set("username")} autoComplete="username" />
+          <FieldInput id="reg-name" label="Name" placeholder="Your full name" value={form.name} onChange={set("name")} autoComplete="name" />
           <FieldInput id="reg-email" label="Email address" type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} autoComplete="email" />
           <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx" value={form.phone} onChange={set("phone")} autoComplete="tel" />
 
@@ -97,6 +122,8 @@ function RegisterView({ onNavigate }: { onNavigate: (p: Page) => void }) {
             </div>
             {pwMismatch && <p className="text-xs mt-0.5" style={{ color: "#ef4444" }}>Passwords do not match.</p>}
           </div>
+
+          {error && <p className="text-sm" style={{ color: "#ef4444" }}>{error}</p>}
 
           <button type="submit" disabled={loading}
             className="w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 mt-2"
@@ -153,9 +180,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
     try {
       const response = await fetch(API_LOGIN_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
         credentials: "include",
       });
@@ -193,7 +218,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page) => void }) {
             </button>
           </FieldInput>
 
-          {error && <p className="text-sm text-red-500" style={{ color: "#ef4444" }}>{error}</p>}
+          {error && <p className="text-sm" style={{ color: "#ef4444" }}>{error}</p>}
 
           <button type="submit" disabled={loading}
             className="w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 mt-1"

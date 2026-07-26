@@ -1,26 +1,40 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, List } from "lucide-react";
 import logoUrl from "../imports/Logo.png";
 import { Bg, Logo, cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput, FieldInput, Spinner } from "./components/shared";
-import Dashboard from "./pages/Dashboard";
+import RiderDashboard from "./pages/RiderDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ActiveRiders from "./pages/ActiveRiders";
 import PendingRiders from "./pages/PendingRiders";
+import OperatorDashboard from "./pages/OperatorDashboard";
 
-type Page = "login" | "register" | "dashboard" | "admin-dashboard" | "admin-register" | "active-riders" | "pending-riders";
+type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders";
 
 interface AuthUser {
   name?: string;
   role: string;
 }
 
-const ROLES = ["Admin", "Operator", "Help Desk", "Driver", "Dispatcher", "Finance"];
-const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/operator/login";
-const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/register/operator";
+interface Profile{
+    name: String,
+    address: String,
+    dob: String,
+    joiningDate: String,
+    totalRides: Number,
+    missedRides: Number,
+    online: Boolean,
+    currentLocation: {lat: Number, lon: Number},
+    rating: Number,
+    lastCustomerId: String
+}
+
+const ROLES = ["Operator", "Customer", "Rider"];
+const API_LOGIN_URL    = import.meta.env.VITE_API_LOGIN_URL    ?? "http://localhost:3000/user/login";
+const API_REGISTER_URL = import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/register/user";
 
 // ─── Register ──────────────────────────────────────────────────
 function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p: Page) => void; showRole?: boolean; onBack?: () => void }) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", dob:"", address:"", password: "", confirmPassword: "", role: "rider" });
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,7 +56,9 @@ function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p
         body: JSON.stringify({
           name: form.name,
           email: form.email,
-          phone: form.phone,
+          phoneNumber: form.phone,
+          dob: form.dob,
+          address: form.address,
           password: form.password,
           role: form.role,
         }),
@@ -83,7 +99,9 @@ function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p
           <FieldInput id="reg-name" label="Name" placeholder="Your full name" value={form.name} onChange={set("name")} autoComplete="name" />
           <FieldInput id="reg-email" label="Email address" type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} autoComplete="email" />
           <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx" value={form.phone} onChange={set("phone")} autoComplete="tel" />
-
+          <FieldInput id="reg-dob" label="Date of birth" type="number" placeholder="DD/MM/YYYY" value={form.dob} onChange={set("dob")} autoComplete="dob" />
+          <FieldInput id="reg-address" label="Home address" type="add" placeholder="House#100, Sultan Road, Multan" value={form.address} onChange={set("address")} autoComplete="tel" />
+        
           {/* Role */}
           {showRole && (
             <div className="flex flex-col gap-1.5">
@@ -162,21 +180,21 @@ function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p
 }
 
 // ─── Login ─────────────────────────────────────────────────────
-function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser) => void }) {
+function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser, profile?: Profile) => void }) {
   const [showPw, setShowPw] = useState(false);
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const isValidPhone = (value: string) =>/^\d{10}$/.test(value);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!isValidEmail(email)) {
-      setError("Please enter a valid email address.");
+    if (!isValidPhone(phone)) {
+      setError("Please enter a valid phone number.");
       return;
     }
 
@@ -191,7 +209,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser) => v
       const response = await fetch(API_LOGIN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ phone, password }),
         credentials: "include",
       });
 
@@ -202,7 +220,20 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser) => v
 
       const data = await response.json();
       const role: string = data.role ?? data.user?.role ?? "";
-      onNavigate(role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard", { name: data.name ?? data.user?.name, role });
+      
+      switch(role.toLowerCase())
+      {
+        case "admin":
+          onNavigate("admin-dashboard",  { name: data.name ?? data.user?.name, role });
+          break;
+        case "operator":
+          onNavigate("operator-dashboard",  { name: data.name ?? data.user?.name, role });
+          break;
+        default:
+          onNavigate("rider-dashboard",  { name: data.name ?? data.user?.name, role  });
+
+      }
+     // onNavigate(role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard", { name: data.name ?? data.user?.name, role });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
@@ -218,8 +249,8 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser) => v
         <p className="text-sm mb-7" style={{ color: "var(--muted-foreground)" }}>Welcome back. Enter your credentials to continue.</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <FieldInput id="email" label="Email address" type="email" placeholder="you@example.com"
-            value={email} onChange={setEmail} autoComplete="email" />
+          <FieldInput id="phone" label="Phone Number" type="phone" placeholder="123-456-7890"
+            value={phone} onChange={setPhone} autoComplete="phone" />
 
           <FieldInput id="password" label="Password" type={showPw ? "text" : "password"}
             placeholder="Enter your password" value={password} onChange={setPassword} autoComplete="current-password">
@@ -284,17 +315,23 @@ function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, use
 export default function App() {
   const [page, setPage] = useState<Page>("login");
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [params, setParams] = useState<any>({});
+  const [route, setRoute] = useState("login");
+  const [profile, SetProfile] = useState<Profile | null> (null);
 
-  const navigate = (p: Page, user?: AuthUser) => {
+  const navigate = (p: Page, user?: AuthUser, params?: any) => {
     if (user) setAuthUser(user);
+    if (params) setParams(params);
+    if (profile) SetProfile(profile);
+    setRoute(route);
     setPage(p);
   };
 
   const logout = () => { setAuthUser(null); setPage("login"); };
   const backToAdminDash = () => setPage("admin-dashboard");
 
-  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard")} />;
-  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard")} />;
+  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
+  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
   if (page === "admin-register") return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -308,6 +345,7 @@ export default function App() {
     </div>
   );
   if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} adminName={authUser?.name} />;
-  if (page === "dashboard") return <Dashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} />;
+  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} operatorName={authUser?.name} />;
+  if (page === "rider-dashboard") return <RiderDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={params.profile} />;
   return <AuthShell page={page} onNavigate={navigate} />;
 }

@@ -73,7 +73,7 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
               </p>
               <p className="text-lg font-semibold mt-1" style={{ color: "#17a882" }}>Register new user</p>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
-                Add a new Admin, Operator, Help Desk, or other role
+                Add a new Operator, Customer, or Rider role
               </p>
             </div>
             <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"

@@ -6,9 +6,10 @@ import RiderDashboard from "./pages/RiderDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ActiveRiders from "./pages/ActiveRiders";
 import PendingRiders from "./pages/PendingRiders";
+import RiderLocation from "./pages/RiderLocationView";
 import OperatorDashboard from "./pages/OperatorDashboard";
 
-type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders";
+type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders" | "rider-location";
 
 interface NavigateParams{
   profile?: Profile | null;
@@ -20,11 +21,11 @@ interface Profile{
     address: string,
     dob: string,
     joiningDate: string,
-    totalRides: Number,
-    missedRides: Number,
+    totalRides: number,
+    missedRides: number,
     online: Boolean,
-    currentLocation: {lat: Number, lon: Number},
-    rating: Number,
+    currentLocation: {lat: number, lon: number},
+    rating: number,
     lastCustomerId: string
 }
 
@@ -335,6 +336,7 @@ export default function App() {
 
   if (page === "active-riders") return <ActiveRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
   if (page === "pending-riders") return <PendingRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
+  if( page ==  "rider-location") return <RiderLocation  params={currentPage.params} onNavigate={navigate} />;
   if (page === "admin-register") return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>

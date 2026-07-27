@@ -52,7 +52,7 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
 
       <main className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Admin Dashboard </h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
             Manage users, riders, and operations across Karachi.
           </p>

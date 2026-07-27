@@ -10,22 +10,22 @@ import OperatorDashboard from "./pages/OperatorDashboard";
 
 type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders";
 
-interface AuthUser {
-  name?: string;
-  role: string;
+interface NavigateParams{
+  profile?: Profile | null;
 }
 
 interface Profile{
-    name: String,
-    address: String,
-    dob: String,
-    joiningDate: String,
+    role: string,
+    name: string,
+    address: string,
+    dob: string,
+    joiningDate: string,
     totalRides: Number,
     missedRides: Number,
     online: Boolean,
     currentLocation: {lat: Number, lon: Number},
     rating: Number,
-    lastCustomerId: String
+    lastCustomerId: string
 }
 
 const ROLES = ["Operator", "Customer", "Rider"];
@@ -180,12 +180,13 @@ function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p
 }
 
 // ─── Login ─────────────────────────────────────────────────────
-function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser, profile?: Profile) => void }) {
+function LoginView({ onNavigate }: { onNavigate: (p: Page, profile?: Profile) => void }) {
   const [showPw, setShowPw] = useState(false);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [profile, setProfile] = useState<Profile | undefined> (undefined);
 
   const isValidPhone = (value: string) =>/^\d{10}$/.test(value);
 
@@ -220,17 +221,20 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser, prof
 
       const data = await response.json();
       const role: string = data.role ?? data.user?.role ?? "";
-      
+      setProfile(data.profile);
+
       switch(role.toLowerCase())
       {
         case "admin":
-          onNavigate("admin-dashboard",  { name: data.name ?? data.user?.name, role });
+          onNavigate("admin-dashboard",  {profile: data.profile});
           break;
         case "operator":
-          onNavigate("operator-dashboard",  { name: data.name ?? data.user?.name, role });
+          console.debug("Operator:", profile)
+          onNavigate("operator-dashboard",  {profile: data.profile});
           break;
-        default:
-          onNavigate("rider-dashboard",  { name: data.name ?? data.user?.name, role  });
+        case "rider":
+          console.debug("Rider:", profile)
+          onNavigate("rider-dashboard",  {profile: data.profile});
 
       }
      // onNavigate(role.toLowerCase() === "admin" ? "admin-dashboard" : "dashboard", { name: data.name ?? data.user?.name, role });
@@ -294,7 +298,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, user?: AuthUser, prof
 }
 
 // ─── Auth shell (login / register) ────────────────────────────
-function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, user?: AuthUser) => void }) {
+function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, params?: NavigateParams | undefined ) => void }) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -311,27 +315,26 @@ function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, use
   );
 }
 
-// ─── Root ──────────────────────────────────────────────────────
+ // ─── Root ──────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState<Page>("login");
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [params, setParams] = useState<any>({});
-  const [route, setRoute] = useState("login");
-  const [profile, SetProfile] = useState<Profile | null> (null);
+  const [profile, setProfile] = useState<Profile | undefined> (undefined);
 
-  const navigate = (p: Page, user?: AuthUser, params?: any) => {
-    if (user) setAuthUser(user);
-    if (params) setParams(params);
-    if (profile) SetProfile(profile);
-    setRoute(route);
+
+  const navigate = (p: Page, params?: NavigateParams) => {
+    if(params?.profile != undefined)
+    {
+      setProfile(params.profile);
+    }
+
     setPage(p);
   };
 
-  const logout = () => { setAuthUser(null); setPage("login"); };
+  const logout = () => { setPage("login"); };
   const backToAdminDash = () => setPage("admin-dashboard");
 
-  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
-  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(authUser?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
+  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
+  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
   if (page === "admin-register") return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -344,8 +347,9 @@ export default function App() {
       </div>
     </div>
   );
-  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} adminName={authUser?.name} />;
-  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} operatorName={authUser?.name} />;
-  if (page === "rider-dashboard") return <RiderDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={params.profile} />;
-  return <AuthShell page={page} onNavigate={navigate} />;
+
+  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} adminName={profile?.name} />;
+  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} operatorName={profile?.name} />;
+  if (page === "rider-dashboard") return <RiderDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
+  return <AuthShell page={page} onNavigate={navigate}/>;
 }

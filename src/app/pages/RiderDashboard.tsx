@@ -1,31 +1,26 @@
 import { Logo, cardStyle } from "../components/shared";
+import NavigateParams from "./RiderDashboard"
 
 interface Props {
-  onNavigate: (route: string, params?: { profile?: any }) => void;
+  onNavigate: (route: string,  params?: typeof NavigateParams ) => void;
   onLogout: () => void;
   profile?: {
-    name: String,
-    address: String,
-    dob: String,
-    joiningDate: String,
+  role: string,
+    name: string,
+    address: string,
+    dob: string,
+    joiningDate: string,
     totalRides: Number,
     missedRides: Number,
     online: Boolean,
     currentLocation: {lat: Number, lon: Number},
     rating: Number,
-    lastCustomerId: String
+    lastCustomerId: string
   };
 }
 
-
-const STATS = {
-  total: 0,
-  active: 0,
-  pending: 0,
-};
-
-
 export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Props){
+  console.debug("profile :", profile);
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -66,7 +61,7 @@ export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Prop
                 Total Rides
               </p>
               <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>
-                {STATS.total}
+                {profile?.totalRides}
               </p>
             </div>
             <div
@@ -94,7 +89,7 @@ export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Prop
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#0d8f6e"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#17a882"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.active}
+                {"Inactive"}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to view live map →</p>
             </div>
@@ -122,7 +117,7 @@ export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Prop
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#d97706"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.pending}
+                {profile?.missedRides}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to review applications →</p>
             </div>

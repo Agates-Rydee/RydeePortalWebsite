@@ -11,21 +11,23 @@ import OperatorDashboard from "./pages/OperatorDashboard";
 
 type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders" | "rider-location";
 
-interface NavigateParams{
+export interface NavigateParams{
   profile?: Profile | null;
 }
 
-interface Profile{
+export interface Profile{
     role: string,
     name: string,
     address: string,
+    rideArea: string,
     dob: string,
     joiningDate: string,
     totalRides: number,
     missedRides: number,
-    online: Boolean,
+    distanceTraveled: number,
+    online: boolean,
     currentLocation: {lat: number, lon: number},
-    rating: number,
+    ratings: number,
     lastCustomerId: string
 }
 
@@ -181,13 +183,13 @@ function RegisterView({ onNavigate, showRole = false, onBack }: { onNavigate: (p
 }
 
 // ─── Login ─────────────────────────────────────────────────────
-function LoginView({ onNavigate }: { onNavigate: (p: Page, profile?: Profile) => void }) {
+function LoginView({ onNavigate }: { onNavigate: (p: Page, params?: NavigateParams) => void }) {
   const [showPw, setShowPw] = useState(false);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [profile, setProfile] = useState<Profile | undefined> (undefined);
+  const [profile, setProfile] = useState<Profile | null> (null);
 
   const isValidPhone = (value: string) =>/^\d{10}$/.test(value);
 
@@ -222,7 +224,10 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, profile?: Profile) =>
 
       const data = await response.json();
       const role: string = data.role ?? data.user?.role ?? "";
+      data.profile.role=role;
       setProfile(data.profile);
+
+      console.debug("data ", data);
 
       switch(role.toLowerCase())
       {
@@ -299,7 +304,7 @@ function LoginView({ onNavigate }: { onNavigate: (p: Page, profile?: Profile) =>
 }
 
 // ─── Auth shell (login / register) ────────────────────────────
-function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, params?: NavigateParams | undefined ) => void }) {
+function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, params?: NavigateParams ) => void }) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -319,24 +324,37 @@ function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, par
  // ─── Root ──────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState<Page>("login");
-  const [profile, setProfile] = useState<Profile | undefined> (undefined);
+  const [profile, setProfile] = useState<Profile | null> (null);
 
+  console.debug("First profile ", JSON.stringify(profile, null, 2));
+  console.debug("First page ", page);
 
   const navigate = (p: Page, params?: NavigateParams) => {
-    if(params?.profile != undefined)
-    {
-      setProfile(params.profile);
-    }
+  if(params?.profile != null) setProfile(params.profile);
 
-    setPage(p);
+  setPage(p);
   };
 
   const logout = () => { setPage("login"); };
   const backToAdminDash = () => setPage("admin-dashboard");
 
-  if (page === "active-riders") return <ActiveRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
-  if (page === "pending-riders") return <PendingRiders onBack={() => setPage(profile?.role.toLowerCase() === "admin" ? "admin-dashboard" : "rider-dashboard")} />;
-  if( page ==  "rider-location") return <RiderLocation  params={currentPage.params} onNavigate={navigate} />;
+  switch(profile?.role?.toLowerCase())
+  {
+    case "admin":
+        if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("admin-dashboard")} />;}
+        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("admin-dashboard")} />; }
+        break;
+    case "operator":
+        if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("operator-dashboard")} />;}
+        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("operator-dashboard")} />; }
+        break;
+    case "rider":
+        if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("rider-dashboard")} />;}
+        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("rider-dashboard")} />; }
+        break;
+
+  }
+
   if (page === "admin-register") return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
@@ -350,8 +368,8 @@ export default function App() {
     </div>
   );
 
-  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} adminName={profile?.name} />;
-  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} operatorName={profile?.name} />;
+  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
+  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
   if (page === "rider-dashboard") return <RiderDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
   return <AuthShell page={page} onNavigate={navigate}/>;
 }

@@ -1,9 +1,11 @@
 import { Logo, cardStyle } from "../components/shared";
+import { useEffect, useState } from "react";
+import type {Profile, NavigateParams} from "../App"
 
 interface Props {
-  onNavigate: (p: string) => void;
+  onNavigate: (route: string,  params?: NavigateParams ) => void;
   onLogout: () => void;
-  adminName?: string;
+  profile: Profile | null;
 }
 
 const STATS = {
@@ -12,7 +14,54 @@ const STATS = {
   pending: 8,
 };
 
-export default function AdminDashboard({ onNavigate, onLogout, adminName }: Props) {
+const API_GET_ALL_UNREGISTERED_URL = import.meta.env.VITE_API_GET_All_UNREGISTERED_URL ?? "http://localhost:3000/GetAll/UnregisteredRiders";
+
+export default function AdminDashboard({ onNavigate, onLogout, profile }: Props) {
+   const [pendingCount, setPendingCount] = useState(null);
+   const [totalRiders, setTotalRiders] = useState(null);
+   const [activeRiders, setActiveRiders] = useState(null);
+
+   useEffect(() => {
+    async function loadPending() {
+
+   const response = await fetch(API_GET_ALL_UNREGISTERED_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || response.statusText || "NO RESPONSE");
+      }
+
+      const data = await response.json();
+
+    if (!data || !Array.isArray(data.riders)) {
+        console.error("Invalid response format:", data);
+         throw new Error("Invalid response : " + data);
+      }
+      const riderList = data.riders.filter(r => r.activation_status === "pending");
+
+      const total = data.riders.length;
+      const pending = riderList.length;
+      const active = total - pending;
+
+      //console.debug("DATA:", JSON.stringify(data, null, 2));
+      //console.debug("riders "+ JSON.stringify(riderList, null, 2));
+      setPendingCount(pending);
+      setTotalRiders(total);
+      setActiveRiders(active);
+
+      console.debug("total ", total);
+      console.debug("active ", active);
+      console.debug("pending ", pending);
+      
+    }
+
+    loadPending();   
+   }, []); // runs once when page loads
+
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -33,9 +82,9 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {adminName && (
+          {profile?.name && (
             <span className="text-sm hidden sm:block" style={{ color: "var(--muted-foreground)" }}>
-              {adminName}
+              {profile?.name}
             </span>
           )}
           <button
@@ -91,7 +140,7 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
           <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
             <div>
               <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Total Riders</p>
-              <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>{STATS.total}</p>
+              <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>{totalRiders}</p>
             </div>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(23,168,130,0.10)" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#17a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -113,7 +162,7 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#0d8f6e"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#17a882"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.active}
+                {activeRiders}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to view live map →</p>
             </div>
@@ -136,7 +185,7 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#d97706"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.pending}
+                {pendingCount}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to review applications →</p>
             </div>

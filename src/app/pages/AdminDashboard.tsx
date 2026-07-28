@@ -8,12 +8,6 @@ interface Props {
   profile: Profile | null;
 }
 
-const STATS = {
-  total: 312,
-  active: 47,
-  pending: 8,
-};
-
 const API_GET_ALL_UNREGISTERED_URL = import.meta.env.VITE_API_GET_All_UNREGISTERED_URL ?? "http://localhost:3000/GetAll/UnregisteredRiders";
 
 export default function AdminDashboard({ onNavigate, onLogout, profile }: Props) {

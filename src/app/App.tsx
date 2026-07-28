@@ -13,11 +13,13 @@ type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "oper
 
 export interface NavigateParams{
   profile?: Profile | null;
+  pendingRiders?: Profile[];
 }
 
 export interface Profile{
     role: string,
     name: string,
+    phone: string,
     address: string,
     rideArea: string,
     dob: string,
@@ -26,9 +28,12 @@ export interface Profile{
     missedRides: number,
     distanceTraveled: number,
     online: boolean,
+    activated: boolean,
+    pin: string,
     currentLocation: {lat: number, lon: number},
     ratings: number,
-    lastCustomerId: string
+    lastCustomerId: string,
+    lastRiderId: string,
 }
 
 const ROLES = ["Operator", "Customer", "Rider"];
@@ -325,14 +330,23 @@ function AuthShell({ page, onNavigate }: { page: Page; onNavigate: (p: Page, par
 export default function App() {
   const [page, setPage] = useState<Page>("login");
   const [profile, setProfile] = useState<Profile | null> (null);
+  const [pendingRiders, setPendingRiders] = useState<Profile[]>([]);
 
   console.debug("First profile ", JSON.stringify(profile, null, 2));
   console.debug("First page ", page);
 
   const navigate = (p: Page, params?: NavigateParams) => {
-  if(params?.profile != null) setProfile(params.profile);
+    if (params?.profile !== undefined) {
+      setProfile(params.profile ?? null);
+    }
 
-  setPage(p);
+    if (params?.pendingRiders !== undefined) {
+      setPendingRiders(params.pendingRiders);
+    }
+
+    console.debug("navigate -> page", p);
+    console.debug("navigate -> pendingRiders", params?.pendingRiders ?? []);
+    setPage(p);
   };
 
   const logout = () => { setPage("login"); };
@@ -342,15 +356,36 @@ export default function App() {
   {
     case "admin":
         if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("admin-dashboard")} />;}
-        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("admin-dashboard")} />; }
+        if (page === "pending-riders") {
+                    return (
+                      <PendingRiders
+                        onBack={() => setPage("admin-dashboard")}
+                        riders={pendingRiders}
+                      />
+                    );
+                  }
         break;
     case "operator":
         if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("operator-dashboard")} />;}
-        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("operator-dashboard")} />; }
+        if (page === "pending-riders") {
+            return (
+              <PendingRiders
+                onBack={() => setPage("operator-dashboard")}
+                riders={pendingRiders}
+              />
+            );
+          }
         break;
     case "rider":
         if (page === "active-riders"){ return <ActiveRiders onBack={() => setPage("rider-dashboard")} />;}
-        if (page === "pending-riders") { return <PendingRiders onBack={() => setPage("rider-dashboard")} />; }
+        if (page === "pending-riders") {
+            return (
+              <PendingRiders
+                onBack={() => setPage("rider-dashboard")}
+                riders={pendingRiders}
+              />
+            );
+          }
         break;
 
   }
@@ -368,8 +403,8 @@ export default function App() {
     </div>
   );
 
-  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
-  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
-  if (page === "rider-dashboard") return <RiderDashboard onNavigate={(p) => setPage(p as Page)} onLogout={logout} profile={profile} />;
+  if (page === "admin-dashboard") return <AdminDashboard onNavigate={(route, params) => navigate(route as Page, params)} onLogout={logout} profile={profile} />;
+  if (page === "operator-dashboard") return <OperatorDashboard onNavigate={(route, params) => navigate(route as Page, params)} onLogout={logout} profile={profile} />;
+  if (page === "rider-dashboard") return <RiderDashboard onNavigate={(route, params) => navigate(route as Page, params)} onLogout={logout} profile={profile} />;
   return <AuthShell page={page} onNavigate={navigate}/>;
 }

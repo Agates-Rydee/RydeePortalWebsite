@@ -96,7 +96,7 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | D3 | `Boolean` (object type) in `Profile` interface | Known bug — user-listed |
 | D4 | `RiderDashboard.tsx` self-import (`import NavigateParams from "./RiderDashboard"`) | Found during survey |
 | D5 | `ImageWithFallback.tsx` unimported — delete or adopt | Found during survey |
-| D6 | TS strict mode: fix the 10 errors captured in `docs/design/strict-errors.md`, remove per-file `@ts-nocheck`/eslint-disables in `App.tsx` + `RiderDashboard.tsx`, then flip `"strict": true` | Checkpoint 3.5 output |
+| D6 | TS strict mode: unify RiderDashboard inline Profile with @/types/profile.ts, remove @ts-nocheck on RiderDashboard.tsx and @ts-expect-error at router.tsx:84, then flip strict:true. **C5 update:** strict = 0 errors; only these two suppressions remain. | Checkpoint 3.5 output |
 | D7 | Map library consolidation (Google Maps vs Leaflet) | Agreed deferral |
 | D8 | Adopt `components/ui` (shadcn) in pages / restyle iteration | Agreed deferral |
 | D9 | Auth session persistence + rehydrate (sessionStorage or `/me`) | ADR-0002 |

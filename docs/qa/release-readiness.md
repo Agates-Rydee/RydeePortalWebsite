@@ -128,3 +128,84 @@ test('MSW rider login lands at /rider', async ({ page }) => {
   await expect(page).toHaveURL('/rider');
 });
 ```
+
+---
+
+## Final Re-Verification (2026-07-29) — commits c649bd8 + 6a04f71
+
+**FINAL VERDICT: ✅ SHIP — restructure C0–C7 is release-ready.**
+
+Gates re-run locally: `lint` 0 err / 14 warn · `typecheck` 0 err · `typecheck:strict` 0 err · `build` PASS (595.16 kB / 168.15 kB gzip) · `rg msw dist/assets/` → 0 hits.
+
+### F6 — Mocked login round-trips ✅
+Two-pronged verification:
+
+**(a) Headless E2E via `msw/node`** — a replica handler (identical predicate + seeds + response shapes to the real file) was booted with `setupServer(...)` and hit with the exact fetch body `LoginPage.tsx` sends (`{ phone, password }`, `credentials: "include"`, `Content-Type: application/json`). Results:
+
+```
+Rider              status=200 role=Rider     name=Rida Rider
+Admin              status=200 role=Admin     name=Ada Admin
+Operator           status=200 role=Operator  name=Omar Operator
+Customer           status=200 role=Customer  name=Cara Customer
+BadPass            status=401 err=Invalid phone or password
+BadPhone           status=401 err=Invalid phone or password
+OldReadmeEmail     status=401 err=Invalid phone or password
+```
+
+(A direct `tsx`-load of the real `src/mocks/handlers/auth.ts` couldn't complete headlessly because `src/lib/config.ts` reads Vite-only `import.meta.env` at module scope — expected, not a bug. Hence the replica approach.)
+
+**(b) Structural check of the real handler file** — 8 critical string assertions all present in `src/mocks/handlers/auth.ts`:
+- `phone: "0300111111"`, `"0300222222"`, `"0300333333"`, `"0300444444"` (all exactly 10 digits, pass `/^\d{10}$/`).
+- `interface LoginBody { phone?: string; password?: string }` (no email in predicate type).
+- Predicate: `(u) => u.phone === body.phone && u.password === body.password`.
+- 401 text: `"Invalid phone or password"`.
+- Success shape: `{ role: user.profile.role, profile: user.profile }`.
+
+`email` remains only as seed field + `email:` echo in the register response — never in the login predicate. As documented in the file comment.
+
+### F7 — ADR-0003 contract table ✅
+`docs/adr/0003-mock-api-msw.md:36` now reads `{ phone, password }` for the login request, `{ role, profile: { name, role, ... } }` for the response. Footnote ¹ documents the amendment, dates it, names `LoginPage.tsx` as source of truth. Seed-user paragraph updated to include Customer.
+
+### F14 — Customer seed exercises F1 ✅
+- Seed present in `handlers/auth.ts:74-91` with an inline comment: `Customer — intentionally exercises the F1 unknown-role logout path`.
+- README root: "**Do not remove this seed**".
+- `src/mocks/README.md` §"About the Customer seed" explains the 4-step F1 trace and repeats the do-not-delete warning.
+- Handler returns 200 for Customer login (as it should — logout is a client-side guard concern, not a server refusal). Traceable path: LoginPage → `auth.login(profile)` → `navigate("/login")` → `PublicOnly.useEffect(logout)` → clean session. Matches C5 re-verification.
+
+### F8 — Seed tables consistent across docs ✅
+Line-by-line cross-check of the three seed listings (`README.md:82-85`, `src/mocks/README.md:42-45`, `handlers/auth.ts:14-92`):
+
+| Role | Phone | Password | Docs match handler? |
+|---|---|---|---|
+| Rider | `0300111111` | `rider` | ✅ |
+| Admin | `0300222222` | `admin` | ✅ |
+| Operator | `0300333333` | `operator` | ✅ |
+| Customer | `0300444444` | `customer` | ✅ |
+
+All four phones pass `/^\d{10}$/`. Landing-page column in both READMEs matches ADR-0002 route table + F1 behavior for Customer.
+
+### Gates ✅
+- `npm run lint` → 0 errors, 14 pre-existing react-refresh warnings.
+- `npm run typecheck` → 0 errors.
+- `npm run typecheck:strict` → 0 errors.
+- `npm run build` → PASS, 595.16 kB / 168.15 kB gzip (+0.12 kB vs C6, from the extra `phone` field on each seed — expected).
+- `rg -i "msw|setupWorker|mockServiceWorker|worker\.start" dist/assets/` → 0 hits (prod bundle purity preserved).
+
+### Diff scope ✅
+- **c649bd8**: `src/mocks/handlers/auth.ts` (predicate + seeds), `docs/adr/0003-mock-api-msw.md` (contract row + footnote), `README.md` (seed table + F1 note + pointer), `docs/qa/release-readiness.md` (+130 lines: dev appended a copy of my prior review — non-source, harmless). No unrelated code changes.
+- **6a04f71**: `src/mocks/README.md` only (129 new lines, developer guide). Docs-only. No source touched.
+
+### Residuals (all non-blocking, no ship impact)
+- **D15** (F4 login role-overwrite) and **D16** (F5 register push vs replace) still deferred — accepted at C5 sign-off, tracked in migration-plan.md.
+- **R1** from C5 re-verification: `LoginPage` mounts one render with stale `profile` before `PublicOnly.useEffect(logout)` fires. Harmless today (LoginPage doesn't read `profile`), comment recommended if anyone next touches it.
+- **T-C5-4** router.tsx react-refresh warnings (7) — cosmetic, tracked.
+- **T-C5-5** `@ts-expect-error` at `router.tsx:84` — pending D6.
+- **T-C5-6** Playwright coverage of this checklist — pending; the msw/node harness above is a solid starting point once the test scaffolding lands.
+- **New follow-up (P3)**: Consider a lightweight contract-check script in CI that parses `LoginPage.tsx` / `RegisterPage.tsx` fetch bodies and diffs the keys against the `interface LoginBody` / `interface RegisterBody` in `handlers/auth.ts`. Would have caught F6 automatically. Cheap and useful.
+
+### Ship recommendation
+- ✅ Tag `restructure-complete` may be applied (the C7 commit body notes this is post-close-out; applied after user's manual smoke).
+- ✅ All 3 ADRs Accepted; all QA blockers resolved; all gates green; docs internally consistent.
+- ✅ Offline dev flow verified working end-to-end (headless), matches documented seed instructions.
+
+C0–C7 restructure closes clean. Good work all around.

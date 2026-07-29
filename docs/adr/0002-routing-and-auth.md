@@ -48,7 +48,7 @@ graph TD
 ## Decision — AuthProvider
 
 - `src/features/auth/AuthProvider.tsx`: React context holding `{ profile: Profile | null, login(profile), logout() }`.
-- **In-memory only** this iteration (matches current behavior: refresh = logged out). Session persistence (`sessionStorage` rehydrate) → deferred register.
+- **Client-side rehydrate via `localStorage`** (key `rydee.session`, versioned envelope, survives tab close and browser restart): `useState` lazy initializer reads storage at mount so protected routes never flash `/login` on refresh. Envelope shape: `{ v: 1, profile, savedAt: number }`. `login()` writes, `logout()` removes — critical for F1 (unknown-role logout must also clear the key or refresh re-loops). Validation on rehydrate: envelope version match, string `role` on the profile, and `Date.now() - savedAt <= SESSION_MAX_AGE_MS` (default 24h) as a client-side TTL stopgap. Anything else → treated as logged out and the key is cleared. Persistence I/O is isolated in `src/features/auth/session.ts` so a v2 envelope carrying `{ accessToken, refreshToken, expiresAt }` can be added additively when backend token support lands (see D-token in migration plan). Delivered 2026-07-29 (D9 §client-side). Server-side revocation via `/me` and the token-based auth ADR remain deferred.
 - `LoginPage` keeps the existing fetch verbatim; on success calls `auth.login(data.profile)` then `navigate(roleHome(profile.role))` — replicating today's role → dashboard switch.
 - `logout()` clears profile; guards then bounce to `/login` (replaces `setPage("login")`).
 - Rendered as the root layout route's element wrapping `<Outlet/>`, so every route can `useAuth()` — ends prop-drilling of `profile`/`onLogout` (props kept where pages already accept them; wiring happens in route elements to avoid touching page internals).
@@ -87,7 +87,7 @@ sequenceDiagram
 
 ## Consequences
 - Positive: real URLs/history; role access declared once; `App.tsx` retired; MSW + future e2e tests can target routes.
-- Negative: refresh on a protected deep link logs out until persistence lands (same net behavior as today, now more visible).
+- ~~Negative: refresh on a protected deep link logs out until persistence lands~~ **Resolved 2026-07-29:** `sessionStorage` rehydrate (see AuthProvider decision above) — refresh preserves the session for the tab's lifetime. Server-side revocation still pending (D9-remainder).
 - Neutral: `NavigateParams`-style data for RiderLocationView moves to route param + `location.state`.
 
 ## Open questions / Risks

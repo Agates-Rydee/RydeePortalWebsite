@@ -99,7 +99,8 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | D6 | TS strict mode: unify RiderDashboard inline Profile with @/types/profile.ts, remove @ts-nocheck on RiderDashboard.tsx and @ts-expect-error at router.tsx:84, then flip strict:true. **C5 update:** strict = 0 errors; only these two suppressions remain. | Checkpoint 3.5 output |
 | D7 | Map library consolidation (Google Maps vs Leaflet) | Agreed deferral |
 | D8 | Adopt `components/ui` (shadcn) in pages / restyle iteration | Agreed deferral |
-| D9 | Auth session persistence + rehydrate (sessionStorage or `/me`) | ADR-0002 |
+| D9 | ~~Auth session persistence + rehydrate~~ **Client-side `localStorage` delivered 2026-07-29** (`rydee.session` key, versioned envelope `{ v:1, profile, savedAt }`, 24h client-side TTL, cleared on logout — F1-safe). Persistence I/O isolated in `src/features/auth/session.ts` so v2 (with tokens) is additive. **D9-remainder:** server-side revocation via `/me` endpoint still pending. | ADR-0002 |
+| D17 | **Token-based auth integration**: backend refresh-token + TTL contract pending — needs an ADR when backend lands. Client envelope v2 will carry `{ accessToken, refreshToken, expiresAt }`; localStorage vs httpOnly-cookie trade-off decided in that ADR. Current 24h client-side TTL is a stopgap approximation. | D9 amendment 2026-07-29 |
 | D10 | Dependency audit of remaining likely-unused deps (react-dnd, react-slick, react-responsive-masonry, canvas-confetti, react-popper, motion, recharts…) | Survey |
 | D11 | `Customer` role: route/home destination undefined | ADR-0002 open question |
 | D12 | Reuse MSW handlers in Node for vitest/Playwright test suite | ADR-0003 |

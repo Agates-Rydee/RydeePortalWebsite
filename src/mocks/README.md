@@ -60,6 +60,33 @@ F1 unknown-role logout without hand-editing React state. If Customer ever
 gains a dashboard, update `roleHome()` in `src/types/profile.ts` and this
 seed's expected outcome above.
 
+## Session persistence
+
+Since D9 (2026-07-29), `AuthProvider` persists the profile in
+`localStorage` under the key `rydee.session` using a versioned envelope
+`{ v: 1, profile, savedAt }`. See
+[`src/features/auth/session.ts`](../features/auth/session.ts) for the
+read/write helpers. Consequences for local mock-based dev:
+
+- Refreshing on `/rider`/`/admin`/`/operator` **stays** on that page
+  (no round-trip to `/login`).
+- Session survives tab close and browser restart (localStorage
+  semantics). To force a logged-out state without clicking logout:
+  DevTools → Application → Local Storage → delete `rydee.session` →
+  refresh.
+- Logging in as Customer, refreshing → the stored envelope is
+  rehydrated, `PublicOnly` detects the unknown role, and `logout()`
+  clears the key. Loop stays broken.
+- Client-side TTL: envelopes older than 24h (`SESSION_MAX_AGE_MS`) are
+  discarded on rehydrate → user lands on `/login`. This is a stopgap
+  approximation of real token expiry until backend tokens land (D17).
+- Unknown envelope version (e.g. a future v2 payload seen by v1 code)
+  is treated as logged out and cleared.
+
+Server-side revocation (`/me`) and real token-based auth are still
+deferred (D9-remainder + D17 in
+[`docs/design/migration-plan.md`](../../docs/design/migration-plan.md)).
+
 ## Mocked endpoint contract
 
 URLs come from [`src/lib/config.ts`](../lib/config.ts) — mock and app

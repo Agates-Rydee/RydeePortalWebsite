@@ -209,3 +209,60 @@ All four phones pass `/^\d{10}$/`. Landing-page column in both READMEs matches A
 - ✅ Offline dev flow verified working end-to-end (headless), matches documented seed instructions.
 
 C0–C7 restructure closes clean. Good work all around.
+
+---
+
+## D9 Re-Verification (2026-07-29) — commit 0960516 (session persistence)
+
+**VERDICT: ✅ SHIP — D9 client-side rehydrate is release-ready.**
+
+Gates: `lint` 0e/14w · `typecheck` 0 · `typecheck:strict` 0 · `build` PASS 596.19 kB / 168.42 kB gzip. Prod bundle: `rg msw dist/assets/` = 0 hits (MSW purity preserved); `rydee.session` present (expected — it's app code, not mocks).
+
+### (1) No flash-redirect on refresh ✅
+`AuthProvider` uses `useState<Profile | null>(loadSession)` — the **lazy initializer** form (function reference, not eager call). React runs it exactly once during mount, synchronously, before the first render's return value is committed. `ProtectedRoute` and `PublicOnly` therefore see the rehydrated profile on their first render — no null-then-set-then-rerender cycle, no `<Navigate to="/login"/>` intermediate. Confirmed by inspection of `AuthProvider.tsx:27`.
+
+### (2) F1 interaction — no per-refresh re-loop ✅
+Traced and simulated headlessly (11/11 assertions PASS incl. the loop-break):
+
+1. Rehydrate Customer via `loadSession()` (lazy init) → context has `profile.role="Customer"`.
+2. `PublicOnly` computes `home="/login"`, `unknownRole=true` → renders `<Outlet/>` and schedules `useEffect(logout)`.
+3. `logout()` calls `clearSession()` **then** `setProfile(null)`. Order matters and is correct: storage is cleared before the re-render fires so a synchronous `loadSession` anywhere else won't see stale data.
+4. Next refresh: `loadSession()` returns `null` (key gone). Guards treat as unauthed → `LoginPage`. **No loop.**
+
+The `AuthProvider.tsx:34-40` comment explicitly calls out the F1 dependency. Good defense-in-depth doc.
+
+### (3) TTL expiry path ✅
+`Date.now() - parsed.savedAt > SESSION_MAX_AGE_MS` → `clearSession()` → return `null`. `useState(loadSession)` seeds `null` → indistinguishable from a fresh logout. Smoke: `25h old envelope → null + key cleared` PASS; `23h old envelope → returns profile` PASS. Boundary is exclusive of the exact 24h mark, which is correct.
+
+### (4) Corrupt / foreign envelope ✅
+Four reject paths, all clearing storage before returning null:
+- JSON parse throw → `clearSession()` in the catch. ✅ (smoke: "corrupt JSON")
+- `!isEnvelopeV1(parsed)` covers: non-object, null, wrong `v`, non-numeric `savedAt`, missing/non-object `profile`, non-string `role`. Each path clears + returns null. ✅ (smokes: "v:2 envelope", "non-string role", "missing profile")
+- Version bump path is elegant: future v2 envelope stored, v1 client sees `rec.v !== 1` → drops → user re-logs in. No migration code needed for a one-way rollout.
+
+### (5) login()/logout() storage sync ✅
+- `login(next)`: `saveSession(next)` → `setProfile(next)`. New v1 envelope written with fresh `savedAt`. ✅
+- `logout()`: `clearSession()` → `setProfile(null)`. Storage cleared before state, so any concurrent read (e.g. another `loadSession` call in a fast refresh) sees the cleared state. ✅
+- `PublicOnly.useEffect` uses the same `logout` from context → same behavior. F1 loop stays broken across refreshes. ✅ (smoke: "F1 loop-break")
+- `saveSession` degrades to no-op on quota/disabled (silent, per commit). Session lives in memory only for that tab; refresh → `/login`. Acceptable graceful degradation.
+
+### (6) Gates ✅
+- `lint` 0 errors, 14 pre-existing react-refresh warnings — unchanged.
+- `typecheck` 0 errors.
+- `typecheck:strict` 0 errors — `session.ts` is well-typed (`unknown` narrowing via `isEnvelopeV1`, no `any`).
+- `build` PASS, 596.19 kB (+~1 kB vs post-C6 — session.ts overhead, matches commit body).
+
+### (7) Diff scope ✅
+- **Source**: only `src/features/auth/session.ts` (new, 118 lines) + `src/features/auth/AuthProvider.tsx` (+13 lines: import, lazy init, save on login, clear on logout). No touches to guards, router, handlers, config, types, or any page component.
+- **Docs**: `docs/adr/0002-routing-and-auth.md` (AuthProvider decision + consequences updated, previously said "in-memory only"), `docs/design/migration-plan.md` (D9 → delivered, D17 → token integration deferred, cleanly scoped), `src/mocks/README.md` (+27-line session-persistence section), `docs/qa/release-readiness.md` (+81 lines from dev's own trace — non-source).
+- No unrelated changes.
+
+### Residuals (info-only, non-blocking)
+- **I1**: `saveSession` swallows quota/disabled errors silently. Consider `console.warn` in the catch so developers can spot storage failures during local dev. Cosmetic.
+- **I2**: Cross-tab logout not propagated (no `storage`-event listener). Tab B keeps profile until refresh. Acceptable — server-side revocation (D9-remainder + D17) is the real answer here.
+- **I3**: TTL is check-on-load only. A tab kept open for 25h without refresh stays logged in via in-memory state. Standard SPA behavior; documented as stopgap.
+- **I4** (persists from C5 R1): `PublicOnly` still renders `<Outlet/>` for one render before `useEffect(logout)` fires. `LoginPage` mounts with a stale `profile` in context for that render. Doesn't read `profile`, so no visible effect. Persistence makes this window slightly more consequential in theory (if user could refresh in that window, cleared-storage race), but `useEffect` fires before browser paint on the same task; not reproducible.
+- **I5** (P3 follow-up): Add a `storage`-event listener for cross-tab sync, or an idle-timer that re-checks TTL periodically. Owned by whoever picks up D9-remainder / D17.
+
+### Ship recommendation
+D9 client-side scope is complete, F1-safe, and well-isolated for the future token upgrade. Sign off. Token-based auth + server-side revocation properly parked as D17.

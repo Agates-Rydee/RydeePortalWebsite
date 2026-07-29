@@ -4,26 +4,17 @@
 import { Logo, cardStyle } from "@/components/shared";
 import logoUrl from "@/assets/MapIcon.png";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
-import NavigateParams from "./RiderDashboard"
+// TODO(D6): unify with @/types/profile — see docs/design/migration-plan.md.
+// NavigateParams is a legacy shape from the pre-C5 App.tsx string-switch
+// nav model. This file is @ts-nocheck-guarded so we keep it as a local
+// placeholder rather than re-exporting a dead API surface.
+import type { Profile } from "@/types/profile";
+type NavigateParams = { profile?: Profile | null };
 
 interface Props {
-  onNavigate: (route: string,  params?: typeof NavigateParams ) => void;
+  onNavigate: (route: string,  params?: NavigateParams ) => void;
   onLogout: () => void;
-  profile?: {
-  role: string,
-    name: string,
-    address: string,
-    rideArea: string,
-    dob: string,
-    joiningDate: string,
-    totalRides: number,
-    missedRides: number,
-    distanceTraveled: number,
-    online: boolean,
-    currentLocation: {lat: number, lon: number},
-    ratings: number,
-    lastCustomerId: string
-  };
+  profile: Profile | null;
 }
 
 export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Props){
@@ -37,8 +28,8 @@ export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Prop
   }
 
   const center = {
-    lat: Number(profile?.currentLocation.lat),
-    lng: Number(profile?.currentLocation.lon),
+    lat: Number(profile?.currentLocation?.lat),
+    lng: Number(profile?.currentLocation?.lon),
   };
 
   const riderIcon = {
@@ -205,16 +196,16 @@ export default function  RiderDashboard ({ onNavigate, onLogout, profile }: Prop
          <div className="w-[850px] h-[600px] rounded-xl overflow-hidden">
           <GoogleMap
             center={{
-              lat: profile?.currentLocation.lat,
-              lng: profile?.currentLocation.lon,
+              lat: profile?.currentLocation?.lat,
+              lng: profile?.currentLocation?.lon,
             }}
             zoom={16}
             mapContainerStyle={{ width: "100%", height: "100%" }}
           >
             <Marker
               position={{
-                lat: profile?.currentLocation.lat,
-                lng: profile?.currentLocation.lon,
+                lat: profile?.currentLocation?.lat,
+                lng: profile?.currentLocation?.lon,
               }}
               icon={riderIcon}
             />

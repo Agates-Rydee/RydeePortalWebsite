@@ -21,6 +21,7 @@ src/mocks/
   handlers/
     index.ts          # export const handlers = [...auth]  (spread per-domain arrays)
     auth.ts           # POST /user/login, POST /register/user
+    riders.ts         # POST /GetAll/UnregisteredRiders (added 2026-07-29 merge)
   data/
     riders.ts         # seed arrays moved from src/app/data/mockData.ts (ADR-0001 #6)
 public/mockServiceWorker.js   # generated: npx msw init public/ — committed
@@ -35,6 +36,7 @@ public/mockServiceWorker.js   # generated: npx msw init public/ — committed
 |----------|---------|------------------|-------|
 | `POST /user/login` | `{ phone, password }` ¹ (+ cookie via `credentials:include`) | `{ role, profile: { name, role, ... } }` | role drives redirect (ADR-0002) |
 | `POST /register/user` | `{ name, email, phoneNumber, dob, address, password, role }` | success payload → app navigates to login | field names frozen |
+| `POST /GetAll/UnregisteredRiders` ² | *(empty body; cookie via `credentials:include`)* | `{ riders: Array<{ name, phone, activation_status, area? }> }` — dashboards filter `activation_status === "pending"` case-insensitively | Added 2026-07-29 during origin/main merge; env var `VITE_API_GET_All_UNREGISTERED_URL` name preserved verbatim from collaborator commit 3f197d2. PendingRiders itself still consumes local mocks — see Deferred D18. |
 
 Seed users: one per role (Rider/Admin/Operator/Customer) defined in `handlers/auth.ts`; wrong phone or password → 401 with the error shape the UI already renders.
 

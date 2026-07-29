@@ -1,18 +1,80 @@
+// Operator dashboard.
+//
+// Merge (2026-07-29): origin/main commit 3f197d2 ("Removed mock from
+// PendingRiders") introduced a live pending-rider fetch that replaced the
+// STATS constants with counts computed from POST /GetAll/UnregisteredRiders.
+// Ported here symmetrically with AdminDashboard — endpoint URL from
+// src/lib/config.ts (H6), request/response covered by MSW handler in
+// src/mocks/handlers/riders.ts (H6, ADR-0003), `profile: Profile | null`
+// prop shape.
+import { useEffect, useState } from "react";
 import { Logo, cardStyle } from "@/components/shared";
+import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
+import type { Profile } from "@/types/profile";
 
 interface Props {
   onNavigate: (p: string) => void;
   onLogout: () => void;
-  operatorName?: string;
+  profile: Profile | null;
 }
 
-const STATS = {
-  total: 312,
-  active: 47,
-  pending: 8,
-};
+interface UnregisteredRidersResponse {
+  riders?: Array<Record<string, unknown>>;
+}
 
-export default function OperatorDashboard({ onNavigate, onLogout, operatorName }: Props) {
+export default function OperatorDashboard({ onNavigate, onLogout, profile }: Props) {
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [totalRiders, setTotalRiders] = useState<number | null>(null);
+  const [activeRiders, setActiveRiders] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPending = async (): Promise<void> => {
+      try {
+        const response = await fetch(API_GET_UNREGISTERED_RIDERS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || response.statusText || "NO RESPONSE");
+        }
+
+        const data = (await response.json()) as UnregisteredRidersResponse;
+
+        if (!data || !Array.isArray(data.riders)) {
+          throw new Error("Invalid response shape");
+        }
+
+        const pending = data.riders.filter((r) => {
+          const status = String(
+            r.activation_status ?? r.activationStatus ?? "",
+          ).toLowerCase().trim();
+          return status === "pending";
+        }).length;
+        const total = data.riders.length;
+        const active = total - pending;
+
+        if (cancelled) return;
+        setPendingCount(pending);
+        setTotalRiders(total);
+        setActiveRiders(active);
+      } catch (err) {
+        console.error("OperatorDashboard: failed to load unregistered riders", err);
+      }
+    };
+
+    void loadPending();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const operatorName = profile?.name;
+
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -63,7 +125,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, operatorName }
           <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
             <div>
               <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Total Riders</p>
-              <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>{STATS.total}</p>
+              <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>{totalRiders ?? "—"}</p>
             </div>
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(23,168,130,0.10)" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#17a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -85,7 +147,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, operatorName }
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#0d8f6e"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#17a882"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.active}
+                {activeRiders ?? "—"}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to view live map →</p>
             </div>
@@ -108,7 +170,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, operatorName }
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#d97706"; e.currentTarget.style.textDecoration = "underline"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.textDecoration = "none"; }}
               >
-                {STATS.pending}
+                {pendingCount ?? "—"}
               </button>
               <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to review applications →</p>
             </div>

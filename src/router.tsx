@@ -54,7 +54,7 @@ function AdminDashboardRoute() {
     }
   };
   const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  return <AdminDashboard onNavigate={onNavigate} onLogout={onLogout} adminName={profile?.name} />;
+  return <AdminDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
 }
 
 function OperatorDashboardRoute() {
@@ -68,7 +68,7 @@ function OperatorDashboardRoute() {
     }
   };
   const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  return <OperatorDashboard onNavigate={onNavigate} onLogout={onLogout} operatorName={profile?.name} />;
+  return <OperatorDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
 }
 
 function RiderDashboardRoute() {
@@ -78,11 +78,11 @@ function RiderDashboardRoute() {
   // pass a no-op cast-compatible stub.
   const onNavigate: (route: string, params?: unknown) => void = () => {};
   const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  // TODO(D6): RiderDashboard has an inline Profile shape (rideArea/distanceTraveled/ratings)
-  // that diverges from @/types/profile. Unify in a follow-up; safe because RiderDashboard
-  // guards on missing fields at render time.
-  // @ts-expect-error legacy Profile shape mismatch — see TODO(D6) above
-  return <RiderDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? undefined} />;
+  // RiderDashboard now imports `Profile` from `@/types/profile` (fixed
+  // during the 2026-07-29 origin/main merge — the file previously used
+  // an inline shape imported from the deleted `../App`). The remaining
+  // D6 concern is only that the file is still `@ts-nocheck` internally.
+  return <RiderDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
 }
 
 function ActiveRidersRoute() {

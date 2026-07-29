@@ -5,3 +5,10 @@ export const API_LOGIN_URL =
   import.meta.env.VITE_API_LOGIN_URL ?? "http://localhost:3000/user/login";
 export const API_REGISTER_URL =
   import.meta.env.VITE_API_REGISTER_URL ?? "http://localhost:3000/register/user";
+
+// New endpoint introduced by origin/main 3f197d2 ("Removed mock from PendingRiders").
+// Env var name preserved verbatim from the collaborator commit so shared .env
+// files keep working. See ADR-0003 for request/response shape + MSW handler.
+export const API_GET_UNREGISTERED_RIDERS_URL =
+  import.meta.env.VITE_API_GET_All_UNREGISTERED_URL ??
+  "http://localhost:3000/GetAll/UnregisteredRiders";

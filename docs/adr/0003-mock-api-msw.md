@@ -1,7 +1,7 @@
 # ADR-0003: Mock API via MSW 2.x
 
 ## Status
-Proposed (MSW pre-agreed; this ADR fixes the concrete setup)
+Accepted (2026-07-29, at end of Checkpoint 7)
 
 ## Context
 Login/register call a WIP backend (`VITE_API_LOGIN_URL` / `VITE_API_REGISTER_URL`, defaulting to `http://localhost:3000/user/login` and `/register/user`, `credentials: "include"`). Frontend devs need to work without the backend running, **without changing app fetch code**, and the contract must stay compatible for the real backend swap-in.

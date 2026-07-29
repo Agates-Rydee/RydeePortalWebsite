@@ -1,7 +1,7 @@
 # ADR-0001: Target Folder Structure (Feature-Based)
 
 ## Status
-Proposed
+Accepted (2026-07-29, at end of Checkpoint 7)
 
 ## Context
 RydeePortalWebsite is a Figma Make export: React 18 + Vite 6 + Tailwind 4 + TS (non-strict), ~1500 LOC of app code. All views hang off a 357-line `App.tsx` string-switch. 48 shadcn `ui/` files are present but unreferenced. We are restructuring for a small (~8 person) team ahead of routing (ADR-0002) and mock API (ADR-0003) work. **Scope: structure only — no behavior changes, no restyling.**

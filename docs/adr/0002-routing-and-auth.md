@@ -1,7 +1,7 @@
 # ADR-0002: Routing & Auth (react-router 7 library mode + AuthProvider)
 
 ## Status
-Proposed (routing/auth approach pre-agreed; this ADR fixes the concrete design)
+Accepted (2026-07-29, at end of Checkpoint 7). Amended once mid-C5 per QA F3 / user Option A — see route table footnote.
 
 ## Context
 Navigation today is `useState<Page>` with a 9-value string union and an if-chain in `App.tsx`; the `Profile` object is prop-drilled. react-router 7 is already installed but unused. Roles: Rider, Admin, Operator (Customer reserved). Backend API is WIP elsewhere — login/register fetch calls must stay byte-compatible (`POST /user/login`, `POST /register/user`, `credentials: "include"`).

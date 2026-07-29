@@ -1,0 +1,130 @@
+# C6 / C7 Release Readiness — Final QA Pass
+
+**Reviewer:** QA-C5-Review (sub-agent) · **Date:** 2026-07-29
+**Commits under review:** `40573ef` (C6 MSW) + `5dbb12c` (C7 README/ADR close-out)
+**Cross-refs:** `docs/qa/c5-review.md` (C5 + re-verification), ADR-0003, migration-plan.md
+
+---
+
+## Final Verdict
+
+**⛔ NOT READY — 1 BLOCKER (mocked login broken due to contract drift).**
+
+The tree-shaking guardrail, dev-only boot, gates, and doc quality are all excellent. The one issue is severe: the MSW login handler does not match the frozen app fetch contract, so the entire offline-dev workflow that C6 exists to enable does not actually work end-to-end. Fix is a ~3-line change in `src/mocks/handlers/auth.ts` + a matching edit in ADR-0003 + README seed-user instructions. Once F6 is resolved, C6/C7 are shippable.
+
+---
+
+## Findings
+
+| # | Sev | Area | Finding | Evidence |
+|---|-----|------|---------|----------|
+| **F6** | **BLOCKER** | MSW contract fidelity | The MSW login handler reads `body.email` and matches against `seed[].email`, but `LoginPage.tsx` sends **`JSON.stringify({ phone, password })`** — the app's frozen byte-parity contract from pre-C5 App.tsx. The handler therefore always sees `body.email === undefined`, `seed.find(...)` returns nothing, and every mocked login returns **401 "Invalid email or password"**. The offline-dev flow that C6 exists to enable does not work at all. Additionally, `isValidPhone = /^\d{10}$/` in `LoginPage` rejects `rider@example.com` client-side before fetch even fires — the README's own seed-user instructions can't be executed. | `src/mocks/handlers/auth.ts:86,94-96`, `src/features/auth/pages/LoginPage.tsx:24,47`, README.md:78-83 |
+| **F7** | Major (doc) | ADR-0003 contract table | ADR-0003 §"Contract fidelity" lists `POST /user/login` request as `{ email, password }`. The actual frozen app contract (verified byte-for-byte in the C5 review against `git show 41d649e:src/App.tsx:217`) is `{ phone, password }`. The ADR is a "living contract" per its own text — it currently misrepresents that contract. Handler was written to the ADR, not to the app; fix the ADR *and* the handler together. | `docs/adr/0003-mock-api-msw.md:36`, `LoginPage.tsx:47` |
+| **F8** | Minor | README seed users | The seed-user table under "Local Dev — Without a backend" gives email addresses. After F6 is fixed the seeds must key on phone (10 digits). Update table to e.g. `0300xxxxxxx / rider` for each role. Also worth noting: the `Customer` seed entry now serves a dual purpose (F1 fix demo) — call that out inline so future readers don't remove it. | README.md:78-83, `handlers/auth.ts:10-83` |
+| **F9** | Info | main.tsx render gating | `enableMockingIfConfigured()` returns `Promise<void>` immediately when DEV=false or flag !== "true". `.then(() => createRoot(...).render(...))` schedules one microtask before first render — imperceptible in practice. Render is **not** blocked when flag off. ✅ | `src/main.tsx:10-21` |
+| **F10** | Info | Prod bundle purity | `rg -i "msw\|setupWorker\|mockServiceWorker\|worker\.start" dist/assets/*.{js,css}` → **0 matches** after `npm run build`. Dynamic `import("./mocks/browser")` behind `import.meta.env.DEV` correctly tree-shakes the entire `src/mocks/` subtree. Only `dist/assets/index-*.js` (~595 kB) + CSS + logo/mapicon assets present. ✅ | `dist/assets/`, `main.tsx:11-14` |
+| **F11** | Info | Handler URL wiring | Both `http.post(API_LOGIN_URL, ...)` and `http.post(API_REGISTER_URL, ...)` import from `src/lib/config.ts` — the exact same module `LoginPage`/`RegisterPage` use. Endpoint drift is structurally impossible. ✅ | `handlers/auth.ts:5,93,104`, `lib/config.ts` |
+| **F12** | Info | Register handler | Reads `{ name, email, phoneNumber, dob, address, password, role }` — matches RegisterPage's `JSON.stringify` order and field names exactly. Missing-field 400 branch matches error UI. `role` echoed back but not consumed. ✅ | `handlers/auth.ts:104-110`, `RegisterPage.tsx:45-55` |
+| **F13** | Info | Login success response | Handler returns `{ role: profile.role, profile }`. LoginPage reads `data.role ?? data.user?.role` and `data.profile as Profile` — both satisfied. Seed `Rider` profile also carries the RiderDashboard-only fields (`area`, `distanceTraveled`, `ratings`) that D6 documented — dashboard renders without `undefined` fallbacks. ✅ | `handlers/auth.ts:14-31,101`, `LoginPage.tsx:56-70`, `RiderDashboard.tsx:124,164,184` |
+| **F14** | Info | F1 fix exercisable in dev | Customer seed exists specifically so `customer@example.com / customer` triggers the PublicOnly-logout path. Once F6 is fixed, this is a great smoke test to keep the F1 fix from regressing silently. ✅ | `handlers/auth.ts:67-83` |
+| **F15** | Info | Gates | `lint` 0 err / 14 warn (all pre-existing) · `typecheck` 0 err · `typecheck:strict` 0 err · `build` PASS (595.00 kB / 168.09 kB gzip). ✅ | Local runs 2026-07-29 |
+| **F16** | Info | Diff scope | 40573ef: only `src/main.tsx`, `src/mocks/**` (new), `public/mockServiceWorker.js` (generated), `package.json`/`package-lock.json` (msw devDep), `docs/qa/c5-review.md` (+40 lines noting re-verification — non-source). 5dbb12c: only `README.md` (rewritten), three ADR files (Status→Accepted). No unrelated code changes. ✅ | git show --stat outputs |
+| **F17** | Info | README accuracy (non-login) | Structure map matches actual `src/` tree. Scripts table matches `package.json`. Env table matches `.env.example`. Route table matches ADR-0002 (post-amendment). CI notes accurate. Only the seed-user login instructions are broken (see F8). ✅ (aside from F8) | README.md, `package.json`, `.env.example`, `docs/adr/0002-*.md` |
+| **F18** | Info | Bundle size warning | Vite emits its usual "chunks > 500 kB" advisory. Not introduced by C6 (same as C5, ±0.1 kB). Code-splitting is out of scope for the restructure. No action. | Build log |
+
+---
+
+## Recommended fix for F6/F7/F8 (route to Frontend Developer)
+
+Two lines in `src/mocks/handlers/auth.ts`:
+
+```diff
+- interface LoginBody { email?: string; password?: string }
++ interface LoginBody { phone?: string; password?: string }
+  ...
+-     const user = seed.find(
+-       (u) => u.email === body.email && u.password === body.password,
+-     );
++     const user = seed.find(
++       (u) => u.phone === body.phone && u.password === body.password,
++     );
+```
+
+Then per-seed, add a 10-digit `phone` field alongside (or replacing) `email`:
+
+```
+rider    → phone: "0300111111"
+admin    → phone: "0300222222"
+operator → phone: "0300333333"
+customer → phone: "0300444444"
+```
+
+Then:
+- Update `docs/adr/0003-mock-api-msw.md:36` contract table cell for `POST /user/login` request from `{ email, password }` → `{ phone, password }`.
+- Update README "seed users" section to use phone numbers.
+- Optionally: keep `email` on seeds for future email-based login without another migration.
+
+---
+
+## Release Readiness Checklist
+
+**Blocking (must be green before ship):**
+- [ ] **F6** Mocked login round-trips successfully with a seed user (manual: `npm run dev` → phone/pw → land at role home).
+- [ ] **F6** ADR-0003 contract table matches actual app fetch body shape.
+- [ ] **F14** Customer seed login exercises F1 PublicOnly-logout (confirms the C5 fix hasn't regressed).
+
+**Already verified (do not need re-check unless code moves):**
+- [x] Gates: lint / typecheck / typecheck:strict / build all green.
+- [x] `rg msw dist/assets/` → 0 hits.
+- [x] main.tsx render is not blocked when flag off.
+- [x] MSW handler URLs sourced from `src/lib/config.ts`.
+- [x] Login handler response shape (`{ role, profile }`) matches LoginPage consumption.
+- [x] Register handler request shape matches RegisterPage; success path navigates to /login.
+- [x] Seed Rider profile includes RiderDashboard-only fields (area, distanceTraveled, ratings).
+- [x] Diff scope clean on both C6 and C7 commits.
+- [x] README structure map / scripts / env / routes / CI notes accurate.
+- [x] All three ADRs Accepted; ADR-0002 notes F3 amendment.
+
+**Post-fix nice-to-haves (non-blocking, log as tickets):**
+- [ ] Add a tiny Playwright smoke test that boots MSW and asserts each seed login → role home (would have caught F6 in CI).
+- [ ] Add an "MSW contract test" in CI: parse the app's `JSON.stringify(...)` request bodies vs handler `interface *Body` definitions.
+- [ ] D15 (F4 login role-overwrite), D16 (F5 register push vs replace) still deferred — schedule for the next iteration.
+- [ ] R1 from C5 re-verification: `LoginPage` mounts one render with stale `profile` before `PublicOnly`'s `useEffect(logout)` fires — harmless today, add a comment when anyone next touches LoginPage.
+
+---
+
+## Bug report — F6 (blocking)
+
+**Summary:** MSW mocked login always returns 401 due to request-body field-name mismatch (`email` vs `phone`).
+
+**Severity:** Blocker · **Priority:** P1
+**Environment:** local `npm run dev`, `VITE_ENABLE_MSW=true`, no backend running. Node 18+, Chromium.
+**Build:** 40573ef.
+
+**Steps to reproduce:**
+1. `cp .env.example .env` (has `VITE_ENABLE_MSW=true`).
+2. `npm run dev`, open http://127.0.0.1:5173, arrive at `/login`.
+3. Attempt to log in per README instructions: `rider@example.com` / `rider`.
+4. Client-side validation (`/^\d{10}$/`) rejects the email string — error "Please enter a valid phone number." No fetch fires. Blocked here already.
+5. Alternative: enter any 10-digit phone (e.g. `0300111111`) and any password.
+6. Fetch fires: `POST http://localhost:3000/user/login` with body `{"phone":"0300111111","password":"..."}`.
+7. MSW handler intercepts, but `body.email` is `undefined`, `seed.find(...)` returns `undefined`, handler responds `401 "Invalid email or password"`.
+
+**Expected:** Log in with a documented seed credential → mocked handler returns `{ role, profile }` → app navigates to role home.
+
+**Actual:** Every login attempt fails with 401 (or client-side "invalid phone" if trying README emails). Offline-dev workflow is unusable.
+
+**Reproducibility:** Always.
+
+**Impact:** C6's entire raison d'être (frontend devs working without the backend) is non-functional. Also documentation lie in README + ADR-0003.
+
+**Suggested regression test (Playwright pseudo):**
+```ts
+test('MSW rider login lands at /rider', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Phone Number').fill('0300111111');
+  await page.getByLabel('Password').fill('rider');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL('/rider');
+});
+```

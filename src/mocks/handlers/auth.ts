@@ -1,15 +1,20 @@
 // MSW handlers for the auth surface. Endpoints are built from the same
 // src/lib/config.ts constants the app fetches, so contract can't drift.
 // ADR-0003 §"Contract fidelity" is authoritative.
+//
+// F6 fix (QA 2026-07-29): LoginPage submits `{ phone, password }`, NOT
+// `{ email, password }` — verified against the byte-for-byte fetch call
+// in src/features/auth/pages/LoginPage.tsx. Handlers match on phone.
+// Seeds retain `email` for register-collision realism.
 import { http, HttpResponse } from "msw";
 import { API_LOGIN_URL, API_REGISTER_URL } from "@/lib/config";
 
-// Seed users — one per role that has a dashboard. `Customer` is intentionally
-// omitted (ADR-0002 D11 open question); a Customer login attempt succeeds and
-// triggers the F1 "unknown-role logout" path so the fix is exercisable.
+// Per-role 10-digit memorable phone numbers. LoginPage validates
+// /^\d{10}$/ before submit, so seeds must be exactly 10 digits.
 const seed = [
   {
     email: "rider@example.com",
+    phone: "0300111111", // Rider
     password: "rider",
     profile: {
       role: "Rider",
@@ -32,6 +37,7 @@ const seed = [
   },
   {
     email: "admin@example.com",
+    phone: "0300222222", // Admin
     password: "admin",
     profile: {
       role: "Admin",
@@ -49,6 +55,7 @@ const seed = [
   },
   {
     email: "operator@example.com",
+    phone: "0300333333", // Operator
     password: "operator",
     profile: {
       role: "Operator",
@@ -66,7 +73,8 @@ const seed = [
   },
   {
     email: "customer@example.com",
-    password: "customer",
+    phone: "0300444444", // Customer — intentionally exercises the F1
+    password: "customer",  // unknown-role logout path (Customer has no dashboard).
     profile: {
       role: "Customer",
       name: "Cara Customer",
@@ -83,7 +91,7 @@ const seed = [
   },
 ];
 
-interface LoginBody { email?: string; password?: string }
+interface LoginBody { phone?: string; password?: string }
 interface RegisterBody {
   name?: string; email?: string; phoneNumber?: string; dob?: string;
   address?: string; password?: string; role?: string;
@@ -93,10 +101,10 @@ export const authHandlers = [
   http.post(API_LOGIN_URL, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as LoginBody;
     const user = seed.find(
-      (u) => u.email === body.email && u.password === body.password,
+      (u) => u.phone === body.phone && u.password === body.password,
     );
     if (!user) {
-      return HttpResponse.text("Invalid email or password", { status: 401 });
+      return HttpResponse.text("Invalid phone or password", { status: 401 });
     }
     return HttpResponse.json({ role: user.profile.role, profile: user.profile });
   }),

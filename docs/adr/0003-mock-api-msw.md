@@ -33,10 +33,12 @@ public/mockServiceWorker.js   # generated: npx msw init public/ — committed
 
 | Endpoint | Request | Success response | Notes |
 |----------|---------|------------------|-------|
-| `POST /user/login` | `{ email, password }` (+ cookie via `credentials:include`) | `{ profile: { name, email, role, ... } }` | role drives redirect (ADR-0002) |
+| `POST /user/login` | `{ phone, password }` ¹ (+ cookie via `credentials:include`) | `{ role, profile: { name, role, ... } }` | role drives redirect (ADR-0002) |
 | `POST /register/user` | `{ name, email, phoneNumber, dob, address, password, role }` | success payload → app navigates to login | field names frozen |
 
-Seed users: one per role (Rider/Admin/Operator) defined in `handlers/auth.ts`; wrong password → 401 with the error shape the UI already renders.
+Seed users: one per role (Rider/Admin/Operator/Customer) defined in `handlers/auth.ts`; wrong phone or password → 401 with the error shape the UI already renders.
+
+¹ **Amended 2026-07-29 (QA F6):** ADR-0003's original draft listed `{ email, password }` but `LoginPage.tsx` submits `{ phone, password }` (verbatim from pre-C5 App.tsx, with a `/^\d{10}$/` client-side check). Source of truth = `src/features/auth/pages/LoginPage.tsx`. Handlers now match on phone.
 
 ## Decision — Enable/Disable Switch
 

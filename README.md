@@ -75,12 +75,21 @@ Never commit a real `.env`. See `.gitignore`.
 
 1. `.env` has `VITE_ENABLE_MSW=true`.
 2. `npm run dev` — console shows `[MSW] Mocking enabled`.
-3. Log in with a seed user (see `src/mocks/handlers/auth.ts`):
-   - `rider@example.com` / `rider` → `/rider`
-   - `admin@example.com` / `admin` → `/admin`
-   - `operator@example.com` / `operator` → `/operator`
-   - `customer@example.com` / `customer` → exercises the F1 unknown-role
-     logout path and lands back on `/login`.
+3. Log in with a seed user (login form takes **phone + password**):
+
+   | Role | Phone | Password | Lands at |
+   |---|---|---|---|
+   | Rider | `0300111111` | `rider` | `/rider` |
+   | Admin | `0300222222` | `admin` | `/admin` |
+   | Operator | `0300333333` | `operator` | `/operator` |
+   | Customer | `0300444444` | `customer` | back to `/login` (see note) |
+
+   The Customer seed intentionally exercises the F1 unknown-role logout
+   path: Customer has no dashboard, so `PublicOnly` calls `logout()` and
+   returns you to the login form. **Do not remove this seed** — it's the
+   only in-app way to smoke-test the F1 fix without hand-editing state.
+
+   Full contract + seed details: [`src/mocks/README.md`](src/mocks/README.md).
 
 **Against the real backend**
 

@@ -4,7 +4,7 @@ Implements ADR-0001/0002/0003. **Structure/tooling only — zero behavior change
 Each checkpoint = one small reviewable PR/commit, and **ends with `npm run build` passing**.
 Executor: Frontend Developer. Rollback at any point: `git reset --hard pre-restructure` (tag from step 1).
 
-## Checkpoint 0 — Git & Env Hygiene (do FIRST, before any code moves)
+## Checkpoint 0 — Git & Env Hygiene ✅ DONE (9dcc503)
 
 | # | Step |
 |---|------|
@@ -15,7 +15,7 @@ Executor: Frontend Developer. Rollback at any point: `git reset --hard pre-restr
 | 0.5 | **🔑 ROTATE the Google Maps API key** — it is in git history and must be treated as leaked. Rotation (new key + delete old in Google Cloud Console) is mandatory; history rewrite optional (repo is private/small — note and skip). Add HTTP-referrer restriction to the new key. |
 | 0.6 | ✅ `npm run build` passes (no code touched — sanity gate) |
 
-## Checkpoint 1 — Figma Artifact Strip + Package Identity *(pending user confirm on strip list)*
+## Checkpoint 1 — Figma Artifact Strip + Package Identity ✅ DONE (3aeecae)
 
 | # | Step |
 |---|------|
@@ -26,7 +26,7 @@ Executor: Frontend Developer. Rollback at any point: `git reset --hard pre-restr
 | 1.5 | `rm -rf node_modules && npm install` → fresh committed `package-lock.json` |
 | 1.6 | ✅ `npm run build` passes |
 
-## Checkpoint 2 — Remove Agreed-Unused Dependencies
+## Checkpoint 2 — Remove Agreed-Unused Dependencies ✅ DONE (9506ff5)
 
 | # | Step |
 |---|------|
@@ -34,7 +34,7 @@ Executor: Frontend Developer. Rollback at any point: `git reset --hard pre-restr
 | 2.2 | Do **not** remove anything else (Radix/shadcn deps stay; broader dep audit → deferred register) |
 | 2.3 | ✅ `npm run build` passes |
 
-## Checkpoint 3 — Tooling Baseline (ESLint + Prettier + typecheck + CI)
+## Checkpoint 3 — Tooling Baseline (ESLint + Prettier + typecheck + CI) ✅ DONE (35093f5)
 
 | # | Step |
 |---|------|
@@ -46,7 +46,7 @@ Executor: Frontend Developer. Rollback at any point: `git reset --hard pre-restr
 | 3.6 | `.github/workflows/ci.yml`: on push/PR → `npm ci` → `npm run lint` → `npm run typecheck` → `npm run build`; plus a `continue-on-error: true` job step for `typecheck:strict` (visible signal, non-blocking). Node 20, `actions/setup-node` cache: npm. Zero cost on GitHub free tier. |
 | 3.7 | ✅ `npm run build` passes; CI green on PR |
 
-## Checkpoint 4 — File Moves (ADR-0001 mapping, no splits yet)
+## Checkpoint 4 — File Moves (ADR-0001 mapping, no splits yet) ✅ DONE (41d649e)
 
 Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5.
 
@@ -59,7 +59,7 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | 4.5 | `App.tsx` temporarily moves to `src/App.tsx` (still the string-switch — unchanged behavior); update `src/main.tsx` import; delete empty `src/app/` |
 | 4.6 | ✅ `npm run build` passes + 2-minute manual smoke: login → each dashboard renders |
 
-## Checkpoint 5 — Routing & Auth (ADR-0002)
+## Checkpoint 5 — Routing & Auth (ADR-0002) ✅ DONE (79822f1 + 8c22e86 + 884a0a4)
 
 | # | Step |
 |---|------|
@@ -70,7 +70,7 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | 5.5 | Rewrite `src/main.tsx`: `<RouterProvider router={router}/>`; delete `src/App.tsx` (`Page` union + switch retired) |
 | 5.6 | ✅ `npm run build` passes + smoke: guards redirect, back button works, logout → /login, deep-link to /admin while logged out → /login |
 
-## Checkpoint 6 — Mock API via MSW (ADR-0003)
+## Checkpoint 6 — Mock API via MSW (ADR-0003) ✅ DONE (40573ef)
 
 | # | Step |
 |---|------|
@@ -80,7 +80,7 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | 6.4 | Add `VITE_ENABLE_MSW=true` to `.env.example`; README section: local dev with/without backend |
 | 6.5 | ✅ `npm run build` passes + smoke: login works with MSW on & no backend; flag off + backend up → passthrough works |
 
-## Checkpoint 7 — Close-out
+## Checkpoint 7 — Close-out ✅ DONE (5dbb12c)
 
 | # | Step |
 |---|------|

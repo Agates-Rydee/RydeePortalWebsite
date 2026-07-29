@@ -1,5 +1,5 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "rydee-portal-website",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -66,27 +66,14 @@
     "sonner": "2.0.3",
     "tailwind-merge": "3.2.0",
     "tw-animate-css": "1.3.8",
-    "vaul": "1.1.2"
+    "vaul": "1.1.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "tailwindcss": "4.1.12",
     "vite": "^6.3.5"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
-  },
-  "pnpm": {
-    "overrides": {
-      "vite": "6.3.5"
-    }
   }
 }

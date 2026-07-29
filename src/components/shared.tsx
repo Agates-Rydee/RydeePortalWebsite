@@ -1,4 +1,4 @@
-import logoUrl from "../../imports/Logo.png";
+import logoUrl from "@/assets/Logo.png";
 
 export function Bg() {
   return (

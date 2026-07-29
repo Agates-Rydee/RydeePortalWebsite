@@ -1,9 +1,9 @@
-import { Logo, cardStyle } from "../components/shared";
+import { Logo, cardStyle } from "@/components/shared";
 
 interface Props {
   onNavigate: (p: string) => void;
   onLogout: () => void;
-  adminName?: string;
+  operatorName?: string;
 }
 
 const STATS = {
@@ -12,7 +12,7 @@ const STATS = {
   pending: 8,
 };
 
-export default function AdminDashboard({ onNavigate, onLogout, adminName }: Props) {
+export default function OperatorDashboard({ onNavigate, onLogout, operatorName }: Props) {
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -29,13 +29,13 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
             className="text-xs font-semibold px-2.5 py-1 rounded-full"
             style={{ background: "rgba(23,168,130,0.12)", color: "#17a882", border: "1px solid rgba(23,168,130,0.25)" }}
           >
-            Admin
+            Operator
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {adminName && (
+          {operatorName && (
             <span className="text-sm hidden sm:block" style={{ color: "var(--muted-foreground)" }}>
-              {adminName}
+              {operatorName}
             </span>
           )}
           <button
@@ -52,42 +52,14 @@ export default function AdminDashboard({ onNavigate, onLogout, adminName }: Prop
 
       <main className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Admin Dashboard </h1>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Operator Dashboard</h1>
           <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
             Manage users, riders, and operations across Karachi.
           </p>
         </div>
 
         <div className="flex flex-col gap-4">
-          {/* Register new user */}
-          <button
-            onClick={() => onNavigate("admin-register")}
-            className="w-full rounded-2xl p-6 flex items-center justify-between text-left transition-all duration-150"
-            style={{ ...cardStyle, cursor: "pointer", border: "1px solid rgba(23,168,130,0.30)" }}
-            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 0 1px rgba(23,168,130,0.20), 0 8px 40px rgba(23,168,130,0.16)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 0 1px rgba(23,168,130,0.06), 0 8px 40px rgba(23,168,130,0.10)"; }}
-          >
-            <div>
-              <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
-                User Management
-              </p>
-              <p className="text-lg font-semibold mt-1" style={{ color: "#17a882" }}>Register new user</p>
-              <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
-                Add a new Operator, Customer, or Rider role
-              </p>
-            </div>
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(23,168,130,0.10)" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#17a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <line x1="19" y1="8" x2="19" y2="14" />
-                <line x1="22" y1="11" x2="16" y2="11" />
-              </svg>
-            </div>
-          </button>
-
-          {/* Total Riders */}
+         {/* Total Riders */}
           <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
             <div>
               <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Total Riders</p>

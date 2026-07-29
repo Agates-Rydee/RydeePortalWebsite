@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { INITIAL_ACTIVE_RIDERS, type ActiveRider, type RiderState } from "../data/mockData";
-import { BackButton, Logo } from "../components/shared";
+import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
+import type { ActiveRider, RiderState } from "@/types/rider";
+import { BackButton, Logo } from "@/components/shared";
 
 const STATE_COLOR: Record<RiderState, string> = {
   dispatching: "#22c55e",

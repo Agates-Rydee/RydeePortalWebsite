@@ -3,14 +3,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-wrapper-object-types -- TODO(D1-D4): pre-existing bugs; file rewritten in Checkpoint 5 */
 import { useState } from "react";
 import { Eye, EyeOff, List } from "lucide-react";
-import logoUrl from "../imports/Logo.png";
-import { Bg, Logo, cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput, FieldInput, Spinner } from "./components/shared";
-import RiderDashboard from "./pages/RiderDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import ActiveRiders from "./pages/ActiveRiders";
-import PendingRiders from "./pages/PendingRiders";
-import RiderLocation from "./pages/RiderLocationView";
-import OperatorDashboard from "./pages/OperatorDashboard";
+import logoUrl from "@/assets/Logo.png";
+import { Bg, Logo, cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput, FieldInput, Spinner } from "@/components/shared";
+import RiderDashboard from "@/features/dashboards/RiderDashboard";
+import AdminDashboard from "@/features/dashboards/AdminDashboard";
+import ActiveRiders from "@/features/riders/ActiveRiders";
+import PendingRiders from "@/features/riders/PendingRiders";
+import RiderLocation from "@/features/riders/RiderLocationView";
+import OperatorDashboard from "@/features/dashboards/OperatorDashboard";
 
 type Page = "login" | "register" | "rider-dashboard" | "admin-dashboard" | "operator-dashboard" | "admin-register" | "active-riders" | "pending-riders" | "rider-location";
 

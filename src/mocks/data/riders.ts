@@ -1,25 +1,6 @@
-export type RiderState = "idle" | "arriving" | "dispatching";
-
-export interface ActiveRider {
-  id: number;
-  name: string;
-  lat: number;
-  lng: number;
-  state: RiderState;
-  bike: string;
-  area: string;
-}
-
-export interface PendingRider {
-  id: number;
-  name: string;
-  phone: string;
-  dob: string;
-  cnic: string;
-  area: string;
-  documents: string[];
-  pin: string;
-}
+// Seed data for MSW handlers (ADR-0003). Moved from src/app/data/mockData.ts
+// in Checkpoint 4. Byte-for-byte content preserved.
+import type { ActiveRider, PendingRider } from "@/types/rider";
 
 export const INITIAL_ACTIVE_RIDERS: ActiveRider[] = [
   { id: 1,  name: "Usman Tariq",      lat: 24.8607, lng: 67.0011, state: "idle",        bike: "Jolta E70",    area: "Saddar"          },

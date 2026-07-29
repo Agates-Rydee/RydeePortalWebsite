@@ -22,9 +22,11 @@ Navigation today is `useState<Page>` with a 9-value string union and an if-chain
 | `/rider` | `RiderDashboard` | role: Rider | `rider-dashboard` |
 | `/admin` | `AdminDashboard` | role: Admin | `admin-dashboard` |
 | `/admin/register` | `RegisterPage` (`showRole` variant) | role: Admin | `admin-register` |
-| `/admin/active-riders` | `ActiveRiders` | role: Admin | `active-riders` |
-| `/admin/pending-riders` | `PendingRiders` | role: Admin | `pending-riders` |
-| `/admin/riders/:riderId/location` | `RiderLocationView` | role: Admin | `rider-location` (old `params` → route param + `location.state`) |
+| `/admin/active-riders` | `ActiveRiders` | role: Admin **or** Operator ¹ | `active-riders` |
+| `/admin/pending-riders` | `PendingRiders` | role: Admin **or** Operator ¹ | `pending-riders` |
+| `/admin/riders/:riderId/location` | `RiderLocationView` | role: Admin **or** Operator ¹ | `rider-location` (old `params` → route param + `location.state`) |
+
+¹ **Amended 2026-07-29 (QA F3 / user Option A):** Operators were originally denied these routes in the ADR's first draft, which caused a functional regression versus pre-C5 behavior (Operator dashboard buttons `active-riders` / `pending-riders` no-op'd). Widened to `["Admin", "Operator"]` in `src/router.tsx`.
 | `/operator` | `OperatorDashboard` | role: Operator | `operator-dashboard` |
 | `/` | index redirect | → role home or `/login` | — |
 | `*` | redirect to `/` | — | — |
@@ -34,10 +36,12 @@ graph TD
   R["/ (root layout: AuthProvider)"] --> P["PublicOnly layout"]
   R --> G1["ProtectedRoute allow=[Rider]"]
   R --> G2["ProtectedRoute allow=[Admin]"]
+  R --> G23["ProtectedRoute allow=[Admin, Operator]"]
   R --> G3["ProtectedRoute allow=[Operator]"]
   P --> L["/login"] & Reg["/register"]
   G1 --> RD["/rider"]
-  G2 --> AD["/admin"] & AR["/admin/active-riders"] & PR["/admin/pending-riders"] & ARg["/admin/register"] & RL["/admin/riders/:riderId/location"]
+  G2 --> AD["/admin"] & ARg["/admin/register"]
+  G23 --> AR["/admin/active-riders"] & PR["/admin/pending-riders"] & RL["/admin/riders/:riderId/location"]
   G3 --> OD["/operator"]
 ```
 

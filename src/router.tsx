@@ -127,19 +127,27 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Admin (+ its shared-with-operator rider views)
+      // Admin-only surface (dashboard + create-user)
       {
         element: <ProtectedRoute allow={["Admin"]} />,
         children: [
-          { path: "admin",                              element: <AdminDashboardRoute /> },
-          { path: "admin/register",                     element: <RegisterPage showRole backTo="/admin" /> },
-          { path: "admin/active-riders",                element: <ActiveRidersRoute /> },
-          { path: "admin/pending-riders",               element: <PendingRidersRoute /> },
-          { path: "admin/riders/:riderId/location",     element: <RiderLocationView /> },
+          { path: "admin",           element: <AdminDashboardRoute /> },
+          { path: "admin/register",  element: <RegisterPage showRole backTo="/admin" /> },
         ],
       },
 
-      // Operator
+      // Rider-management views: shared by Admin AND Operator per ADR-0002
+      // (amended 2026-07-29 for QA F3 / user Option A).
+      {
+        element: <ProtectedRoute allow={["Admin", "Operator"]} />,
+        children: [
+          { path: "admin/active-riders",             element: <ActiveRidersRoute /> },
+          { path: "admin/pending-riders",            element: <PendingRidersRoute /> },
+          { path: "admin/riders/:riderId/location",  element: <RiderLocationView /> },
+        ],
+      },
+
+      // Operator dashboard
       {
         element: <ProtectedRoute allow={["Operator"]} />,
         children: [

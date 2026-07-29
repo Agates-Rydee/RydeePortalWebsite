@@ -104,6 +104,9 @@ Pure `git mv` + import-path fixes only; `App.tsx` split deferred to Checkpoint 5
 | D11 | `Customer` role: route/home destination undefined | ADR-0002 open question |
 | D12 | Reuse MSW handlers in Node for vitest/Playwright test suite | ADR-0003 |
 | D13 | Optional git-history rewrite to purge leaked `.env` (key rotation already mandatory in 0.5) | Checkpoint 0 |
+| D14 | **Product question**: should `Admin` be a creatable role via `/admin/register`? Currently ROLES=[Operator, Customer, Rider] (verbatim from pre-C5 App.tsx). If Admin should be creatable, widen ROLES and audit backend accept-list. | QA C5 review — F2 |
+| D15 | `AuthProvider.login(profile)` overwrites `profile.role` if backend responds with a different casing/value than the user selected. Investigate backend contract (does /user/login echo canonical role?), then normalize at the boundary rather than in the UI. | QA C5 review — F4 |
+| D16 | Post-register navigation uses default (push) not `replace: true`, so browser back after successful registration returns to the register form. Add `{ replace: true }` to the `useNavigate()` call in RegisterPage.tsx. | QA C5 review — F5 |
 
 ## Risks & Assumptions
 - **Assumption**: `npm run build` (vite build, no tsc) is the gate per checkpoint; `typecheck` becomes an additional gate from Checkpoint 3 onward.

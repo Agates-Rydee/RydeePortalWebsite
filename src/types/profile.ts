@@ -2,7 +2,10 @@
 // (ADR-0001 §"Where types live" — shared by auth, dashboards, and MSW
 // handlers). Field shape preserved byte-for-byte; broadening or
 // tightening of individual fields is deferred (D3: `Boolean` → `boolean`).
-export const ROLES = ["Rider", "Admin", "Operator", "Customer"] as const;
+// Preserved verbatim from pre-C5 App.tsx (git show 41d649e:src/App.tsx).
+// Admin is NOT a creatable role via /admin/register. See D12 for the open
+// product question.
+export const ROLES = ["Operator", "Customer", "Rider"] as const;
 export type Role = (typeof ROLES)[number];
 
 // Kept as the loose shape the current backend/mock returns. Refined

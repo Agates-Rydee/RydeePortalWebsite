@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: lint · typecheck · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      # Non-blocking visibility signal — flip to blocking once D6 is closed.
+      - name: Typecheck (strict — advisory)
+        continue-on-error: true
+        run: npm run typecheck:strict
+EOF;cat .github/workflows/ci.yml | tee "C:/Users/dandkhan/.aki/.tasks/tool-toolu_bdrk_01L2KaRDoPsoJV79y7e7RWz3/pipe_full.log" | head -5

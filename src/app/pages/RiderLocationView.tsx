@@ -1,5 +1,6 @@
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(D7/C5.4): params shape formalised when route params + location.state land in Checkpoint 5
 export default function RiderLocationView({ params }: { params: any }) {
   const { lat, lon, name } = params;
 

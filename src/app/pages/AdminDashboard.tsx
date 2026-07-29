@@ -11,51 +11,61 @@ interface Props {
 const API_GET_ALL_UNREGISTERED_URL = import.meta.env.VITE_API_GET_All_UNREGISTERED_URL ?? "http://localhost:3000/GetAll/UnregisteredRiders";
 
 export default function AdminDashboard({ onNavigate, onLogout, profile }: Props) {
-   const [pendingCount, setPendingCount] = useState(null);
-   const [totalRiders, setTotalRiders] = useState(null);
-   const [activeRiders, setActiveRiders] = useState(null);
-
-   useEffect(() => {
-    async function loadPending() {
-
-   const response = await fetch(API_GET_ALL_UNREGISTERED_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || response.statusText || "NO RESPONSE");
+   const [pendingCount, setPendingCount] = useState<number | null>(null);
+    const [totalRiders, setTotalRiders] = useState<number | null>(null);
+    const [activeRiders, setActiveRiders] = useState<number | null>(null);
+    const [riderList, setRiderList] = useState<Profile[]>([]);
+  
+    const loadPending = async (): Promise<Profile[]> => {
+      try {
+        const response = await fetch(API_GET_ALL_UNREGISTERED_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || response.statusText || "NO RESPONSE");
+        }
+  
+        const data = await response.json();
+  
+        if (!data || !Array.isArray(data.riders)) {
+          console.error("Invalid response format:", data);
+          throw new Error("Invalid response : " + data);
+        }
+  
+        const riders = data.riders as Array<Record<string, unknown>>;
+        const pendingRiders = riders.filter((r) => {
+          const status = String(r.activation_status ?? r.activationStatus ?? "").toLowerCase().trim();
+          return status === "pending";
+        }) as unknown as Profile[];
+  
+        const total = riders.length;
+        const pending = pendingRiders.length;
+        const active = total - pending;
+  
+        setRiderList(pendingRiders);
+        setPendingCount(pending);
+        setTotalRiders(total);
+        setActiveRiders(active);
+  
+        console.debug("total ", total);
+        console.debug("active ", active);
+        console.debug("pending ", pending);
+        console.debug("pending riders ", pendingRiders);
+  
+        return pendingRiders;
+      } catch (error) {
+        console.error("Failed to load pending riders", error);
+        return [];
       }
-
-      const data = await response.json();
-
-    if (!data || !Array.isArray(data.riders)) {
-        console.error("Invalid response format:", data);
-         throw new Error("Invalid response : " + data);
-      }
-      const riderList = data.riders.filter(r => r.activation_status === "pending");
-
-      const total = data.riders.length;
-      const pending = riderList.length;
-      const active = total - pending;
-
-      //console.debug("DATA:", JSON.stringify(data, null, 2));
-      //console.debug("riders "+ JSON.stringify(riderList, null, 2));
-      setPendingCount(pending);
-      setTotalRiders(total);
-      setActiveRiders(active);
-
-      console.debug("total ", total);
-      console.debug("active ", active);
-      console.debug("pending ", pending);
-      
-    }
-
-    loadPending();   
-   }, []); // runs once when page loads
-
+    };
+  
+  useEffect(() => {
+    void loadPending();
+  }, []);
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -173,7 +183,7 @@ export default function AdminDashboard({ onNavigate, onLogout, profile }: Props)
             <div>
               <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Pending Riders</p>
               <button
-                onClick={() => onNavigate("pending-riders")}
+                onClick={() =>  onNavigate("pending-riders", { pendingRiders: riderList }) }
                 className="text-4xl font-bold mt-1 transition-colors duration-150"
                 style={{ color: "#f59e0b", background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1.2 }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#d97706"; e.currentTarget.style.textDecoration = "underline"; }}

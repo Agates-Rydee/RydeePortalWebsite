@@ -113,3 +113,43 @@ Manual (until Playwright suite lands in D-later):
 - **T-C5-4** (P3): Split router-adapter components out of `router.tsx` to clear the 7 react-refresh warnings.
 - **T-C5-5** (P3): Track the `@ts-expect-error` at `router.tsx:84` alongside D6.
 - **T-C5-6** (P3): Add Playwright coverage for the Regression Test Checklist above once MSW lands (ADR-0003).
+
+---
+
+## Re-Verification (2026-07-29) — commits 8c22e86 + 884a0a4
+
+**Final verdict: ✅ APPROVED — C6 UNBLOCKED.**
+
+Gates re-run locally: `lint` 0 err / 14 warn · `typecheck` 0 err · `typecheck:strict` 0 err · `build` PASS (595.00 kB / 168.09 kB gzip).
+
+### F1 (BLOCKER) — RESOLVED ✅
+`PublicOnly` now detects `roleHome(profile.role) === "/login"` and fires `logout()` from a `useEffect`, then renders `<Outlet/>` (login form) while the effect settles. Trace confirmed for `role="Customer" | "" | "garbage"`:
+
+1. Authed hit on `/admin` → `ProtectedRoute[Admin]` denies → `<Navigate to="/login"/>`.
+2. `/login` under `PublicOnly`: `profile` truthy, `home="/login"`, `unknownRole=true` → guard renders `<Outlet/>`, not another `<Navigate/>`. **No cycle.**
+3. `useEffect` fires post-render → `logout()` → `profile=null` → re-render → still `<Outlet/>` → `LoginPage` remains mounted.
+
+Effect deps `[profile, unknownRole, logout]` correct; `logout` is `useCallback`-stable in `AuthProvider`, so no re-fire storm. Render-time `setState` warning avoided. Clean.
+
+### F2 (MAJOR security regression) — RESOLVED ✅
+`src/types/profile.ts` reverted to exactly `["Operator", "Customer", "Rider"] as const` — byte-matched against `git show 41d649e:src/App.tsx:35`. `/admin/register` dropdown no longer offers `Admin`. Product question logged as **D14** in `docs/design/migration-plan.md`. F4 (D15) and F5 (D16) also captured as deferreds — good hygiene.
+
+### F3 (MAJOR UX) — RESOLVED ✅
+`src/router.tsx` split into three guard blocks:
+- `allow=["Admin"]` → `/admin`, `/admin/register`
+- `allow=["Admin", "Operator"]` → `/admin/active-riders`, `/admin/pending-riders`, `/admin/riders/:riderId/location`
+- `allow=["Operator"]` → `/operator`
+
+Case-handling unchanged (`ProtectedRoute` still `.toLowerCase()`s both sides). ADR-0002 route table amended with footnote ¹ and mermaid diagram now shows a `G23` node for the shared block. Operator's `active-riders` / `pending-riders` buttons will now render the intended pages instead of no-op'ing.
+
+### Diff scope check ✅
+- **8c22e86**: `ProtectedRoute.tsx` (F1), `profile.ts` (F2), `migration-plan.md` (D14/D15/D16), `c5-review.md` (verbatim addition of this review). No unrelated changes.
+- **884a0a4**: `router.tsx` (guard split), `docs/adr/0002-routing-and-auth.md` (table + diagram amendment). No unrelated changes.
+
+### Residual concerns (non-blocking)
+- **R1 (info)**: In the F1 fix, `LoginPage` briefly mounts one render with `profile` still non-null before `useEffect(logout)` fires. `LoginPage` doesn't read `profile` from context today (only `location.state.from` + `auth.login`), so no visible flicker. Add a comment near any future `useAuth().profile` read in `LoginPage`, or short-circuit the render with `if (profile && unknownRole) return null;` before the `Outlet`. Not blocking; log as follow-up if desired.
+- **R2 (info)**: D15 (F4 login role-overwrite) and D16 (F5 register push-vs-replace) remain deferred — accepted per QA scope carve-out. Add to the C6 or C7 tracker so they don't drift.
+- **R3 (info)**: Router-file react-refresh warnings (7) and `@ts-expect-error` at `router.tsx:84` still present — already tracked as T-C5-4 / T-C5-5.
+
+### Regression checklist status
+All F1/F2/F3 verification items in the original checklist above are now covered by the code review + gates. Manual smoke on dashboards confirmed by user. Full Playwright coverage remains deferred to post-MSW (ADR-0003), tracked as T-C5-6.

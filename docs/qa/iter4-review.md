@@ -407,3 +407,71 @@ Commit touches only `src/components/DatePickerField.tsx` and adds `src/component
 ### Sign-off
 
 All 6 gates green, bundle split preserved, loader pattern is correct on all four axes reviewed (dedup, failure-reset, idle guard, keyboard). No H-rule impact. **Ship.** ✅
+
+
+## Iteration 4.4 addendum — DatePicker simplification (drop lazy split)
+
+**Date:** 2026-07-30 · **Reviewer:** QA-Iter4e · **Commit:** `0f79f7e` `refactor(components): merge DatePickerPopover into DatePickerField (drop lazy split)` · **Verdict:** **SHIP ✅**
+
+### Owner decision context
+At ~224 kB total the app doesn't justify micro-splitting the 29 kB picker chunk against the cost of `React.lazy` + `Suspense` + `pickerMounted` state + prefetch (idle + pointerenter/focus) + spinner + loader-module machinery. Reverted to the canonical static shadcn date-picker pattern. Route-level splitting will be reconsidered as the app grows. Old bundle band **191.1–198.9 kB is VOID**; new baseline **223.43 kB** (PM to record; suggested ±2% band **219–228 kB**).
+
+### Gates at HEAD `0f79f7e`
+| Gate | Result |
+|---|---|
+| `npm run lint` | ✅ clean |
+| `npm run typecheck` | ✅ clean |
+| `npm run typecheck:strict` | ✅ clean |
+| `npm test` | ✅ **55/55** (7 files, 22.06s) |
+| `npm run build` | ✅ 15.4s |
+| `npm run test:e2e` | ✅ **1/1** chromium (11.1s) |
+| Main gzip | **223.43 kB** — exactly matches owner claim (new baseline) |
+| Dist chunk count | **1 JS** — `dist/assets/index-*.js` only; no `DatePickerPopover-*.js` chunk emitted ✅ |
+| Async picker chunk | **Absent** — `ls dist/assets/*.js` → single file ✅ |
+| MSW dist purity | `rg -c msw dist/assets/*.js` → 0 hits ✅ |
+| `react-day-picker` in main | 1 hit (expected — now static, folded into main) ✅ |
+
+### Diff review — lazy machinery removal is total
+`rg -n 'lazy\|Suspense\|requestIdleCallback\|pickerMounted\|loadDatePicker\|DatePickerPopover' src/`:
+- `DatePickerField.tsx:10` — comment mentioning "React.lazy / Suspense / pickerMounted / prefetch machinery removed" (doc-only, correct)
+- `AuthProvider.tsx:3` — unrelated ("useState lazy initializer")
+- **`RegisterPage.tsx:286-288`** — stale JSDoc "Phase-6 lazy split PRESERVED: only the outline Button trigger + mount flag live in the main chunk; Popover + Calendar load on first click." ⚠️ **Now factually wrong** (Popover + Calendar are static). Doc-only, non-blocking. Filed as **F-4.4-01**.
+
+No dead imports, no leftover Suspense/lazy calls. `DatePickerPopover.tsx` and `.loader.ts` deleted. `date-helpers.ts` still used (`formatDobDisplay` in `DatePickerField.tsx:61` + `RegisterPage.tsx:297`) — retained correctly.
+
+### Behavior preservation (vs 4.1–4.3 addenda)
+| Contract | Location | Status |
+|---|---|---|
+| `captionLayout="dropdown-buttons"` | `DatePickerField.tsx:106` | ✅ |
+| `fromYear` / `toYear` from call sites | `DatePickerField.tsx:107-108`; call sites pass `DOB_MIN_YEAR=1940` / `DOB_MAX_YEAR=currentYear-18` | ✅ |
+| `disabled after Dec 31 of toYear` (underage-impossible) | `DatePickerField.tsx:109` `disabled={{ after: new Date(toYear, 11, 31) }}` | ✅ |
+| DD/MM/YYYY display | `DatePickerField.tsx:61` via `formatDobDisplay` | ✅ |
+| ISO wire (H1) | Unchanged — `RegisterPage` still `parseDobDisplay(form.dob)` → picker → `formatDobDisplay(d)` back to state → ISO conversion on submit lives in RegisterPage (not touched by 0f79f7e); guarded by `tests/regression/contract.test.ts` | ✅ |
+| `<Label htmlFor>` / `id` wiring | `DatePickerField.tsx:78` (`id={id}`) | ✅ |
+| `aria-invalid` / `aria-describedby` / `role="alert"` | `DatePickerField.tsx:82-83, 114-117` | ✅ |
+| Field-styling locks (`hover:bg-background`, `data-[state=open]:bg-background`, palette-collision defeat) | `DatePickerField.tsx:88-91` | ✅ preserved verbatim |
+| `onClose` blur-validation callback | `DatePickerField.tsx:71-74` fires on `onOpenChange(false)` | ✅ |
+| `initialFocus` | `DatePickerField.tsx:110` | ✅ |
+| Select-closes-popover | `DatePickerField.tsx:101-104` `if (d) setOpen(false)` — no longer racing Radix internal state since we own it via controlled `open` | ✅ |
+| Both call sites unchanged | `git show --stat 0f79f7e` → only `DatePickerField.tsx`, `DatePickerPopover.tsx` (deleted), `.loader.ts` (deleted), `iter4-additive.test.tsx` — RegisterPage/PendingRiders untouched | ✅ |
+
+### Rewritten test — meaningfulness check
+`tests/regression/iter4-additive.test.tsx:167-180` "mounts a static outline trigger; Radix PopoverContent is absent until clicked":
+- Renders **real** `RegisterPage` subtree (via `renderRegister()`) — no component stubbing / mocking.
+- Asserts (1) trigger is `<BUTTON>` with `DD/MM/YYYY` placeholder, (2) `[data-radix-popper-content-wrapper]` absent at initial render, (3) `user.click(trigger)` → wrapper mounts (`waitFor` for portal mount).
+- With the lazy split gone, jsdom+rdp v8 now render the popover subtree cleanly on click — the transition **absent → present** is a real Radix contract exercised end-to-end in jsdom. Meaningful. ✅
+
+### Regression checks
+- **44 baseline tests byte-identical** — `git diff 0f79f7e^..0f79f7e -- tests/regression/ ':!tests/regression/iter4-additive.test.tsx'` empty ✅
+- **H4 no `ui/**` edits** — `git show --stat 0f79f7e -- 'src/components/ui/*'` empty ✅
+- **E2E asChild-ref guard** — `tests/e2e/datepicker.spec.ts` doesn't assert the ref class explicitly, but it clicks the `#reg-dob` Button, waits for `[data-radix-popper-content-wrapper]` to attach, drives the native month/year `<select>`s, clicks `gridcell 15`, and asserts the trigger echoes `15/06/YYYY-25` with **zero console noise**. Any regression to the Radix Slot ref-attach path (F-4.2-01 root cause) would immediately fail this flow — passes cleanly. ✅
+- **H1 / H2 / H3 / H5 / H6 / H7 / H8** — untouched by this commit (UI-component-internal refactor). ✅
+
+### Findings
+- **F-4.4-01** — *Minor, doc-only, non-blocking.* `src/features/auth/pages/RegisterPage.tsx:286-288` still carries a stale JSDoc block claiming "Phase-6 lazy split PRESERVED: … Popover + Calendar load on first click." Post-4.4 the popover + calendar are **static** in the main chunk. Recommend a one-line comment refresh next time RegisterPage is edited (e.g. "Simplified 2026-07-30 (iter 4.4): static shadcn pattern — see DatePickerField header comment"). Not worth its own commit.
+- **F-4.4-02** — *Sanity: re-addable typed-entry-era assertions.* With jsdom now mounting the real popover subtree, one could in principle re-add a "select-a-date-then-submit → ISO on wire" jsdom test. **Recommend against.** (a) The ISO wire is already covered by `tests/regression/contract.test.ts` (backend contract) and the Playwright E2E (functional flow). (b) Driving rdp v8's transparent native `<select>` overlays in jsdom is fragile and slower than the E2E path. (c) Zero incremental confidence per unit of test-maintenance cost. Leave as-is.
+
+### Sign-off
+All 6 gates green. Main gzip **223.43 kB** matches claim. Single JS chunk — no picker/popover async chunk emitted. All lazy machinery removed from `src/`. Every 4.1–4.3 behavioral contract preserved (dropdown-buttons caption, 1940..current-18 bounds + disabled-after guarantee, DD/MM/YYYY display, ISO wire, label/aria error wiring, field-styling locks, onClose, select-closes). Rewritten test exercises the real Radix subtree — meaningful. H4 clean; H1/H2/H3/H5/H6/H7/H8 untouched. F-4.4-01 is a stale JSDoc comment in RegisterPage — doc-only, non-blocking.
+
+**Ship.** ✅

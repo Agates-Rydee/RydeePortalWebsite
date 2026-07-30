@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) + Iter **4.3 perf fix** (DatePickerPopover prefetch) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.46 kB gzip**; async DatePickerPopover chunk **28.93 kB**.
+Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) + Iter **4.3 perf fix** (DatePickerPopover prefetch) + Iter **4.4 simplification** (lazy split removed, static bundling) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baseline: main **223.43 kB gzip** (±2% band 219.0–227.9 kB); single chunk — async DatePickerPopover chunk no longer exists (removed Iter 4.4).
 
 | Area | Status |
 |------|--------|
@@ -218,6 +218,26 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 - Main bundle: **195.46 kB gzip** (±2% band 191.1–198.9 kB — unchanged)
 - Async DatePickerPopover chunk: **28.93 kB gzip** (−0.01 kB vs 4.2 — within noise)
 
+### Iteration 4.4 Datepicker Simplification ✅ COMPLETE 2026-07-30
+
+**Owner decision (Danial Khan, 2026-07-30):** At ~224 kB total the app doesn't justify micro-splitting the 29 kB picker chunk against the cost of `React.lazy` + `Suspense` + `pickerMounted` state + prefetch (idle + pointerenter/focus) + spinner + loader-module machinery. `DatePickerPopover.tsx` + `DatePickerPopover.loader.ts` deleted; all logic folded into `DatePickerField.tsx` (static imports, Radix controlled `open` state). **Net result: −146 lines, zero loading states, single JS chunk.** Route-level code-splitting to be reconsidered when the app genuinely grows (see D22).
+
+| Commit | Scope |
+|--------|-------|
+| `0f79f7e` | refactor(components): merge DatePickerPopover into DatePickerField, drop lazy split, static imports, controlled Radix open |
+| `0b764d0` | docs: QA Iteration 4.4 addendum (verdict SHIP; F-4.4-01 doc-only, F-4.4-02 recommend-only) |
+| `3b9e1bf` | chore: stale-comment cleanup |
+
+**Iteration 4.4 gate results (final):** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 15.4s / **223.43 kB gzip SINGLE chunk** (no async chunks) · test **55/55** · e2e 1/1 ✅
+
+**Bundle baselines reset:**
+- Main bundle: **223.43 kB gzip** (±2% band **219.0–227.9 kB**)
+- Async DatePickerPopover chunk: **no longer exists** — picker/calendar are statically bundled into main
+
+**QA F-findings:**
+- F-4.4-01 — Minor/doc-only: stale JSDoc in `RegisterPage.tsx:286-288` references "lazy split PRESERVED" post-simplification; non-blocking, refresh next time file is edited
+- F-4.4-02 — Recommend-only: re-adding jsdom "select-a-date → ISO wire" test not recommended (E2E + contract.test.ts cover the invariant; rdp v8 native overlay fragile in jsdom)
+
 ---
 
 ## Key Decisions
@@ -248,6 +268,7 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | DOB entry is picker-only (canonical shadcn date-picker pattern); typed DD/MM/YYYY entry removed — supersedes iter4-spec §2.2 (owner decision 2026-07-30) | Ghost-icon-in-input trigger rejected as undiscoverable; shared `DatePickerField` + `DatePickerPopover` components adopted on RegisterPage + PendingRiders; ISO wire preserved; picker bounds unchanged | [iter4-spec.md amendment](ux/iter4-spec.md) §Iter 4.1 / `29099e3` / `6113b5c` |
 | `ui/button.tsx` + `ui/calendar.tsx` rewritten (Iter 4.2 P1) — version-skew class of bug; H4-compliant full-file swap | `button.tsx` restored to `React.forwardRef` for React 18.3.1/Radix `asChild` compatibility; `calendar.tsx` classNames mapped to react-day-picker v8 CaptionDropdowns; fixed P1 + free-win F-4.2-01 | `ab2a32c` / `65e966b` |
 | E2E smoke policy (Iter 4.2, owner-delegated, QA rec F-4.2-04, adopted 2026-07-30) | `npm run test:e2e` (Playwright Chromium, opt-in) is the pre-release gate for `ui/{button,popover,calendar,alert-dialog}`, `DatePickerField/Popover`, or any lazy Radix surface; NOT a default CI gate until ≥ 3 specs and < 60s (see Conventions/Gates note) | `54d1121` / [iter4-review.md](qa/iter4-review.md) §F-4.2-04 |
+| Datepicker eager-bundled — lazy split removed (owner, 2026-07-30); revisit splitting at route level as app grows | At ~224 kB the micro-split premium (Suspense spinner + loader machinery) exceeded its value; `DatePickerPopover` + loader folded back into `DatePickerField` static imports; −146 net lines; single JS chunk; see D22 | `0f79f7e` / [iter4-review.md](qa/iter4-review.md) §Iter 4.4 |
 
 ---
 
@@ -297,6 +318,10 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 
 **Verdict:** ✅ **SHIP**. Gates at HEAD `65e966b`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.31 kB gzip** (in band) · test **55/55** · e2e 1/1 smoke. H1–H8 verified; `asChild` blast-radius confirmed clean; free win F-4.2-01 (AlertDialogTrigger fix). See `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 
+### Iteration 4.4 Datepicker Simplification Review (2026-07-30)
+
+**Verdict:** ✅ **SHIP**. Gates at HEAD `0f79f7e`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **223.43 kB gzip SINGLE chunk** (no async chunks) · test **55/55** · e2e 1/1. All lazy machinery (`React.lazy`, `Suspense`, `pickerMounted`, prefetch loader) removed from source. Every 4.1–4.3 behavioral contract preserved (dropdown-buttons caption, 1940..current-18 bounds, DD/MM/YYYY display, ISO wire, ARIA wiring, field-styling locks). Bundle baseline reset; old 191.1–198.9 kB band void; new band 219.0–227.9 kB. F-4.4-01 doc-only (stale JSDoc comment); F-4.4-02 recommend-only. See `docs/qa/iter4-review.md` §Iteration 4.4 addendum.
+
 ---
 
 ## Open Items — Deferred Work Register
@@ -325,7 +350,7 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **195.46 kB** (updated Iter 4.3); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.93 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **223.43 kB** (updated Iter 4.4; single chunk); ±2% band = 219.0–227.9 kB; async DatePickerPopover chunk no longer exists | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---

@@ -5,7 +5,7 @@
 // "option"). Migrating to Radix Select breaks that assertion; spec's
 // DO-NOT-CHANGE rule (§6.4) preserves test-visible contracts, so we keep the
 // native <select> here. Other Radix Select swaps happen in Phase 3.
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff, CalendarIcon } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
@@ -13,11 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
+
+// Iter 4 phase 6: dynamic import splits react-day-picker + date-fns AND
+// @radix-ui/react-popover (+ FocusScope, DismissableLayer, Presence, Popper)
+// into a separate async chunk. The main chunk keeps only a static trigger
+// button; the first click mounts <DobPicker> which auto-opens on load.
+const DobPicker = lazy(() => import("./components/DobPicker"));
 
 // Iter 4 §2: min age 18 per product decision 2.
 const DOB_MAX_YEAR = new Date().getFullYear() - 18;
@@ -67,6 +71,11 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const [loading, setLoading] = useState(false);
   const [pwMismatch, setPwMismatch] = useState(false);
   const [error, setError] = useState("");
+  // Iter 4 phase 6: mount flag for the lazy-loaded DobPicker. Stays false
+  // until the user clicks the calendar icon; once true, the async chunk
+  // downloads and the Popover auto-opens. Remains mounted afterwards so
+  // subsequent opens are instant.
+  const [pickerMounted, setPickerMounted] = useState(false);
 
   // Iter 4 §1: per-field error map. Keys mirror form field ids.
   type FieldKey = "name" | "email" | "phone" | "dob" | "address" | "password" | "role";
@@ -295,21 +304,35 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               errorMessage={fieldErrors.dob}
               autoComplete="bday"
             >
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Open date picker"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
-                  >
-                    <CalendarIcon size={16} aria-hidden="true" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-auto p-0">
-                  <Calendar
-                    mode="single"
+              {/* Iter 4 phase 6: static trigger stays in the main chunk. First
+                  click flips pickerMounted=true, React.lazy fetches DobPicker
+                  (Popover + Calendar + react-day-picker + date-fns as a single
+                  ~17 kB gzip async chunk), which then auto-opens on mount. */}
+              {!pickerMounted && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Open date picker"
+                  onClick={() => setPickerMounted(true)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+                >
+                  <CalendarIcon size={16} aria-hidden="true" />
+                </Button>
+              )}
+              {pickerMounted && (
+                <Suspense
+                  fallback={
+                    <div
+                      role="status"
+                      aria-label="Loading date picker"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-muted-foreground"
+                    >
+                      <Spinner />
+                    </div>
+                  }
+                >
+                  <DobPicker
                     selected={parseDobDisplay(form.dob)}
                     onSelect={(d) => {
                       if (!d) return;
@@ -317,14 +340,11 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                       clearFieldError("dob");
                     }}
                     defaultMonth={parseDobDisplay(form.dob) ?? new Date(DOB_MAX_YEAR, 0, 1)}
-                    captionLayout="dropdown-buttons"
                     fromYear={DOB_MIN_YEAR}
                     toYear={DOB_MAX_YEAR}
-                    disabled={{ after: new Date(DOB_MAX_YEAR, 11, 31) }}
-                    initialFocus
                   />
-                </PopoverContent>
-              </Popover>
+                </Suspense>
+              )}
             </FieldInput>
             <FieldInput
               id="reg-address"

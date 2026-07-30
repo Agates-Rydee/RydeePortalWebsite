@@ -241,3 +241,25 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Iter 4 §3: Restore pointer cursor for interactive elements.
+   Tailwind v4 preflight sets cursor:default on <button>; this rule reintroduces the
+   affordance across enabled buttons/links/selects/summary/role=button, and shows
+   not-allowed on disabled equivalents. Single global rule; no component edits. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  select:not(:disabled),
+  summary,
+  [tabindex]:not([tabindex="-1"]):not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
+}

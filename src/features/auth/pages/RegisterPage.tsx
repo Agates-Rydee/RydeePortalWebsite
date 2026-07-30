@@ -6,7 +6,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
-import { Logo, cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput, FieldInput, Spinner } from "@/components/shared";
+import { Logo, FieldInput, Spinner } from "@/components/shared";
+import { cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput } from "@/components/shared-styles";
 import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";

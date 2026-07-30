@@ -3,7 +3,7 @@
 // as `element` on layout routes.
 import { useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./useAuth";
 import { roleHome } from "@/types/profile";
 
 interface ProtectedRouteProps {

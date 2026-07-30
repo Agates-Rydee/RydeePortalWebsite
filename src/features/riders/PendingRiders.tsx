@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { PENDING_RIDERS, KARACHI_AREAS, VERIFICATION_DOCS } from "@/mocks/data/riders";
 import type { PendingRider } from "@/types/rider";
-import { BackButton, Logo, cardStyle, inputBase, focusInput, blurInput, btnPrimary } from "@/components/shared";
+import { BackButton, Logo } from "@/components/shared";
+import { cardStyle, inputBase, focusInput, blurInput, btnPrimary } from "@/components/shared-styles";
 
 function calcAge(dob: string): number {
   const birth = new Date(dob);

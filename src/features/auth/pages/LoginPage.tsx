@@ -4,10 +4,11 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
-import { Logo, cardStyle, btnPrimary, btnLoading, FieldInput, Spinner } from "@/components/shared";
+import { Logo, FieldInput, Spinner } from "@/components/shared";
+import { cardStyle, btnPrimary, btnLoading } from "@/components/shared-styles";
 import { API_LOGIN_URL } from "@/lib/config";
 import { roleHome, type Profile } from "@/types/profile";
-import { useAuth } from "@/features/auth/AuthProvider";
+import { useAuth } from "@/features/auth/useAuth";
 import { AuthShell } from "./AuthShell";
 
 export default function LoginPage() {

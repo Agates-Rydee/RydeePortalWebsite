@@ -2,7 +2,8 @@
 // @/types/profile — `area`, `distanceTraveled`, `ratings` were added
 // there in Iteration 2 / D6 so this file no longer needs an inline
 // shape or `@ts-nocheck`).
-import { Logo, cardStyle } from "@/components/shared";
+import { Logo } from "@/components/shared";
+import { cardStyle } from "@/components/shared-styles";
 import logoUrl from "@/assets/MapIcon.png";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import type { Profile } from "@/types/profile";

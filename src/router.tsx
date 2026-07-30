@@ -1,103 +1,25 @@
-// Route tree + guard wiring per ADR-0002.
+// Route tree per ADR-0002.
 //
-// This module intentionally does the "translation" from the old
-// string-based onNavigate/onLogout/onBack props to react-router
-// navigation, so the page components under src/features/{dashboards,riders}/
-// stay untouched. When those pages are later modernized (deferred),
-// their prop contracts can be replaced with useNavigate() directly.
-import { Navigate, Outlet, createBrowserRouter, useNavigate } from "react-router";
-import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
+// This module intentionally exports ONLY the router value — layout,
+// index redirect, and per-feature route adapters live alongside their
+// features (see src/router-layout.tsx, src/features/dashboards/routes.tsx,
+// src/features/riders/routes.tsx). Split completed 2026-07-30 to clear
+// the react-refresh/only-export-components lint warnings.
+import { Navigate, createBrowserRouter } from "react-router";
 import { ProtectedRoute, PublicOnly } from "@/features/auth/ProtectedRoute";
-import { roleHome } from "@/types/profile";
 import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
-import RiderDashboard from "@/features/dashboards/RiderDashboard";
-import AdminDashboard from "@/features/dashboards/AdminDashboard";
-import OperatorDashboard from "@/features/dashboards/OperatorDashboard";
-import ActiveRiders from "@/features/riders/ActiveRiders";
-import PendingRiders from "@/features/riders/PendingRiders";
 import RiderLocationView from "@/features/riders/RiderLocationView";
-
-/**
- * Root layout: mounts AuthProvider so every route can `useAuth()`.
- */
-function RootLayout() {
-  return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
-  );
-}
-
-/**
- * `/` — send authed users to their role home; unauthed → /login.
- */
-function IndexRedirect() {
-  const { profile } = useAuth();
-  return <Navigate to={profile ? roleHome(profile.role) : "/login"} replace />;
-}
-
-// ─── Route-element adapters ──────────────────────────────────────
-// Each adapter maps the old string-nav props the page components
-// still expect onto react-router navigation. Pure wiring; no page
-// internals touched.
-
-function AdminDashboardRoute() {
-  const navigate = useNavigate();
-  const { profile, logout } = useAuth();
-  const onNavigate = (p: string) => {
-    switch (p) {
-      case "admin-register":  return navigate("/admin/register");
-      case "active-riders":   return navigate("/admin/active-riders");
-      case "pending-riders":  return navigate("/admin/pending-riders");
-      default:                return; // no-op for unknown legacy strings
-    }
-  };
-  const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  return <AdminDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
-}
-
-function OperatorDashboardRoute() {
-  const navigate = useNavigate();
-  const { profile, logout } = useAuth();
-  const onNavigate = (p: string) => {
-    switch (p) {
-      case "active-riders":  return navigate("/admin/active-riders");
-      case "pending-riders": return navigate("/admin/pending-riders");
-      default:               return;
-    }
-  };
-  const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  return <OperatorDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
-}
-
-function RiderDashboardRoute() {
-  const navigate = useNavigate();
-  const { profile, logout } = useAuth();
-  // RiderDashboard declares onNavigate but never calls it; pass a no-op.
-  const onNavigate: (route: string, params?: unknown) => void = () => {};
-  const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  return <RiderDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
-}
-
-function ActiveRidersRoute() {
-  const navigate = useNavigate();
-  const { profile } = useAuth();
-  // Preserve old "back to your own dashboard" behavior. Non-admins
-  // can only reach this via the operator dashboard (which also opens
-  // ActiveRiders); route themselves back to their role home.
-  const onBack = () => navigate(roleHome(profile?.role));
-  return <ActiveRiders onBack={onBack} />;
-}
-
-function PendingRidersRoute() {
-  const navigate = useNavigate();
-  const { profile } = useAuth();
-  const onBack = () => navigate(roleHome(profile?.role));
-  return <PendingRiders onBack={onBack} />;
-}
-
-// ─── Router ───────────────────────────────────────────────────────
+import { RootLayout, IndexRedirect } from "@/router-layout";
+import {
+  AdminDashboardRoute,
+  OperatorDashboardRoute,
+  RiderDashboardRoute,
+} from "@/features/dashboards/routes";
+import {
+  ActiveRidersRoute,
+  PendingRidersRoute,
+} from "@/features/riders/routes";
 
 export const router = createBrowserRouter([
   {
@@ -150,7 +72,7 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Catch-all: send unknown paths through the index redirect.
+      // Catch-all
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },

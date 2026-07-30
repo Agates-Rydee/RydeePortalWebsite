@@ -16,7 +16,8 @@
 // CNIC/documents/block-rider UX. Alignment tracked as Deferred Register
 // D18.
 import { useEffect, useState } from "react";
-import { Logo, cardStyle } from "@/components/shared";
+import { Logo } from "@/components/shared";
+import { cardStyle } from "@/components/shared-styles";
 import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
 import type { Profile } from "@/types/profile";
 

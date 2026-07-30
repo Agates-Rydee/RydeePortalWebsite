@@ -74,14 +74,9 @@ function OperatorDashboardRoute() {
 function RiderDashboardRoute() {
   const navigate = useNavigate();
   const { profile, logout } = useAuth();
-  // RiderDashboard currently declares onNavigate but never calls it;
-  // pass a no-op cast-compatible stub.
+  // RiderDashboard declares onNavigate but never calls it; pass a no-op.
   const onNavigate: (route: string, params?: unknown) => void = () => {};
   const onLogout = () => { logout(); navigate("/login", { replace: true }); };
-  // RiderDashboard now imports `Profile` from `@/types/profile` (fixed
-  // during the 2026-07-29 origin/main merge — the file previously used
-  // an inline shape imported from the deleted `../App`). The remaining
-  // D6 concern is only that the file is still `@ts-nocheck` internally.
   return <RiderDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
 }
 

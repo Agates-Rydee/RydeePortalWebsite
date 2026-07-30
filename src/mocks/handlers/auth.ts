@@ -93,7 +93,7 @@ const seed = [
 
 interface LoginBody { phone?: string; password?: string }
 interface RegisterBody {
-  name?: string; email?: string; phoneNumber?: string; dob?: string;
+  name?: string; email?: string; phone?: string; dob?: string;
   address?: string; password?: string; role?: string;
 }
 

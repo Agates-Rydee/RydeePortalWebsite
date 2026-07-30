@@ -184,7 +184,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
         body: JSON.stringify({
           name: form.name,
           email: form.email,
-          phoneNumber: form.phone,
+          phone: form.phone,
           dob: dobToIso(form.dob),
           address: form.address,
           password: form.password,

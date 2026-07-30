@@ -69,7 +69,7 @@ describe("H1 — POST /register/user body shape", () => {
     const body = {
       name: "Alice",
       email: "a@example.com",
-      phoneNumber: "0300000000",
+      phone: "0300000000",
       dob: "1990-01-01",
       address: "1 Street",
       password: "pw",
@@ -78,7 +78,7 @@ describe("H1 — POST /register/user body shape", () => {
     const seen = await captureRegisterBody(body);
     expect(seen).toEqual(body);
     expect(Object.keys(seen as object).sort()).toEqual(
-      ["address", "dob", "email", "name", "password", "phoneNumber", "role"],
+      ["address", "dob", "email", "name", "password", "phone", "role"],
     );
   });
 });

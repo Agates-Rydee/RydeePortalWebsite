@@ -6,7 +6,8 @@
 // - Inline "Saved" pill -> live-region banner (role=status, auto-dismiss ~2s).
 // - Buttons via shadcn Button variants; all JS hover handlers removed.
 import { useState, useEffect } from "react";
-import { PENDING_RIDERS, KARACHI_AREAS, VERIFICATION_DOCS } from "@/mocks/data/riders";
+import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
+import { KARACHI_AREAS, VERIFICATION_DOCS } from "@/features/riders/constants";
 import type { PendingRider } from "@/types/rider";
 import { BackButton, Logo } from "@/components/shared";
 import { DatePickerField } from "@/components/DatePickerField";
@@ -41,12 +42,106 @@ function generatePin(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+interface UnregisteredRidersResponse {
+  riders?: Array<Record<string, unknown>>;
+}
+
+function toPendingRider(raw: Record<string, unknown>, idx: number): PendingRider {
+  // Wire shape reconciliation (D18): backend contract only firmly guarantees
+  // name / phone / activation_status (see ADR-0003). id / dob / cnic /
+  // documents / pin are best-effort — fall back to page-local defaults when
+  // absent so the review form still renders.
+  const id = typeof raw.id === "number" ? raw.id : idx + 1;
+  const documents = Array.isArray(raw.documents)
+    ? (raw.documents as unknown[]).filter((d): d is string => typeof d === "string")
+    : [];
+  return {
+    id,
+    name: typeof raw.name === "string" ? raw.name : "",
+    phone: typeof raw.phone === "string" ? raw.phone : "",
+    dob: typeof raw.dob === "string" ? raw.dob : "",
+    cnic: typeof raw.cnic === "string" ? raw.cnic : "",
+    // Wire alias (2026-07-30): backend Profile uses `rideArea`; accept either.
+    area:
+      typeof raw.area === "string"
+        ? raw.area
+        : typeof raw.rideArea === "string"
+          ? raw.rideArea
+          : "",
+    documents,
+    pin: typeof raw.pin === "string" ? raw.pin : "",
+  };
+}
+
+function isPending(raw: Record<string, unknown>): boolean {
+  // Wire alias (2026-07-30): backend may send string `activation_status` or
+  // boolean `activated`. Resolution rule (see ADR-0003 riders row):
+  //   1. If activation_status is present & non-empty, IT WINS (case-insensitive
+  //      match against "pending").
+  //   2. Otherwise, if activated === true, treat as ACTIVE → NOT pending.
+  //   3. Otherwise, treat as pending (endpoint returns the unregistered
+  //      subset — no explicit status means unregistered).
+  const rawStatus = raw.activation_status ?? raw.activationStatus;
+  const status = String(rawStatus ?? "").toLowerCase().trim();
+  if (status !== "") {
+    return status === "pending";
+  }
+  if (raw.activated === true) {
+    return false;
+  }
+  return true;
+}
+
 export default function PendingRiders({ onBack }: { onBack: () => void }) {
-  const [riders, setRiders] = useState<PendingRider[]>(PENDING_RIDERS);
+  const [riders, setRiders] = useState<PendingRider[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<PendingRider | null>(null);
   const [blocked, setBlocked] = useState<number[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async (): Promise<void> => {
+      try {
+        const response = await fetch(API_GET_UNREGISTERED_RIDERS_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || response.statusText || "NO RESPONSE");
+        }
+
+        const data = (await response.json()) as UnregisteredRidersResponse;
+        if (!data || !Array.isArray(data.riders)) {
+          throw new Error("Invalid response shape");
+        }
+
+        const pending = data.riders
+          .filter(isPending)
+          .map((r, i) => toPendingRider(r, i));
+
+        if (cancelled) return;
+        setRiders(pending);
+        setLoadError(null);
+      } catch (err) {
+        if (cancelled) return;
+        setLoadError(err instanceof Error ? err.message : "Failed to load riders");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!notice) return;
@@ -118,6 +213,36 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
           Select a rider to review and complete their registration.
         </p>
 
+        {loading && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-2xl border border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground"
+          >
+            Loading pending riders…
+          </div>
+        )}
+
+        {!loading && loadError && (
+          <div
+            role="alert"
+            className="rounded-2xl border border-destructive/25 bg-destructive/10 px-6 py-6 text-sm text-destructive"
+          >
+            {loadError}
+          </div>
+        )}
+
+        {!loading && !loadError && activeRiders.length === 0 && (
+          <Card className="rounded-2xl p-10 flex-col items-center justify-center text-center border-border shadow-none">
+            <p className="text-sm font-medium text-foreground">No pending riders</p>
+            <p className="text-xs mt-1 text-muted-foreground">
+              All rider applications have been reviewed.
+            </p>
+          </Card>
+        )}
+
+        {!loading && !loadError && activeRiders.length > 0 && (
+        <>
         {/* Rider picker — native <select> styled with shadcn tokens */}
         <div className="flex flex-col gap-1.5 mb-8">
           <Label htmlFor="rider-select" className="text-foreground-label">
@@ -347,6 +472,8 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
               Choose a rider from the dropdown above to review their application.
             </p>
           </Card>
+        )}
+        </>
         )}
       </main>
 

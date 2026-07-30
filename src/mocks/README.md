@@ -95,7 +95,7 @@ share the exact same constants, so endpoint drift is impossible.
 | Method + URL | Request body | Success (200) | Failure |
 |---|---|---|---|
 | `POST` `API_LOGIN_URL` | `{ phone: string, password: string }` | `{ role: string, profile: Profile }` | `401` text `"Invalid phone or password"` |
-| `POST` `API_REGISTER_URL` | `{ name, email, phoneNumber, dob, address, password, role }` | `{ ok: true, email, role }` | `400` text `"Missing required fields"` |
+| `POST` `API_REGISTER_URL` | `{ name, email, phone, dob, address, password, role }` | `{ ok: true, email, role }` | `400` text `"Missing required fields"` |
 
 All requests include `credentials: "include"` (cookie flow ready for the
 real backend). Handlers currently ignore cookies; add if backend introduces

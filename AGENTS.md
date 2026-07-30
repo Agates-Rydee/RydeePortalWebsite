@@ -46,7 +46,7 @@ src/
 
 Break any of these and QA blocks the PR.
 
-- **H1. API contract to the WIP backend is FROZEN**: `POST /user/login` body `{ phone, password }`; `POST /register/user` body `{ name, email, phoneNumber, dob, address, password, role }`. All calls include `credentials: 'include'`. Do **not** alter fetch shapes without a new ADR.
+- **H1. API contract to the WIP backend is FROZEN**: `POST /user/login` body `{ phone, password }`; `POST /register/user` body `{ name, email, phone, dob, address, password, role }` (backend renamed `phoneNumber` → `phone` on 2026-07-30 — see ADR-0003). All calls include `credentials: 'include'`. Do **not** alter fetch shapes without a new ADR.
 - **H2. Never widen `ROLES`.** It is `["Operator", "Customer", "Rider"]` (see `src/types/profile.ts`). **Never add `Admin` as a creatable role via `/admin/register`** — QA F2 security incident. Product Q tracked as D14.
 - **H3. Never delete the Customer seed user** (`src/mocks/handlers/auth.ts`, phone `0300444444`). It is the QA-F1 regression tripwire: it exercises `PublicOnly`'s unknown-role logout path (`roleHome("Customer") === "/login"` → `logout()` in `useEffect`).
 - **H4. Do not edit `src/components/ui/**`** — generated shadcn primitives, lint-ignored, replace via CLI or full-file rewrite in a scoped commit.

@@ -1,10 +1,12 @@
 // D8 Phase 2: shared stat card used by Admin + Operator dashboards.
-// Extracted from the ~35-line duplicated JSX in both dashboards. The
-// `href` variant renders as a Link-styled Button (click-through metric);
-// otherwise renders read-only.
+// Iter 4 §5: when `onClick` is provided AND `value` is non-null, the entire
+// card is rendered as a semantic <button> for a full-size click target with
+// hover elevation, active-scale, focus-visible ring, and a dynamic aria-label.
+// The inner value renders as a plain <p> in that case — no nested interactives.
+// When `value` is null (loading) OR `onClick` is absent, the card is a static
+// <div>, matching the pre-Iter-4 read-only appearance.
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 interface StatCardProps {
   label: string;
@@ -12,12 +14,25 @@ interface StatCardProps {
   value: number | string | null | undefined;
   /** Tailwind color classname for the value (e.g. "text-primary", "text-warning"). */
   valueClassName?: string;
-  /** Optional tap-through — renders value as a link-button. */
+  /** Optional tap-through — makes the entire card an interactive <button>. */
   onClick?: () => void;
   hint?: string;
   icon: ReactNode;
   iconBgClassName?: string;
 }
+
+// Base visual chrome shared by static + interactive variants.
+const CARD_BASE =
+  "rounded-2xl p-6 flex-row items-center justify-between gap-4 card-elevated border-border";
+
+// Interactive-only additions: motion, focus ring, hover elevation, press scale.
+// motion-reduce:* guards defer to the prefers-reduced-motion override already
+// in theme.css, but we set them explicitly for defensiveness on this element.
+const CARD_INTERACTIVE =
+  "text-left w-full transition-all duration-200 " +
+  "hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
+  "motion-reduce:transform-none motion-reduce:transition-none";
 
 export function StatCard({
   label,
@@ -29,23 +44,15 @@ export function StatCard({
   iconBgClassName = "bg-[color:var(--brand-bright)]/10",
 }: StatCardProps) {
   const display = value ?? "—";
-  return (
-    <Card className="rounded-2xl p-6 flex-row items-center justify-between gap-4 card-elevated border-border">
+  const interactive = onClick != null && value != null;
+
+  const body = (
+    <>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
-        {onClick ? (
-          <Button
-            type="button"
-            variant="link"
-            onClick={onClick}
-            className={`text-4xl font-bold mt-1 h-auto p-0 no-underline hover:underline ${valueClassName}`}
-            style={{ lineHeight: 1.2 }}
-          >
-            {display}
-          </Button>
-        ) : (
-          <p className={`text-4xl font-bold mt-1 ${valueClassName}`}>{display}</p>
-        )}
+        <p className={`text-4xl font-bold mt-1 ${valueClassName}`} style={{ lineHeight: 1.2 }}>
+          {display}
+        </p>
         {hint && <p className="text-xs mt-1 text-muted-foreground">{hint}</p>}
       </div>
       <div
@@ -53,6 +60,30 @@ export function StatCard({
       >
         {icon}
       </div>
-    </Card>
+    </>
   );
+
+  if (interactive) {
+    // Rendered as a <Card asChild-equivalent> via the underlying div-vs-button
+    // switch: we render a real <button> and re-apply the Card visual classes
+    // (bg-card / text-card-foreground / gap-6 / rounded-xl / border) so the
+    // semantic root becomes the interactive element without wrapping/nesting.
+    const ariaLabel = `View ${display} ${label.toLowerCase()}`;
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        className={
+          "bg-card text-card-foreground flex flex-row items-center justify-between gap-4 " +
+          "rounded-2xl border card-elevated border-border p-6 " +
+          CARD_INTERACTIVE
+        }
+      >
+        {body}
+      </button>
+    );
+  }
+
+  return <Card className={CARD_BASE}>{body}</Card>;
 }

@@ -75,12 +75,14 @@ export function FieldInput({
   placeholder,
   value,
   onChange,
+  onBlur,
   autoComplete,
   inputMode,
   required = true,
   readOnly = false,
   error,
   errorId,
+  errorMessage,
   children,
 }: {
   id: string;
@@ -89,14 +91,22 @@ export function FieldInput({
   placeholder?: string;
   value: string;
   onChange?: (v: string) => void;
+  /** Iter 4 §1: on-blur validation hook. */
+  onBlur?: () => void;
   autoComplete?: string;
   inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
   required?: boolean;
   readOnly?: boolean;
+  /** Legacy boolean flag — kept for callers that manage the error <p> themselves. */
   error?: boolean;
   errorId?: string;
+  /** Iter 4 §1: when set, renders <p role="alert" id=errorId> below the field and
+   *  wires aria-invalid + aria-describedby automatically. */
+  errorMessage?: string;
   children?: React.ReactNode;
 }) {
+  const derivedErrorId = errorId ?? id + "-error";
+  const hasError = Boolean(errorMessage) || Boolean(error);
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id} className="text-foreground-label">
@@ -112,9 +122,10 @@ export function FieldInput({
           inputMode={inputMode}
           readOnly={readOnly}
           required={required && !readOnly}
-          aria-invalid={error || undefined}
-          aria-describedby={error && errorId ? errorId : undefined}
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? derivedErrorId : undefined}
           onChange={(e) => onChange?.(e.target.value)}
+          onBlur={onBlur}
           className={
             "h-auto rounded-xl px-4 py-3 text-sm" +
             (children ? " pr-12" : "") +
@@ -125,6 +136,11 @@ export function FieldInput({
         />
         {children}
       </div>
+      {errorMessage && (
+        <p id={derivedErrorId} role="alert" className="text-xs mt-0.5 text-destructive">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }

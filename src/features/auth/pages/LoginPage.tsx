@@ -22,21 +22,40 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  // General/server error (existing behavior — non-field). Kept as-is for
+  // test-visible contract (Invalid phone or password passthrough, etc.).
   const [error, setError] = useState("");
+  // Iter 4 §1: per-field errors, set on-blur or on-submit.
+  const [phoneError, setPhoneError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const isValidPhone = (value: string) => /^\d{10}$/.test(value);
+
+  // Test-visible strings preserved verbatim (login-flow.test.tsx expects
+  // /valid phone number/i). Password error copy is new (additive).
+  const PHONE_ERR = "Please enter a valid phone number.";
+  const PASSWORD_ERR = "Please enter your password.";
+
+  const validatePhone = (v: string): string => (isValidPhone(v) ? "" : PHONE_ERR);
+  const validatePassword = (v: string): string => (v ? "" : PASSWORD_ERR);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!isValidPhone(phone)) {
-      setError("Please enter a valid phone number.");
+    const pErr = validatePhone(phone);
+    const pwErr = validatePassword(password);
+    setPhoneError(pErr);
+    setPasswordError(pwErr);
+
+    if (pErr) {
+      // Field-level <p role="alert"> announces; do NOT duplicate in the
+      // general error <p> (would break findByText with a duplicate match).
+      document.getElementById("phone")?.focus();
       return;
     }
-
-    if (!password) {
-      setError("Please enter your password.");
+    if (pwErr) {
+      document.getElementById("password")?.focus();
       return;
     }
 
@@ -97,7 +116,12 @@ export default function LoginPage() {
               type="tel"
               placeholder="123-456-7890"
               value={phone}
-              onChange={setPhone}
+              onChange={(v) => {
+                setPhone(v);
+                if (phoneError) setPhoneError("");
+              }}
+              onBlur={() => setPhoneError(phone === "" ? "" : validatePhone(phone))}
+              errorMessage={phoneError || undefined}
               autoComplete="tel"
             />
 
@@ -107,7 +131,12 @@ export default function LoginPage() {
               type={showPw ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
-              onChange={setPassword}
+              onChange={(v) => {
+                setPassword(v);
+                if (passwordError) setPasswordError("");
+              }}
+              onBlur={() => setPasswordError(password === "" ? "" : validatePassword(password))}
+              errorMessage={passwordError || undefined}
               autoComplete="current-password"
             >
               <Button

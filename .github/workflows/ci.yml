@@ -8,7 +8,7 @@ on:
 
 jobs:
   verify:
-    name: lint · typecheck · build
+    name: lint · typecheck · build · test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +31,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test
+        run: npm test
+
       # Non-blocking visibility signal — flip to blocking once D6 is closed.
       - name: Typecheck (strict — advisory)
         continue-on-error: true
         run: npm run typecheck:strict
-EOF;cat .github/workflows/ci.yml | tee "C:/Users/dandkhan/.aki/.tasks/tool-toolu_bdrk_01L2KaRDoPsoJV79y7e7RWz3/pipe_full.log" | head -5

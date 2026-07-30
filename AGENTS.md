@@ -37,8 +37,10 @@ src/
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run typecheck:strict` | `tsc --noEmit --strict` — must stay at 0 errors |
 | `npm run format` | Prettier |
+| `npm test` | Vitest run — jsdom + RTL + msw/node (reuses `src/mocks/handlers`) |
+| `npm run test:watch` | Vitest watch mode |
 
-**All four gates (lint, typecheck, typecheck:strict, build) must be green before every commit.** CI mirrors them.
+**All five gates (lint, typecheck, typecheck:strict, build, test) must be green before every commit.** CI mirrors them.
 
 ## Hard rules
 

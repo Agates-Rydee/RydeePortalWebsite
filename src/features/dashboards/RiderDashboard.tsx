@@ -1,17 +1,13 @@
-// Rider-role dashboard. Reads an extended Profile shape (see
-// @/types/profile — `area`, `distanceTraveled`, `ratings` were added
-// there in Iteration 2 / D6 so this file no longer needs an inline
-// shape or `@ts-nocheck`).
-import { Logo } from "@/components/shared";
-import { cardStyle } from "@/components/shared-styles";
+// Rider-role dashboard. D8 Phase 2: shared DashboardHeader + responsive
+// grid fix (was w-[850px] fixed; now w-full max-w-[850px]). Table body
+// migration to shadcn Table is deferred to Phase 4 per spec §7.
+import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
+import { Card } from "@/components/ui/card";
 import logoUrl from "@/assets/MapIcon.png";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import type { Profile } from "@/types/profile";
 
 interface Props {
-  // Route adapter in src/router.tsx keeps this prop for now; unused
-  // internally. Widened to `unknown` params so the adapter can pass its
-  // stub without a cast.
   onNavigate: (route: string, params?: unknown) => void;
   onLogout: () => void;
   profile: Profile | null;
@@ -23,7 +19,11 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
   });
 
   if (!isLoaded) {
-    return <div>Loading map…</div>;
+    return (
+      <div role="status" aria-live="polite" className="p-6 text-sm text-muted-foreground">
+        Loading map…
+      </div>
+    );
   }
 
   const lat = Number(profile?.currentLocation?.lat);
@@ -37,159 +37,91 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}
+      className="min-h-screen w-full flex flex-col bg-background"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* Top nav */}
-      <header
-        className="w-full flex items-center justify-between px-6 py-4 sticky top-0 z-10"
-        style={{ background: "var(--card)", borderBottom: "1px solid var(--border)" }}
-      >
-        <Logo size="sm" />
-        <button
-          onClick={onLogout}
-          className="text-sm font-small px-4 py-2 rounded-xl transition-all duration-150"
-          style={{ color: "var(--muted-foreground)", background: "var(--muted)", border: "none", cursor: "pointer" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "#17a882"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
-        >
-          Sign out
-        </button>
-      </header>
+      <DashboardHeader onLogout={onLogout} />
 
-      {/* Body */}
       <main className="flex-1 px-6 py-10 w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Welcome back {profile?.name} </h1>
-          <h2 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Your Dashboard</h2>
-          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back {profile?.name} </h1>
+          <h2 className="text-2xl font-bold text-foreground">Your Dashboard</h2>
+          <p className="text-sm mt-1 text-muted-foreground">
             Everything you need for your account.
           </p>
         </div>
-        <div className="w-full grid grid-cols-1 md:grid-cols-[40%_60%] gap-6">
-          {/* LEFT SIDE — Rider Profile Table */}
-          <div className="rounded-2xl p-6" style={cardStyle}>
-            <h2 className="text-xl font-bold mb-4" style={{ color: "var(--foreground)" }}>
-              Rider Profile
-            </h2>
+        <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(300px,40%)_1fr] gap-6">
+          {/* LEFT — Rider Profile table (shadcn Table migration → Phase 4) */}
+          <Card className="rounded-2xl p-6 card-elevated border-border">
+            <h2 className="text-xl font-bold mb-4 text-foreground">Rider Profile</h2>
             <table className="w-full border-collapse">
+              <caption className="sr-only">Rider profile summary</caption>
               <tbody>
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)", width: "180px" }}>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground" style={{ width: "180px" }}>
                     Name
                   </td>
-                  <td className="py-3 px-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    {profile?.name}
-                  </td>
+                  <td className="py-3 px-2 text-sm font-semibold text-foreground">{profile?.name}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Address
-                  </td>
-                  <td className="py-3 px-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    {profile?.address}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Address</td>
+                  <td className="py-3 px-2 text-sm font-semibold text-foreground">{profile?.address}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Date of Birth
-                  </td>
-                  <td className="py-3 px-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    {profile?.dob}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Date of Birth</td>
+                  <td className="py-3 px-2 text-sm font-semibold text-foreground">{profile?.dob}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Area
-                  </td>
-                  <td className="py-3 px-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>
-                    {profile?.area}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Area</td>
+                  <td className="py-3 px-2 text-sm font-semibold text-foreground">{profile?.area}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    GPS Location
-                  </td>
-                  <td className="py-3 px-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">GPS Location</td>
+                  <td className="py-3 px-2 text-sm font-semibold text-foreground">
                     {profile?.currentLocation?.lat}, {profile?.currentLocation?.lon}
                   </td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Total Rides
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-bold" style={{ color: "#17a882" }}>
-                    {profile?.totalRides}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Total Rides</td>
+                  <td className="py-3 px-2 text-2xl font-bold text-primary">{profile?.totalRides}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Missed Rides
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-bold" style={{ color: "#f59e0b" }}>
-                    {profile?.missedRides}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Missed Rides</td>
+                  <td className="py-3 px-2 text-2xl font-bold text-warning">{profile?.missedRides}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Distance Traveled
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-bold" style={{ color: "#f59e0b" }}>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Distance Traveled</td>
+                  <td className="py-3 px-2 text-2xl font-bold text-warning">
                     {(profile?.distanceTraveled ?? 0) + " Km"}
                   </td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Online State
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-bold" style={{ color: "#f59e0b" }}>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Online State</td>
+                  <td className="py-3 px-2 text-2xl font-bold text-warning">
                     {profile?.online ? "Online" : "Offline"}
                   </td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Ratings
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-bold" style={{ color: "#f59e0b" }}>
-                    {profile?.ratings}
-                  </td>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Ratings</td>
+                  <td className="py-3 px-2 text-2xl font-bold text-warning">{profile?.ratings}</td>
                 </tr>
-
                 <tr>
-                  <td className="py-3 px-2 font-small uppercase tracking-widest text-sm"
-                      style={{ color: "var(--muted-foreground)" }}>
-                    Activation Status
-                  </td>
-                  <td className="py-3 px-2 text-2xl font-semibold"
-                      style={{ color: profile?.online ? "#17a882" : "#ef4444" }}>
+                  <td className="py-3 px-2 font-medium uppercase tracking-widest text-sm text-muted-foreground">Activation Status</td>
+                  <td
+                    className={
+                      "py-3 px-2 text-2xl font-semibold " +
+                      (profile?.online ? "text-primary" : "text-destructive")
+                    }
+                  >
                     {profile?.online ? "Active" : "Inactive"}
                   </td>
                 </tr>
               </tbody>
             </table>
-          </div>
+          </Card>
 
-          {/* RIGHT SIDE — Google Map */}
-          <div className="w-[850px] h-[600px] rounded-xl overflow-hidden">
+          {/* RIGHT — Google Map (responsive: full width up to 850px cap) */}
+          <div className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden">
             <GoogleMap
               center={center}
               zoom={16}

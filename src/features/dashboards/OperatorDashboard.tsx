@@ -1,15 +1,10 @@
-// Operator dashboard.
+// Operator dashboard. D8 Phase 2 restyle: symmetric to AdminDashboard —
+// header + stat cards via shared components; JS hover handlers gone.
 //
-// Merge (2026-07-29): origin/main commit 3f197d2 ("Removed mock from
-// PendingRiders") introduced a live pending-rider fetch that replaced the
-// STATS constants with counts computed from POST /GetAll/UnregisteredRiders.
-// Ported here symmetrically with AdminDashboard — endpoint URL from
-// src/lib/config.ts (H6), request/response covered by MSW handler in
-// src/mocks/handlers/riders.ts (H6, ADR-0003), `profile: Profile | null`
-// prop shape.
+// Live pending fetch unchanged from merge b0ef29c.
 import { useEffect, useState } from "react";
-import { Logo } from "@/components/shared";
-import { cardStyle } from "@/components/shared-styles";
+import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
+import { StatCard } from "@/features/dashboards/components/StatCard";
 import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
 import type { Profile } from "@/types/profile";
 
@@ -74,113 +69,67 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
     };
   }, []);
 
-  const operatorName = profile?.name;
-
   return (
     <div
-      className="min-h-screen w-full flex flex-col"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}
+      className="min-h-screen w-full flex flex-col bg-background"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* Top nav */}
-      <header
-        className="w-full flex items-center justify-between px-6 py-4 sticky top-0 z-10"
-        style={{ background: "var(--card)", borderBottom: "1px solid var(--border)" }}
-      >
-        <div className="flex items-center gap-4">
-          <Logo size="sm" />
-          <span
-            className="text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(23,168,130,0.12)", color: "#17a882", border: "1px solid rgba(23,168,130,0.25)" }}
-          >
-            Operator
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          {operatorName && (
-            <span className="text-sm hidden sm:block" style={{ color: "var(--muted-foreground)" }}>
-              {operatorName}
-            </span>
-          )}
-          <button
-            onClick={onLogout}
-            className="text-sm font-medium px-4 py-2 rounded-xl transition-all duration-150"
-            style={{ color: "var(--muted-foreground)", background: "var(--muted)", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#17a882"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+      <DashboardHeader roleLabel="Operator" userName={profile?.name} onLogout={onLogout} />
 
       <main className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>Operator Dashboard</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+          <h1 className="text-2xl font-bold text-foreground">Operator Dashboard</h1>
+          <p className="text-sm mt-1 text-muted-foreground">
             Manage users, riders, and operations across Karachi.
           </p>
         </div>
 
         <div className="flex flex-col gap-4">
-         {/* Total Riders */}
-          <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
-            <div>
-              <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Total Riders</p>
-              <p className="text-4xl font-bold mt-1" style={{ color: "var(--foreground)" }}>{totalRiders ?? "—"}</p>
-            </div>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(23,168,130,0.10)" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#17a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <StatCard
+            label="Total Riders"
+            value={totalRiders}
+            icon={
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                className="text-primary" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-            </div>
-          </div>
+            }
+          />
 
-          {/* Active Riders */}
-          <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
-            <div>
-              <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Active Riders</p>
-              <button
-                onClick={() => onNavigate("active-riders")}
-                className="text-4xl font-bold mt-1 transition-colors duration-150"
-                style={{ color: "#17a882", background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1.2 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#0d8f6e"; e.currentTarget.style.textDecoration = "underline"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#17a882"; e.currentTarget.style.textDecoration = "none"; }}
-              >
-                {activeRiders ?? "—"}
-              </button>
-              <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to view live map →</p>
-            </div>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(23,168,130,0.10)" }}>
+          <StatCard
+            label="Active Riders"
+            value={activeRiders}
+            valueClassName="text-primary"
+            onClick={() => onNavigate("active-riders")}
+            hint="Tap to view live map →"
+            icon={
               <span className="relative flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: "#17a882" }} />
-                <span className="relative inline-flex rounded-full h-4 w-4" style={{ background: "#17a882" }} />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 bg-[color:var(--brand-bright)]" />
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-[color:var(--brand-bright)]" />
               </span>
-            </div>
-          </div>
+            }
+          />
 
-          {/* Pending Riders */}
-          <div className="rounded-2xl p-6 flex items-center justify-between" style={cardStyle}>
-            <div>
-              <p className="text-sm font-medium uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>Pending Riders</p>
-              <button
-                onClick={() => onNavigate("pending-riders")}
-                className="text-4xl font-bold mt-1 transition-colors duration-150"
-                style={{ color: "#f59e0b", background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1.2 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#d97706"; e.currentTarget.style.textDecoration = "underline"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.textDecoration = "none"; }}
-              >
-                {pendingCount ?? "—"}
-              </button>
-              <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Tap to review applications →</p>
-            </div>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(245,158,11,0.10)" }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          <StatCard
+            label="Pending Riders"
+            value={pendingCount}
+            valueClassName="text-warning"
+            onClick={() => onNavigate("pending-riders")}
+            hint="Tap to review applications →"
+            iconBgClassName="bg-warning-muted"
+            icon={
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                className="text-warning" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-            </div>
-          </div>
+            }
+          />
         </div>
       </main>
     </div>

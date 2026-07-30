@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { PENDING_RIDERS, KARACHI_AREAS, VERIFICATION_DOCS } from "@/mocks/data/riders";
 import type { PendingRider } from "@/types/rider";
 import { BackButton, Logo } from "@/components/shared";
+import { DatePickerField } from "@/components/DatePickerField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -184,12 +185,19 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
             {/* DOB + Age side by side */}
             <div className="grid grid-cols-2 gap-4">
               <FormField id="pr-dob" label="Date of birth">
-                <Input
+                {/* Iter 4.1 hotfix: shadcn-canonical DatePickerField replaces
+                    the native <input type=date>. State stays ISO YYYY-MM-DD
+                    internally (calcAge + seeds use new Date(dob)); the picker
+                    displays DD/MM/YYYY on the outline button. Bounds
+                    1940..currentYear-18 (riders are 18+). */}
+                <DatePickerField
                   id="pr-dob"
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => setField("dob", e.target.value)}
-                  className="h-auto rounded-xl px-4 py-3 text-sm"
+                  value={form.dob ? new Date(form.dob) : undefined}
+                  onChange={(d) => setField("dob", d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "")}
+                  fromYear={1940}
+                  toYear={new Date().getFullYear() - 18}
+                  placeholder="DD/MM/YYYY"
+                  ariaLabel="Date of birth"
                 />
               </FormField>
               <FormField id="pr-age" label="Age (calculated)">

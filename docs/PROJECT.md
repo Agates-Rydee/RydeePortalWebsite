@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shadcn Calendar + Popover DOB datepicker (react-day-picker v8, lazy-loaded chunk); clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **58 regression tests passing**. Bundle baselines reset: main **195.04 kB gzip**; async DobPicker chunk **28.64 kB**.
+Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.27 kB gzip**; async DatePickerPopover chunk **28.75 kB**.
 
 | Area | Status |
 |------|--------|
@@ -156,6 +156,27 @@ Batched execution, QA-gated before each push. All items closed.
 - F2 — spec §1.3/§2.3 still shows 16-100 draft; resolved by amendment in `docs/ux/iter4-spec.md`
 - F3 — cursor rule improvement is spec-sample deviation; implementation superior; no action
 
+### Iteration 4.1 Hotfix ✅ COMPLETE 2026-07-30
+
+Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscoverable on RegisterPage; PendingRiders DOB still native `type=date`). Typed DD/MM/YYYY entry removed — owner-approved trade. See `docs/ux/iter4-spec.md` Product Decisions Amendment §Iter 4.1 and `docs/qa/iter4-review.md` §Iteration 4.1 Addendum.
+
+| Commit | Scope |
+|--------|-------|
+| `29099e3` | feat(auth): shared shadcn-canonical DatePickerField + DatePickerPopover lazy chunk + date-helpers; RegisterPage adoption; typed DOB entry removed |
+| `6113b5c` | feat(riders): PendingRiders DOB adopts shared DatePickerField; ISO state preserved for calcAge |
+
+**Hotfix gate results:** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.27 kB gzip** (band 191.1–198.9 ✓) · test **55/55** ✅
+
+**Test-count revision (58 → 55 — honest record):** Prior close-out reported 58 (44 baseline + 14 additive). Hotfix revised additive count to 11 (net −3): 6 typed-entry tests removed because they drove input fields that no longer exist after typed entry removal — these scenarios are unreachable by design (picker year/day bounds enforce age ≥ 18 and calendar grid never offers Feb 29 on non-leap years); 3 new button-pattern tests added covering the canonical trigger, required-dob submit blocking, and `aria-invalid` wiring. Baseline 44 tests byte-identical. ISO wire contract retained by `contract.test.ts`. Removals are principled, not a quality regression.
+
+**Bundle baseline update:**
+- Main bundle: **195.27 kB gzip** (±2% band 191.1–198.9 kB — unchanged)
+- Async chunk renamed `DobPicker-*` → `DatePickerPopover-*`: **28.75 kB gzip** (was 28.64 kB, +0.11 kB — within noise)
+
+**Deleted:** `src/features/auth/pages/components/DobPicker.tsx` (superseded by `src/components/DatePickerField.tsx` + `DatePickerPopover.tsx`)
+
+**QA F-findings (all INFO):** F-4.1-01 underage-in-current-year window (submit blocks wire; no action), F-4.1-02 `dobToIso` transform coverage gap (contract.test.ts covers wire shape; no action), F-4.1-03 async chunk rename (expected; no action). Full findings in `docs/qa/iter4-review.md` §Iteration 4.1 Addendum.
+
 ---
 
 ## Key Decisions
@@ -183,6 +204,7 @@ Batched execution, QA-gated before each push. All items closed.
 | Minimum registration age 18 (Iter 4) | Supersedes spec §1.3/§2.3 draft value of 16; enforced in validation + datepicker year bounds — product decision 2026-07-30 | [iter4-spec.md amendment](ux/iter4-spec.md) |
 | DobPicker lazy chunk (Iter 4) | react-day-picker heavy; code-split via `React.lazy` — 28.64 kB gzip async, loads on first picker open | `1dc7781` |
 | Bundle baseline reset (Iter 4) | Main **195.04 kB gzip** (±2% band 191.1–198.9 kB); DobPicker async chunk 28.64 kB — reset in `532391d` | [iter4-review.md](qa/iter4-review.md) §1 |
+| DOB entry is picker-only (canonical shadcn date-picker pattern); typed DD/MM/YYYY entry removed — supersedes iter4-spec §2.2 (owner decision 2026-07-30) | Ghost-icon-in-input trigger rejected as undiscoverable; shared `DatePickerField` + `DatePickerPopover` components adopted on RegisterPage + PendingRiders; ISO wire preserved; picker bounds unchanged | [iter4-spec.md amendment](ux/iter4-spec.md) §Iter 4.1 / `29099e3` / `6113b5c` |
 
 ---
 
@@ -252,7 +274,7 @@ Batched execution, QA-gated before each push. All items closed.
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **195.04 kB** (reset Iter 4); ±2% band = 191.1–198.9 kB; DobPicker async 28.64 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **195.27 kB** (updated Iter 4.1); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.75 kB | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---
@@ -262,7 +284,7 @@ Batched execution, QA-gated before each push. All items closed.
 | Convention | Detail |
 |-----------|--------|
 | Commit style | `chore/refactor/feat/fix/docs(scope): description`; every commit ends with all gates green |
-| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (58 regression tests) — all required before merging |
+| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (55 regression tests) — all required before merging |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — Node 20, `npm ci` cache, push/PR |
 | ADRs | `docs/adr/NNNN-slug.md` — Proposed → Accepted/Rejected/Superseded; update in same commit as any shape change |
 | AGENTS.md hard rules | **H1–H8 bind all contributors and AI coding tools.** H1 API contract frozen, H2 never widen ROLES, H3 never delete Customer seed, H4 don't edit `components/ui/`, H5 never commit `.env`, H6 handlers import URLs from `lib/config.ts`, H7 auth storage only via `session.ts`, H8 guard changes require tracing PublicOnly + ProtectedRoute |

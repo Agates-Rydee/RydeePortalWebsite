@@ -17,6 +17,14 @@
 > | DOB wire format to backend (`dob` field in `POST /register/user`) | Not explicitly specified | **ISO YYYY-MM-DD** — UI displays DD/MM/YYYY; submission converts to ISO. Documented in ADR-0003 §dob footnote. |
 >
 > All other §1.3 and §2.3 values remain as written. No spec body rewrite needed — this amendment is the canonical record.
+>
+> **Product Decisions Amendment — Iter 4.1 Hotfix (2026-07-30 — owner: Danial Khan)**
+>
+> | Item | Iter 4 §2.2 Design | **Decision** |
+> |------|-------------------|--------------|
+> | Datepicker trigger / input pattern | Ghost calendar-icon button appended inside a typeable text input (input ↔ picker two-way sync) | **Canonical shadcn button-trigger pattern** — full-width outline `<Button>` as sole trigger; typed DD/MM/YYYY entry removed. Ghost-icon trigger was undiscoverable (product-owner rejection 2026-07-30). |
+>
+> This decision supersedes §2.2 entirely. The shared `DatePickerField` + `DatePickerPopover` components (committed in `29099e3` / `6113b5c`) implement the approved pattern. All other §2 values (picker bounds, year range, ISO wire format, a11y keyboard contract) remain unchanged.
 
 ---
 

@@ -126,7 +126,7 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
             id="rider-select"
             value={selectedId != null ? String(selectedId) : ""}
             onChange={(e) => selectRider(Number(e.target.value))}
-            className="w-full rounded-xl px-4 py-3 text-sm bg-input-background border border-input text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring transition-shadow"
+            className="select-field"
           >
             <option value="" disabled>Choose a rider to review…</option>
             {activeRiders.map((r) => (
@@ -170,7 +170,7 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
                 id="pr-area"
                 value={form.area || ""}
                 onChange={(e) => setField("area", e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm bg-input-background border border-input text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring transition-shadow"
+                className="select-field"
               >
                 <option value="" disabled>Select area…</option>
                 {KARACHI_AREAS.map((a) => (

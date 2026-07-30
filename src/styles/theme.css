@@ -263,3 +263,20 @@
     cursor: not-allowed;
   }
 }
+
+/* Iter 4 §4: Shared class for native <select> elements to match shadcn <Input>
+   parity — explicit bg-white so it doesn't blend into the page background
+   (bg-input-background resolved transparent on the PendingRiders page bg).
+   Chevron rendered as inline SVG data-URI, right-aligned. */
+@layer components {
+  .select-field {
+    @apply w-full rounded-xl px-4 py-3 text-sm
+           bg-white border border-input text-foreground
+           appearance-none outline-none transition-shadow
+           focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a6b5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 2.5rem;
+  }
+}

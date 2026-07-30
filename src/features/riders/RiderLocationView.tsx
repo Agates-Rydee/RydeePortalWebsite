@@ -28,14 +28,14 @@ export default function RiderLocationView() {
     return (
       <div className="w-full h-full p-4">
         <h2 className="text-xl font-bold mb-4">Rider {riderId ?? ""} — location unavailable</h2>
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-sm text-muted-foreground">
           Open this view from the Active Riders list to see live coordinates.
         </p>
       </div>
     );
   }
 
-  if (!isLoaded) return <div>Loading map…</div>;
+  if (!isLoaded) return <div role="status" aria-live="polite" className="p-4 text-sm text-muted-foreground">Loading map…</div>;
 
   const { lat, lon, name } = state as RiderLocationState;
 

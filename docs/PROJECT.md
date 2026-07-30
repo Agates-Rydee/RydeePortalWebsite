@@ -84,7 +84,7 @@ Batched execution, QA-gated before each push.
 | Post-register `navigate` → `replace: true` | D16 | Frontend Dev | 🟡 In progress |
 | Router react-refresh lint-warning split (route adapters) | open item | Frontend Dev | 🟡 In progress |
 | Dependency audit (react-dnd, react-slick, recharts, etc.) | D10 | Frontend Dev | 🟡 In progress |
-| Test foundation — MSW handlers in Node for vitest/Playwright | D12 | QA + Frontend Dev | 🟡 In progress |
+| Test foundation — MSW handlers in Node for vitest/Playwright | D12 | QA + Frontend Dev | ✅ Done (vitest + RTL + msw/node, 44 regression tests) |
 
 ---
 

@@ -58,7 +58,7 @@ export default function DatePickerPopover({
           aria-invalid={hasError || undefined}
           aria-describedby={hasError ? errorId : undefined}
           className={
-            "w-full h-auto justify-start text-left font-normal rounded-xl px-4 py-3 text-sm " +
+            "w-full h-auto justify-start text-left font-normal rounded-xl px-4 py-3 text-sm border-input bg-background hover:bg-background hover:text-inherit data-[state=open]:bg-background data-[state=open]:text-inherit " +
             (value ? "text-card-foreground" : "text-muted-foreground")
           }
         >

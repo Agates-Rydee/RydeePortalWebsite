@@ -11,17 +11,38 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  captionLayout,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      captionLayout={captionLayout}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-4",
         caption: "flex justify-center pt-1 relative items-center w-full",
-        caption_label: "text-sm font-medium",
+        // With captionLayout='dropdown-buttons' rdp v8 does NOT render an
+        // outer caption_label — CaptionDropdowns is used instead — so this
+        // class only styles the visible current-value pill inside each
+        // MonthsDropdown / YearsDropdown (aria-hidden div under the native <select>).
+        caption_label:
+          "inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-md border bg-background",
+        // Outer wrapper laying the two dropdowns side by side.
+        caption_dropdowns: "flex justify-center gap-2 w-full",
+        // Native <select> overlaid transparently on top of caption_label so the
+        // pill is the visual affordance while the select stays the click/keyboard
+        // surface (accessible, native-touch).
+        dropdown:
+          "absolute inset-0 z-10 opacity-0 cursor-pointer appearance-none border-0 bg-transparent w-full h-full",
+        // Positioning context for the absolute select overlay.
+        dropdown_month: "relative inline-flex items-center",
+        dropdown_year: "relative inline-flex items-center",
+        dropdown_icon: "ml-1 size-3 opacity-60",
+        // Hides the outer 'Month Year' label CaptionDropdowns emits, plus the
+        // per-dropdown 'Month:' / 'Year:' aria labels — all use the vhidden key.
+        vhidden: "sr-only",
         nav: "flex items-center gap-1",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -65,6 +86,12 @@ function Calendar({
         ),
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("size-4", className)} {...props} />
+        ),
+        IconDropdown: ({ className, ...props }) => (
+          <ChevronRight
+            className={cn("size-3 rotate-90 opacity-60", className)}
+            {...props}
+          />
         ),
       }}
       {...props}

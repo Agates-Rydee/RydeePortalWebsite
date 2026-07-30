@@ -11,15 +11,48 @@
 // @radix-ui/react-popover + FocusScope/DismissableLayer/Presence/Popper) as a
 // single async chunk, which auto-opens on mount and stays mounted afterwards.
 //
+// Iter 4.x perf: to eliminate the visible Suspense fallback on the FIRST
+// click, the chunk is prefetched via a shared memoized loader — idle
+// callback after this field mounts, plus onPointerEnter/onFocus on the
+// trigger. Both paths share React.lazy's loader (one network request).
+//
 // Props exchange native Date objects; parents own display/wire formatting.
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/shared";
 import { formatDobDisplay } from "./date-helpers";
+import {
+  loadDatePickerPopover,
+  prefetchDatePickerPopover,
+} from "./DatePickerPopover.loader";
 
-// Lazy subtree — Popover + Calendar + Radix Popper. Loads on first open.
-const DatePickerPopover = lazy(() => import("./DatePickerPopover"));
+// Lazy subtree — Popover + Calendar + Radix Popper. Loads on first open OR
+// via the prefetch triggers below. React.lazy and the prefetch hooks share
+// the SAME memoized loader (see DatePickerPopover.loader.ts), so at most one
+// network request is issued for the ~28.94 kB gzip async chunk.
+const DatePickerPopover = lazy(loadDatePickerPopover);
+
+// requestIdleCallback isn't in jsdom (or Safari); fall back to setTimeout at
+// ~1.75s so we still never compete with initial render / data fetches on those
+// runtimes. Guarded on typeof window so SSR / no-DOM envs are safe too.
+const IDLE_PREFETCH_MS = 1750;
+type IdleWindow = Window & {
+  requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+function schedulePrefetchIdle(): (() => void) | undefined {
+  if (typeof window === "undefined") return undefined;
+  const w = window as IdleWindow;
+  if (typeof w.requestIdleCallback === "function") {
+    const handle = w.requestIdleCallback(() => prefetchDatePickerPopover(), {
+      timeout: 3000,
+    });
+    return () => w.cancelIdleCallback?.(handle);
+  }
+  const handle = window.setTimeout(prefetchDatePickerPopover, IDLE_PREFETCH_MS);
+  return () => window.clearTimeout(handle);
+}
 
 interface DatePickerFieldProps {
   /** Input id — used by <Label htmlFor> on the button trigger. */
@@ -60,6 +93,17 @@ export function DatePickerField({
   const hasError = Boolean(errorMessage);
   const derivedErrorId = errorId ?? `${id}-error`;
 
+  // Layered prefetch: (1) once this field mounts, schedule the chunk fetch
+  // during an idle callback (or ~1.75s fallback) so it never competes with
+  // initial render / MSW warmup / data fetches. (2) The trigger itself also
+  // fires prefetch on pointerenter/focus (see below) for fast-clickers who
+  // beat the idle window. Both paths call the SAME memoized loader as
+  // React.lazy, so the network request de-dupes to one.
+  useEffect(() => {
+    const cancel = schedulePrefetchIdle();
+    return cancel;
+  }, []);
+
   const display = value ? formatDobDisplay(value) : placeholder;
 
   return (
@@ -72,6 +116,8 @@ export function DatePickerField({
           aria-label={ariaLabel}
           aria-invalid={hasError || undefined}
           aria-describedby={hasError ? derivedErrorId : undefined}
+          onPointerEnter={prefetchDatePickerPopover}
+          onFocus={prefetchDatePickerPopover}
           onClick={() => setPickerMounted(true)}
           className={
             "w-full h-auto justify-start text-left font-normal rounded-xl px-4 py-3 text-sm border-input bg-background hover:bg-background hover:text-inherit data-[state=open]:bg-background data-[state=open]:text-inherit " +

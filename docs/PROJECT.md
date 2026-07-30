@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.27 kB gzip**; async DatePickerPopover chunk **28.75 kB**.
+Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.31 kB gzip**; async DatePickerPopover chunk **28.94 kB**.
 
 | Area | Status |
 |------|--------|
@@ -177,6 +177,28 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 
 **QA F-findings (all INFO):** F-4.1-01 underage-in-current-year window (submit blocks wire; no action), F-4.1-02 `dobToIso` transform coverage gap (contract.test.ts covers wire shape; no action), F-4.1-03 async chunk rename (expected; no action). Full findings in `docs/qa/iter4-review.md` §Iteration 4.1 Addendum.
 
+### Iteration 4.2 P1 Hotfix ✅ COMPLETE 2026-07-30
+
+**Incident:** DOB picker never opened after Iter 4.1 shipped. Root cause: **version-skew class of bug** — shadcn primitives generated for wrong library versions. `ui/button.tsx` was in React-19 ref-as-prop style (function component receiving `ref` as a plain prop) running on React 18.3.1; Radix `asChild` (`PopoverTrigger asChild → Button`) silently dropped the anchor ref because `forwardRef` was absent, so `[data-radix-popper-content-wrapper]` never mounted. `ui/calendar.tsx` classNames targeted react-day-picker v9 CaptionDropdowns naming conventions while the installed library is v8 — produced garbled caption layout.
+
+| Commit | Scope |
+|--------|-------|
+| `ab2a32c` | fix(ui): `button.tsx` full-file rewrite back to `React.forwardRef<HTMLButtonElement, ButtonProps>` — H4-compliant; cva config byte-identical; fixes P1 and (as free win F-4.2-01) the latent identical bug in `PendingRiders` `AlertDialogTrigger asChild` |
+| `65e966b` | fix(ui): `calendar.tsx` full-file rewrite mapping react-day-picker v8 CaptionDropdowns classNames; scoped trigger field-styling on `DatePickerField`/`DatePickerPopover` (palette-collision fix: outline button no longer flashes primary-green on hover/open) |
+| `54d1121` | test(e2e): opt-in Playwright Chromium smoke — `npm run test:e2e`, `tests/e2e/datepicker.spec.ts`; 1 passed 9.5s; closes structural gap F-4.2-02 (jsdom structurally cannot exercise the lazy Radix chunk) |
+
+**QA verdict:** ✅ **SHIP** — all 5 gates green; H1–H8 verified; `asChild` blast-radius clean; free win F-4.2-01 documented. E2E smoke 1/1 passed.
+
+**Free win (F-4.2-01):** Primitive-level `button.tsx` fix simultaneously resolved a latent identical P1 in the `Block rider` `AlertDialogTrigger asChild` path on `/admin/pending-riders` at zero incremental cost.
+
+**Hotfix gate results:** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.31 kB gzip** (band 191.1–198.9 ✓) · test **55/55** ✅ · e2e 1 smoke ✅
+
+**Bundle baseline update:**
+- Main bundle: **195.31 kB gzip** (±2% band 191.1–198.9 kB — unchanged)
+- Async DatePickerPopover chunk: **28.94 kB gzip** (+0.19 kB vs 4.1 — well within noise)
+
+Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
+
 ---
 
 ## Key Decisions
@@ -205,6 +227,8 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 | DobPicker lazy chunk (Iter 4) | react-day-picker heavy; code-split via `React.lazy` — 28.64 kB gzip async, loads on first picker open | `1dc7781` |
 | Bundle baseline reset (Iter 4) | Main **195.04 kB gzip** (±2% band 191.1–198.9 kB); DobPicker async chunk 28.64 kB — reset in `532391d` | [iter4-review.md](qa/iter4-review.md) §1 |
 | DOB entry is picker-only (canonical shadcn date-picker pattern); typed DD/MM/YYYY entry removed — supersedes iter4-spec §2.2 (owner decision 2026-07-30) | Ghost-icon-in-input trigger rejected as undiscoverable; shared `DatePickerField` + `DatePickerPopover` components adopted on RegisterPage + PendingRiders; ISO wire preserved; picker bounds unchanged | [iter4-spec.md amendment](ux/iter4-spec.md) §Iter 4.1 / `29099e3` / `6113b5c` |
+| `ui/button.tsx` + `ui/calendar.tsx` rewritten (Iter 4.2 P1) — version-skew class of bug; H4-compliant full-file swap | `button.tsx` restored to `React.forwardRef` for React 18.3.1/Radix `asChild` compatibility; `calendar.tsx` classNames mapped to react-day-picker v8 CaptionDropdowns; fixed P1 + free-win F-4.2-01 | `ab2a32c` / `65e966b` |
+| E2E smoke policy (Iter 4.2, owner-delegated, QA rec F-4.2-04, adopted 2026-07-30) | `npm run test:e2e` (Playwright Chromium, opt-in) is the pre-release gate for `ui/{button,popover,calendar,alert-dialog}`, `DatePickerField/Popover`, or any lazy Radix surface; NOT a default CI gate until ≥ 3 specs and < 60s (see Conventions/Gates note) | `54d1121` / [iter4-review.md](qa/iter4-review.md) §F-4.2-04 |
 
 ---
 
@@ -246,6 +270,10 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 
 **Verdict:** ✅ **SHIP**. Gates at `532391d`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 195.04 kB gzip (in band) · test 58/58. H1–H8 all respected. 3 INFO findings: F1 hash citation (docs-only), F2 spec age draft resolved by amendment in `docs/ux/iter4-spec.md`, F3 cursor rule improvement (no action). See `docs/qa/iter4-review.md`.
 
+### Iteration 4.2 P1 Hotfix Review (2026-07-30)
+
+**Verdict:** ✅ **SHIP**. Gates at HEAD `65e966b`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.31 kB gzip** (in band) · test **55/55** · e2e 1/1 smoke. H1–H8 verified; `asChild` blast-radius confirmed clean; free win F-4.2-01 (AlertDialogTrigger fix). See `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
+
 ---
 
 ## Open Items — Deferred Work Register
@@ -274,7 +302,7 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **195.27 kB** (updated Iter 4.1); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.75 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **195.31 kB** (updated Iter 4.2); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.94 kB | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---
@@ -284,7 +312,7 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 | Convention | Detail |
 |-----------|--------|
 | Commit style | `chore/refactor/feat/fix/docs(scope): description`; every commit ends with all gates green |
-| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (55 regression tests) — all required before merging |
+| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (55 regression tests) — all required before merging. `test:e2e` (Playwright Chromium smoke, opt-in) — run before release whenever `src/components/ui/{button,popover,calendar,alert-dialog}`, `DatePickerField`/`DatePickerPopover`, or any lazy Radix surface changes; NOT part of the default 5 gates (QA rec F-4.2-04: revisit joining CI once ≥ 3 specs, < 60s) |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — Node 20, `npm ci` cache, push/PR |
 | ADRs | `docs/adr/NNNN-slug.md` — Proposed → Accepted/Rejected/Superseded; update in same commit as any shape change |
 | AGENTS.md hard rules | **H1–H8 bind all contributors and AI coding tools.** H1 API contract frozen, H2 never widen ROLES, H3 never delete Customer seed, H4 don't edit `components/ui/`, H5 never commit `.env`, H6 handlers import URLs from `lib/config.ts`, H7 auth storage only via `session.ts`, H8 guard changes require tracing PublicOnly + ProtectedRoute |

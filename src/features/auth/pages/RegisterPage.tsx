@@ -283,9 +283,12 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                 bounds (fromYear/toYear = 1940..currentYear-18) so the picker
                 cannot produce an out-of-range value; the validator still runs
                 on submit as a defensive check + to cover the empty state.
-                Phase-6 lazy split PRESERVED: only the outline Button trigger +
-                mount flag live in the main chunk; Popover + Calendar load on
-                first click. */}
+                Iter 4.4 (owner decision 2026-07-30): datepicker lazy split
+                dropped in favor of the canonical static shadcn pattern —
+                Popover + Calendar are imported eagerly with the rest of the
+                DatePickerField (single ~224 kB main bundle, zero loading
+                states). Route-level splitting will be reconsidered when the
+                app genuinely grows. */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reg-dob" className="text-foreground-label">
                 Date of birth

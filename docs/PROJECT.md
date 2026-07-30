@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 2 — Hardening is **COMPLETE** (2026-07-30). All five quality gates are green: lint 0 errors, typecheck 0 errors (strict: true), typecheck:strict 0 errors (now redundant — candidate for a future chore to fold), build clean, 44 regression tests passing. 8 unused dependencies removed; react-router patched to ^7.18.2 (security). Bundle baseline updated to **170.07 kB gzip** (±2% band applies from here).
+Iteration 3 — D8 shadcn Restyle is **COMPLETE** (2026-07-30). shadcn/ui primitives now adopted across all pages and shared components. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, 44 regression tests passing. Bundle baseline reset to **192.90 kB gzip** (+22.83 kB from Iter 2 baseline; delta attributed to newly-reached Radix AlertDialog + Checkbox runtime; UX-approved trade for critical a11y fixes).
 
 | Area | Status |
 |------|--------|
@@ -24,11 +24,20 @@ Iteration 2 — Hardening is **COMPLETE** (2026-07-30). All five quality gates a
 | MUI + Emotion + maplibre removed | ✅ Done |
 | Tooling (ESLint + Prettier + typecheck + CI) | ✅ Done — GitHub Actions on push/PR |
 | AGENTS.md + AI assistant rules | ✅ Done — canonical rules file + CLAUDE.md / .cursor / .github stubs |
-| TypeScript strict mode | ✅ Done — `strict: true` flipped in `e84b920`; `typecheck:strict` now redundant (candidate for future chore) |
+| TypeScript strict mode | ✅ Done — `strict: true` flipped in `e84b920`; `typecheck:strict` script now redundant (candidate for future chore) |
 | `.env` removed from git | ✅ Done |
 | **🔑 Google Maps key rotation** | ✅ **DONE (2026-07-30, dandkhan)** — new key issued + HTTP-referrer restriction applied. D13 (git history rewrite) now optional / low-priority. |
 | Collaborator merge round (b0ef29c) | ✅ Done — see below |
-| **Iteration 2 — Hardening** | ✅ **COMPLETE 2026-07-30** — see below |
+| **Iteration 2 — Hardening** | ✅ **COMPLETE 2026-07-30** |
+| **Iteration 3 — D8 shadcn Restyle** | ✅ **COMPLETE 2026-07-30** — commits `57545a6` / `38c773b` / `1a6962f` / `f3e195d`; QA SHIP; UX 5/5 deviation approvals |
+
+**D8 restyle summary:**
+- shadcn primitives adopted across all pages (auth, dashboards, riders) — Radix `<Checkbox>`, `<AlertDialog>`, `<Button>`, `<Card>`, `<Input>`, `<Label>`, `<Badge>`, `<Select>`, `<Table>` in use
+- Palette A (`--primary #0d8f6e`) — WCAG AA on all tokens; one documented borderline: `--primary` = 4.06:1 on white (passes AA-Large / UI 3:1, borderline AA-normal; documented in `theme.css`; see QA F1/P3 → D19)
+- 32 JS inline style event handlers removed (`onMouseEnter`/`onMouseLeave`/`onFocus={style}`/`onBlur={style}`)
+- `src/components/shared-styles.ts` deleted (46-line legacy helper)
+- a11y items closed: Radix `<Checkbox>` replaces div-as-checkbox, `<AlertDialog>` focus-trap, `focus-visible:ring-*` via shadcn, `role="alert"`/`status` + `aria-live` on errors/banners, `@media (prefers-reduced-motion)` global guard in `theme.css`, `sr-only` caption + `fieldset/legend` on documents group, password-toggle `aria-pressed` + tab order restored
+- New shared components: `DashboardHeader`, `StatCard` in `src/features/dashboards/components/`
 
 ---
 
@@ -89,9 +98,31 @@ Batched execution, QA-gated before each push. All items closed.
 
 **Iteration 2 gate results (final):** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 596.98 kB / **170.07 kB gzip** · test 44/44 ✅
 
-**Bundle baseline reset:** 170.07 kB gzip (react-router ^7.18.2 bump). ±2% band (±3.4 kB) applies from this baseline.
+---
 
-**npm-audit note:** `react-router v8` and `eslint v10` are major-version jumps — both declined for Iter 2 (scope). No critical CVEs in current versions. Re-evaluate in next hardening cycle.
+## Iteration 3 — D8 shadcn Restyle ✅ COMPLETE 2026-07-30
+
+4-phase execution; QA SHIP verdict (`docs/qa/d8-restyle-review.md`); 5/5 UX deviation approvals.
+
+| Phase | Commit | Scope |
+|-------|--------|-------|
+| Phase 1 — auth pages | `57545a6` | `AuthShell`, `LoginPage`, `RegisterPage` restyle with shadcn |
+| Phase 2 — dashboard chrome | `38c773b` | `AdminDashboard`, `OperatorDashboard`, `RiderDashboard` + new `DashboardHeader`/`StatCard` |
+| Phase 3 — riders | `1a6962f` | `ActiveRiders`, `PendingRiders` restyle (Radix Checkbox + AlertDialog) |
+| Phase 4 — cleanup | `f3e195d` | `RiderLocationView` cleanup; `shared-styles.ts` deleted; 32 JS style handlers removed |
+
+**Iteration 3 gate results (final):** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 1984 modules / **192.90 kB gzip** · test 44/44 ✅
+
+**Bundle baseline reset:** 192.90 kB gzip (+22.83 kB from Iter 2; delta = Radix AlertDialog + Checkbox runtime). ±2% band (±3.86 kB) applies from this baseline.
+
+**UX deviation approvals (5/5):**
+1. Role dropdown kept native `<select>` (test-selector constraint, spec §6.4)
+2. PendingRiders rider/area selects kept native (Radix Select+popper ~20 kB gzip — over budget)
+3. Primary bg solid `#0d8f6e` (Option B gradient → flat; documented in `theme.css`)
+4. RiderDashboard profile table kept native `<table>` (a11y met via `sr-only` caption + `scope="row"`)
+5. ActiveRiders Leaflet popup state badges use inline hex (Leaflet Popup outside React style tree)
+
+**QA P3 residuals → D19/D20/D21 (see register below)**
 
 ---
 
@@ -106,7 +137,7 @@ Batched execution, QA-gated before each push. All items closed.
 | QA F3 resolved Option A (user decision) | Operator allowed on `/admin/active-riders`, `/admin/pending-riders`, `/admin/riders/:riderId/location` | ADR-0002 fn¹ |
 | Session persistence — localStorage v1 envelope | `{ v: 1, profile, savedAt }`, 24h TTL, versioned for future v2 bump; `session.ts` is sole read/write path (H7) | ADR-0002 |
 | Customer seed = F1 regression tripwire | `phone: 0300444444` must never be deleted — only in-app way to smoke-test the unknown-role logout path | [mocks/README.md](../src/mocks/README.md) |
-| shadcn/ui + Tailwind 4 kept; MUI removed | 48 `components/ui/` files preserved untouched (H4 — do not edit); adoption deferred (D8) | ADR-0001 |
+| shadcn/ui adopted across all pages (D8 CLOSED) | 48 `components/ui/` files consumed untouched (H4); Palette A selected; 32 JS style handlers removed; `shared-styles.ts` deleted | [docs/qa/d8-restyle-review.md](qa/d8-restyle-review.md) |
 | Both map libs kept (Google Maps + Leaflet) | Consolidation deferred (D7) | ADR-0001 |
 | `strict: true` enabled (Iter 2) | Flipped in `e84b920`; `typecheck:strict` script now redundant — candidate for future chore to fold | [strict-errors.md](design/strict-errors.md) |
 | API contract frozen (H1) | Field names, `credentials:include`, endpoint paths locked; MSW handlers are the living contract | ADR-0003 |
@@ -115,6 +146,7 @@ Batched execution, QA-gated before each push. All items closed.
 | PendingRiders live-endpoint migration deferred | Mock-driven UX preserved; migration tracked as D18 | D18 |
 | D13 (git history rewrite) — optional/low-priority | Google Maps key rotated (2026-07-30); old history purge is cosmetic only now | D13 |
 | react-router ^7.18.2 security patch | Patched in `6f4e165`; v8 major upgrade declined (out of scope); bundle baseline reset to 170.07 kB gzip | D10 |
+| Bundle baseline reset (Iter 3) | 192.90 kB gzip; +22.83 kB = Radix AlertDialog + Checkbox runtime; UX-approved; ±2% from here | [d8-restyle-review.md](qa/d8-restyle-review.md) §5 |
 
 ---
 
@@ -148,6 +180,10 @@ Batched execution, QA-gated before each push. All items closed.
 
 **Verdict:** ✅ PUSH-SAFE. All H-rules respected, all gates green, remote intent faithfully ported, PendingRiders rewrite deferred as D18. Gates: lint 0e/14w · typecheck 0 · typecheck:strict 0 · build 597.24 kB / 168.69 kB gzip (+0.32% — within ±2% budget). See `docs/qa/release-readiness.md` §Pre-Push Merge Review.
 
+### D8 Restyle Review (2026-07-30)
+
+**Verdict:** ✅ SHIP. All gates green; H1/H2/H3/H4/H6/H7/H8 verified via targeted diff; all major a11y findings closed; bundle 192.90 kB gzip with plausible attribution; 5/5 documented deviations present in-file. F1–F3 are P3 trivia → D19/D20/D21. See `docs/qa/d8-restyle-review.md`.
+
 ---
 
 ## Open Items — Deferred Work Register
@@ -161,7 +197,7 @@ Batched execution, QA-gated before each push. All items closed.
 | D5 | ~~`ImageWithFallback.tsx` unimported — delete or adopt~~ **CLOSED** — route adapter split `fe6c64f` | — | Closed |
 | D6 | ~~Unify `RiderDashboard` inline `Profile`; remove `@ts-nocheck`; flip `strict: true`~~ **CLOSED** — `e84b920` | — | Closed |
 | D7 | Map library consolidation (Google Maps vs Leaflet) | Architect + PM | Backlog |
-| D8 | Adopt `components/ui/` (shadcn) in pages — restyle iteration | Frontend Dev | Backlog |
+| D8 | ~~Adopt `components/ui/` (shadcn) in pages — restyle iteration~~ **CLOSED** — `57545a6`/`38c773b`/`1a6962f`/`f3e195d`; QA SHIP 2026-07-30 | — | Closed |
 | D9 | ~~Auth session persistence~~ **CLOSED** — localStorage v1 envelope + 24h TTL shipped `0960516`. Remainder → D17 | — | Closed |
 | D10 | ~~Dependency audit~~ **CLOSED** — 8 unused deps removed, react-router patched to ^7.18.2 (`6f4e165`) | — | Closed |
 | D11 | `Customer` role — route/home destination undefined; `roleHome` falls back to `/login` + logout | Architect + PM | Backlog |
@@ -172,8 +208,11 @@ Batched execution, QA-gated before each push. All items closed.
 | D16 | ~~Post-register `navigate("/login")` should use `{ replace: true }`~~ **CLOSED** — `6b114d2` | — | Closed |
 | D17 | Token-based auth + server-side revocation + `/me` rehydrate (D9 remainder) — future ADR, backend contract pending | Backend + Frontend Dev | Backlog |
 | D18 | PendingRiders live-endpoint migration (`POST /GetAll/UnregisteredRiders`) — mock-driven UX preserved; migrate when backend ready | Frontend Dev | Backlog |
+| D19 | **[QA D8-F1/P3]** `--primary #0d8f6e` = 4.06:1 on white text — passes AA-Large / UI 3:1 but fails AA-normal 4.5:1. Options: (a) accept as documented Palette-A trade-off (already in `theme.css` comment), or (b) darken flat token to `#0a7c5f` (5.17:1) in a follow-up polish commit. Non-blocking; real button labels at 14px semibold are borderline "large text" per WCAG. | Frontend Dev + UX | Low |
+| D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
+| D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — gzip baseline **170.07 kB** (reset Iter 2); ±2% band = 166.7–173.5 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — gzip baseline **192.90 kB** (reset Iter 3); ±2% band = 189.0–196.8 kB | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---
@@ -203,8 +242,11 @@ Batched execution, QA-gated before each push. All items closed.
 | ADR-0001: Feature-Based Structure | `docs/adr/0001-target-folder-structure.md` |
 | ADR-0002: Routing & Auth (incl. session persistence) | `docs/adr/0002-routing-and-auth.md` |
 | ADR-0003: Mock API (MSW) | `docs/adr/0003-mock-api-msw.md` |
-| Migration Plan (C0–C7 + deferred register D1–D18) | `docs/design/migration-plan.md` |
+| Migration Plan (C0–C7 + deferred register D1–D21) | `docs/design/migration-plan.md` |
 | TypeScript Strict Mode Baseline | `docs/design/strict-errors.md` |
+| UX Restyle Audit | `docs/ux/restyle-audit.md` |
+| UX Restyle Spec | `docs/ux/restyle-spec.md` |
 | QA C5 Review | `docs/qa/c5-review.md` |
 | QA C6/C7 + D9 + Merge Review b0ef29c | `docs/qa/release-readiness.md` |
+| QA D8 Restyle Review | `docs/qa/d8-restyle-review.md` |
 | MSW Developer Guide (seeds, contract, troubleshooting) | `src/mocks/README.md` |

@@ -7,15 +7,39 @@
 // native <select> here. Other Radix Select swaps happen in Phase 3.
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CalendarIcon } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
+
+// Iter 4 §2: min age 18 per product decision 2.
+const DOB_MAX_YEAR = new Date().getFullYear() - 18;
+const DOB_MIN_YEAR = 1940;
+
+// DD/MM/YYYY <-> Date helpers (isolated so the picker + validators share).
+function formatDobDisplay(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(d.getFullYear());
+  return `${dd}/${mm}/${yyyy}`;
+}
+function parseDobDisplay(v: string): Date | undefined {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
+  if (!m) return undefined;
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
+  const yyyy = Number(m[3]);
+  const d = new Date(yyyy, mm - 1, dd);
+  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return undefined;
+  return d;
+}
 
 interface RegisterPageProps {
   /** When true, renders the admin variant with a role dropdown. */
@@ -254,6 +278,11 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               errorMessage={fieldErrors.phone}
               autoComplete="tel"
             />
+            {/* Iter 4 §2: text input remains the primary labeled control (typeable
+                DD/MM/YYYY); calendar icon opens a Popover with year+month dropdowns
+                (react-day-picker v8 captionLayout=dropdown-buttons, fromYear/toYear
+                bounded 1940..currentYear-18). Selecting a date writes DD/MM/YYYY
+                back into the input; submit converts to ISO YYYY-MM-DD. */}
             <FieldInput
               id="reg-dob"
               label="Date of birth"
@@ -265,7 +294,38 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               onBlur={handleBlur("dob")}
               errorMessage={fieldErrors.dob}
               autoComplete="bday"
-            />
+            >
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Open date picker"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+                  >
+                    <CalendarIcon size={16} aria-hidden="true" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={parseDobDisplay(form.dob)}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      set("dob")(formatDobDisplay(d));
+                      clearFieldError("dob");
+                    }}
+                    defaultMonth={parseDobDisplay(form.dob) ?? new Date(DOB_MAX_YEAR, 0, 1)}
+                    captionLayout="dropdown-buttons"
+                    fromYear={DOB_MIN_YEAR}
+                    toYear={DOB_MAX_YEAR}
+                    disabled={{ after: new Date(DOB_MAX_YEAR, 11, 31) }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </FieldInput>
             <FieldInput
               id="reg-address"
               label="Home address"

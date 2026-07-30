@@ -4,17 +4,25 @@ import "leaflet/dist/leaflet.css";
 import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
 import type { ActiveRider, RiderState } from "@/types/rider";
 import { BackButton, Logo } from "@/components/shared";
+import { Badge } from "@/components/ui/badge";
 
-const STATE_COLOR: Record<RiderState, string> = {
-  dispatching: "#22c55e",
-  arriving:    "#eab308",
-  idle:        "#ef4444",
+// AA-safe hex values sourced from theme tokens (leaflet Popup requires inline styles).
+const STATE_HEX: Record<RiderState, string> = {
+  dispatching: "#15803d", // --success
+  arriving:    "#a16207", // --state-arriving
+  idle:        "#dc2626", // --state-idle / --destructive
 };
 
 const STATE_LABEL: Record<RiderState, string> = {
   dispatching: "Dispatching",
   arriving:    "Arriving",
   idle:        "Idle",
+};
+
+const STATE_BADGE_CLASS: Record<RiderState, string> = {
+  dispatching: "bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25",
+  arriving:    "bg-[color:var(--state-arriving-muted)] text-[color:var(--state-arriving)] border-[color:var(--state-arriving)]/25",
+  idle:        "bg-[color:var(--state-idle-muted)] text-[color:var(--state-idle)] border-[color:var(--state-idle)]/25",
 };
 
 function jitter(val: number, amount = 0.003): number {
@@ -53,40 +61,36 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", background: "var(--background)" }}>
-      {/* Header */}
-      <header
-        className="w-full flex items-center justify-between px-6 py-4 z-[1000] relative"
-        style={{ background: "var(--card)", borderBottom: "1px solid var(--border)" }}
-      >
+    <div className="min-h-screen flex flex-col bg-background font-sans">
+      {/* Header — isolate keeps header + stat bar above the map without global z-index leaks */}
+      <header className="w-full flex items-center justify-between px-6 py-4 isolate z-10 bg-card border-b border-border">
         <div className="flex items-center gap-4">
           <BackButton onClick={onBack} label="Dashboard" />
           <Logo size="sm" />
         </div>
-        {/* Live badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-          style={{ background: "rgba(34,197,94,0.12)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.25)" }}>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: "#22c55e" }} />
-            <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#22c55e" }} />
+        <Badge
+          className="bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25 gap-2 px-3 py-1.5 text-xs font-semibold rounded-full"
+          aria-live="polite"
+        >
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="motion-reduce:hidden animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[color:var(--success)]" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[color:var(--success)]" />
           </span>
           Live — updates every 3s
-        </div>
+        </Badge>
       </header>
 
       {/* Stat pills */}
-      <div className="flex gap-3 px-6 py-4 flex-wrap z-[999] relative" style={{ background: "var(--background)" }}>
+      <div className="flex gap-3 px-6 py-4 flex-wrap isolate z-[9] bg-background">
         {(["dispatching", "arriving", "idle"] as RiderState[]).map(s => (
-          <div key={s} className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-            style={{ background: "var(--card)", border: `1px solid ${STATE_COLOR[s]}30`, color: STATE_COLOR[s] }}>
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: STATE_COLOR[s] }} />
+          <Badge key={s} className={`${STATE_BADGE_CLASS[s]} gap-2 px-4 py-2 text-sm font-medium rounded-full`}>
+            <span className="w-2.5 h-2.5 rounded-full" aria-hidden="true" style={{ background: STATE_HEX[s] }} />
             {STATE_LABEL[s]}: <strong>{counts[s]}</strong>
-          </div>
+          </Badge>
         ))}
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-          style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--muted-foreground)" }}>
-          Total: <strong style={{ color: "var(--foreground)" }}>{riders.length}</strong>
-        </div>
+        <Badge className="bg-card border-border text-muted-foreground gap-2 px-4 py-2 text-sm font-medium rounded-full">
+          Total: <strong className="text-foreground">{riders.length}</strong>
+        </Badge>
       </div>
 
       {/* Map */}
@@ -107,7 +111,7 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
               center={[rider.lat, rider.lng]}
               radius={10}
               pathOptions={{
-                fillColor: STATE_COLOR[rider.state],
+                fillColor: STATE_HEX[rider.state],
                 fillOpacity: 0.9,
                 color: "#ffffff",
                 weight: 2,
@@ -116,13 +120,13 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
               <Popup>
                 <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", minWidth: 160 }}>
                   <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{rider.name}</p>
-                  <p style={{ fontSize: 12, color: "#5a8070", marginBottom: 2 }}>📍 {rider.area}</p>
-                  <p style={{ fontSize: 12, color: "#5a8070", marginBottom: 6 }}>🛵 {rider.bike}</p>
+                  <p style={{ fontSize: 12, color: "#4a6b5e", marginBottom: 2 }}>📍 {rider.area}</p>
+                  <p style={{ fontSize: 12, color: "#4a6b5e", marginBottom: 6 }}>🛵 {rider.bike}</p>
                   <span style={{
                     display: "inline-block",
-                    background: STATE_COLOR[rider.state] + "22",
-                    color: STATE_COLOR[rider.state],
-                    border: `1px solid ${STATE_COLOR[rider.state]}44`,
+                    background: STATE_HEX[rider.state] + "22",
+                    color: STATE_HEX[rider.state],
+                    border: `1px solid ${STATE_HEX[rider.state]}44`,
                     borderRadius: 999,
                     fontSize: 11,
                     fontWeight: 600,

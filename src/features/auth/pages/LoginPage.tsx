@@ -54,19 +54,25 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      const role: string = data.role ?? data.user?.role ?? "";
+      const topLevelRole: string = data.role ?? data.user?.role ?? "";
       const profile = data.profile as Profile | undefined;
       // ─── end verbatim fetch ─────────────────────────────────
 
       if (!profile) {
         throw new Error("Login response missing profile");
       }
-      // Preserve original behavior: role comes from top-level `role` field
-      // (or nested user.role fallback), not from profile.role.
-      auth.login({ ...profile, role: role || profile.role });
+
+      // D15: normalize role at the response boundary. Precedence =
+      // profile.role (backend-canonical) → top-level data.role fallback
+      // (older shape) → "" (guards + roleHome tolerate empty → /login via
+      // PublicOnly's F1 unknown-role logout path; see docs/qa/c5-review.md).
+      // This is response PARSING only; the fetch body is frozen (H1).
+      const canonicalRole = profile.role || topLevelRole;
+      const normalizedProfile: Profile = { ...profile, role: canonicalRole };
+      auth.login(normalizedProfile);
 
       const fromState = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-      const dest = fromState && fromState !== "/login" ? fromState : roleHome(role || profile.role);
+      const dest = fromState && fromState !== "/login" ? fromState : roleHome(canonicalRole);
       navigate(dest, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to sign in");
@@ -83,8 +89,8 @@ export default function LoginPage() {
         <p className="text-sm mb-7" style={{ color: "var(--muted-foreground)" }}>Welcome back. Enter your credentials to continue.</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <FieldInput id="phone" label="Phone Number" type="phone" placeholder="123-456-7890"
-            value={phone} onChange={setPhone} autoComplete="phone" />
+          <FieldInput id="phone" label="Phone Number" type="tel" placeholder="123-456-7890"
+            value={phone} onChange={setPhone} autoComplete="tel" />
 
           <FieldInput id="password" label="Password" type={showPw ? "text" : "password"}
             placeholder="Enter your password" value={password} onChange={setPassword} autoComplete="current-password">

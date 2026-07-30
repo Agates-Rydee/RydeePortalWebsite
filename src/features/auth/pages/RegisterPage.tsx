@@ -58,7 +58,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
         throw new Error(errorText || response.statusText || "Registration failed");
       }
       // ─── end verbatim fetch ─────────────────────────────────
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to register. Please try again.");
     } finally {
@@ -89,8 +89,8 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
           <FieldInput id="reg-name" label="Name" placeholder="Your full name" value={form.name} onChange={set("name")} autoComplete="name" />
           <FieldInput id="reg-email" label="Email address" type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} autoComplete="email" />
           <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx" value={form.phone} onChange={set("phone")} autoComplete="tel" />
-          <FieldInput id="reg-dob" label="Date of birth" type="number" placeholder="DD/MM/YYYY" value={form.dob} onChange={set("dob")} autoComplete="dob" />
-          <FieldInput id="reg-address" label="Home address" type="add" placeholder="House#100, Sultan Road, Multan" value={form.address} onChange={set("address")} autoComplete="tel" />
+          <FieldInput id="reg-dob" label="Date of birth" type="text" inputMode="numeric" placeholder="DD/MM/YYYY" value={form.dob} onChange={set("dob")} autoComplete="bday" />
+          <FieldInput id="reg-address" label="Home address" type="text" placeholder="House#100, Sultan Road, Multan" value={form.address} onChange={set("address")} autoComplete="street-address" />
 
           {/* Role */}
           {showRole && (

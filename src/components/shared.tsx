@@ -74,11 +74,13 @@ export function Spinner() {
 
 export function FieldInput({
   id, label, type = "text", placeholder, value, onChange,
-  autoComplete, required = true, readOnly = false, children,
+  autoComplete, inputMode, required = true, readOnly = false, children,
 }: {
   id: string; label: string; type?: string; placeholder?: string;
   value: string; onChange?: (v: string) => void;
-  autoComplete?: string; required?: boolean; readOnly?: boolean;
+  autoComplete?: string;
+  inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
+  required?: boolean; readOnly?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -87,7 +89,7 @@ export function FieldInput({
       <div className="relative">
         <input
           id={id} type={type} placeholder={placeholder} value={value}
-          autoComplete={autoComplete} readOnly={readOnly}
+          autoComplete={autoComplete} inputMode={inputMode} readOnly={readOnly}
           onChange={(e) => onChange?.(e.target.value)}
           required={required && !readOnly}
           className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200"

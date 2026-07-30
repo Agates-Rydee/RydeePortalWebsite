@@ -358,3 +358,52 @@ Running 1 test using 1 worker
 - P1 fix ships. Verdict: **SHIP.**
 - Structural gap that let the P1 ship is now closed by an opt-in Chromium smoke, added under a separate `test(e2e):` commit per the task's split-commit requirement.
 - Recommend running `npm run test:e2e` as part of release readiness whenever the button/popover/calendar surface changes; defer default-gate inclusion until the E2E surface grows.
+
+---
+
+## Iteration 4.3 addendum — DatePicker prefetch (perf)
+
+**Date:** 2026-07-30 · **Reviewer:** QA-Iter4d · **Commit:** `678d753` `perf(components): prefetch date picker chunk` · **Verdict:** **SHIP ✅**
+
+### Gates at HEAD `678d753`
+| Gate | Result |
+|---|---|
+| `npm run lint` | ✅ clean |
+| `npm run typecheck` | ✅ clean |
+| `npm run typecheck:strict` | ✅ clean |
+| `npm test` | ✅ **55/55** (16.9s, 7 files) |
+| `npm run build` | ✅ 11.9s |
+| `npm run test:e2e` | ✅ **1/1** chromium (10.2s) |
+| Main gzip | **195.46 kB** (band 191.1–198.9 ✓, +0.15 vs 4.2 baseline 195.31) |
+| Async `DatePickerPopover-BBekLy3i.js` gzip | **28.93 kB** (baseline 28.94 — preserved) |
+| Split verification | `rg -c "react-day-picker\|date-fns" dist/assets/index-*.js` = **0** hits; same pattern in `DatePickerPopover-*.js` = 1 hit → chunk boundary intact |
+| MSW dist purity | `rg -c msw dist/assets/*.js` = 0 hits ✅ |
+
+### Loader-pattern correctness
+
+- **Exactly-one-request invariant** — `DatePickerPopover.loader.ts:12` uses `promise ??= import("./DatePickerPopover")`. `React.lazy(loadDatePickerPopover)` in `DatePickerField.tsx:34`, the idle-callback `prefetchDatePickerPopover` (line 48/53), and the trigger's `onPointerEnter` / `onFocus` (lines 119-120) all funnel through the same memoized promise → the browser issues one network fetch for the ~28.93 kB chunk regardless of which path wins the race. ✅
+- **Failure-reset ≠ infinite retry** — `prefetchDatePickerPopover` (loader.ts:19-22) resets the memo only on rejection. Retries are user-gated (a new `pointerenter`, `focus`, or click), not automatic — no polling loop possible. React.lazy retains its own successful-module cache; the memo reset only matters on the failure path. ✅
+- **`requestIdleCallback` guard correctness** — `typeof w.requestIdleCallback === "function"` (line 47) correctly excludes jsdom and Safari; falls back to `setTimeout(1750)`. `typeof window === "undefined"` short-circuit (line 45) keeps SSR / no-DOM safe. ✅
+- **No unmount leak** — `useEffect` returns a cleanup closure that calls `cancelIdleCallback` or `clearTimeout` (lines 51, 54). If the idle callback already resolved and started `import()`, the module load is fire-and-forget and memoized — benign. ✅
+- **Keyboard-only flow preserved** — `onFocus` mirrors `onPointerEnter` (lines 119-120), so Tab-navigating users trigger prefetch on focus before Enter/Space activation. Not pointer-gated. ✅
+
+### Contract check — "popover subtree not mounted until click" still valid
+
+The additive test asserts `document.querySelector("[data-radix-popper-content-wrapper]") === null` on initial render. Prefetch fetches the **JS module** but does not render `<DatePickerPopover>` — that is still gated by `pickerMounted` state (`DatePickerField.tsx:92, 131, 146`) which only flips on `onClick`. In jsdom the prefetch does not even fire (no `requestIdleCallback`; the 1.75s `setTimeout` never elapses inside the synchronous test window), so the assertion is doubly safe. The distinction *code fetched ≠ component mounted* holds in implementation. ✅
+
+### Call-site sweep
+
+`rg DatePickerField src/ -g "*.tsx"` → both consumers (`RegisterPage.tsx:293`, `PendingRiders.tsx:193`) use the shared component and therefore inherit prefetch automatically. No consumer-side changes needed. ✅
+
+### H-rules recheck
+
+Commit touches only `src/components/DatePickerField.tsx` and adds `src/components/DatePickerPopover.loader.ts` (2 files, +72/−3). No changes to fetch shapes (H1), `ROLES` (H2), Customer seed (H3), `src/components/ui/**` (H4), `.env` (H5), MSW handlers or `config.ts` (H6), `session.ts` (H7), or guards (H8). All 🟢.
+
+### Findings
+
+- **F-4.3-01** — *Positive.* Both DatePickerField call sites (RegisterPage DOB, PendingRiders DOB on `/admin/pending-riders`) get the prefetch UX for free — perf fix is a single-point improvement.
+- **F-4.3-02** — *Info.* No new tests added. The layered-prefetch behavior is a real-browser concern (idle callback + real network) that jsdom cannot exercise faithfully; the existing Playwright E2E gate is the correct place to catch a regression here, and it passed. Recommend re-running `npm run test:e2e` any time `DatePickerField.tsx` or `DatePickerPopover.loader.ts` change materially — already covered by the F-4.2-04 checklist.
+
+### Sign-off
+
+All 6 gates green, bundle split preserved, loader pattern is correct on all four axes reviewed (dedup, failure-reset, idle guard, keyboard). No H-rule impact. **Ship.** ✅

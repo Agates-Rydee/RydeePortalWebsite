@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.31 kB gzip**; async DatePickerPopover chunk **28.94 kB**.
+Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) + Iter **4.3 perf fix** (DatePickerPopover prefetch) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baselines: main **195.46 kB gzip**; async DatePickerPopover chunk **28.93 kB**.
 
 | Area | Status |
 |------|--------|
@@ -199,6 +199,25 @@ Product-owner rejected the Iter 4 §2 datepicker UX (ghost-icon trigger undiscov
 
 Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 
+### Iteration 4.3 Perf Fix ✅ COMPLETE 2026-07-30
+
+**Problem:** First-click spinner on the DOB picker — Suspense fallback fired while the lazy `DatePickerPopover` chunk was fetched, causing a visible flash on slow networks.
+
+**Fix:** Memoised shared loader (`src/components/DatePickerPopover.loader.ts`) + layered prefetch strategy: `requestIdleCallback` (1.75 s `setTimeout` fallback) fires on mount; `pointerenter`/`focus` on the trigger accelerate prefetch for pointer/keyboard users. All three paths funnel through a single memoised `import()` promise (exactly-one-request invariant). Code-split preserved; Suspense spinner retained as slow-network safety net.
+
+| Commit | Scope |
+|--------|-------|
+| `678d753` | perf(components): memoised shared loader + layered prefetch (requestIdleCallback + pointer/focus hooks) |
+| `aa7ed38` | docs: QA Iteration 4.3 addendum committed |
+
+**QA verdict:** ✅ **SHIP** — `docs/qa/iter4-review.md` §Iteration 4.3 addendum. H1–H8 all 🟢. No new tests needed (behavior is real-browser/real-network; existing E2E smoke 1/1 ✅).
+
+**Hotfix gate results:** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.46 kB gzip** (band 191.1–198.9 ✓) · test **55/55** ✅ · e2e 1/1 ✅
+
+**Bundle baseline update:**
+- Main bundle: **195.46 kB gzip** (±2% band 191.1–198.9 kB — unchanged)
+- Async DatePickerPopover chunk: **28.93 kB gzip** (−0.01 kB vs 4.2 — within noise)
+
 ---
 
 ## Key Decisions
@@ -270,6 +289,10 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 
 **Verdict:** ✅ **SHIP**. Gates at `532391d`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 195.04 kB gzip (in band) · test 58/58. H1–H8 all respected. 3 INFO findings: F1 hash citation (docs-only), F2 spec age draft resolved by amendment in `docs/ux/iter4-spec.md`, F3 cursor rule improvement (no action). See `docs/qa/iter4-review.md`.
 
+### Iteration 4.3 Perf Fix Review (2026-07-30)
+
+**Verdict:** ✅ **SHIP**. Gates at HEAD `678d753`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.46 kB gzip** (in band) · test **55/55** · e2e 1/1. H1–H8 all 🟢. Bundle split preserved; loader-pattern (dedup, failure-reset, idle guard, keyboard) verified. See `docs/qa/iter4-review.md` §Iteration 4.3 addendum.
+
 ### Iteration 4.2 P1 Hotfix Review (2026-07-30)
 
 **Verdict:** ✅ **SHIP**. Gates at HEAD `65e966b`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **195.31 kB gzip** (in band) · test **55/55** · e2e 1/1 smoke. H1–H8 verified; `asChild` blast-radius confirmed clean; free win F-4.2-01 (AlertDialogTrigger fix). See `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
@@ -302,7 +325,7 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **195.31 kB** (updated Iter 4.2); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.94 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **195.46 kB** (updated Iter 4.3); ±2% band = 191.1–198.9 kB; DatePickerPopover async 28.93 kB | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---

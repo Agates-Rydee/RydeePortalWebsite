@@ -1,11 +1,13 @@
-// Extracted from src/App.tsx LoginView in Checkpoint 5. Form UI and
-// fetch call are copied byte-for-byte; only the navigation mechanism
-// changes (onNavigate → useNavigate + auth.login) per ADR-0002.
+// D8 restyle Phase 1: hand-rolled buttons/inputs → shadcn primitives.
+// Fetch call + all test-visible text (labels "Phone Number" / "Password",
+// button "Sign in", client error "valid phone number", server error
+// passthrough) is unchanged — see docs/ux/restyle-spec.md §6.4.
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
-import { cardStyle, btnPrimary, btnLoading } from "@/components/shared-styles";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { API_LOGIN_URL } from "@/lib/config";
 import { roleHome, type Profile } from "@/types/profile";
 import { useAuth } from "@/features/auth/useAuth";
@@ -63,11 +65,7 @@ export default function LoginPage() {
         throw new Error("Login response missing profile");
       }
 
-      // D15: normalize role at the response boundary. Precedence =
-      // profile.role (backend-canonical) → top-level data.role fallback
-      // (older shape) → "" (guards + roleHome tolerate empty → /login via
-      // PublicOnly's F1 unknown-role logout path; see docs/qa/c5-review.md).
-      // This is response PARSING only; the fetch body is frozen (H1).
+      // D15: normalize role at the response boundary (see original commit).
       const canonicalRole = profile.role || topLevelRole;
       const normalizedProfile: Profile = { ...profile, role: canonicalRole };
       auth.login(normalizedProfile);
@@ -85,51 +83,92 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <Logo subtitle="Electric rides across Karachi" />
-      <div className="w-full rounded-2xl p-8" style={cardStyle}>
-        <h2 className="text-xl font-semibold mb-1" style={{ color: "var(--card-foreground)" }}>Sign in</h2>
-        <p className="text-sm mb-7" style={{ color: "var(--muted-foreground)" }}>Welcome back. Enter your credentials to continue.</p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <FieldInput id="phone" label="Phone Number" type="tel" placeholder="123-456-7890"
-            value={phone} onChange={setPhone} autoComplete="tel" />
-
-          <FieldInput id="password" label="Password" type={showPw ? "text" : "password"}
-            placeholder="Enter your password" value={password} onChange={setPassword} autoComplete="current-password">
-            <button type="button" onClick={() => setShowPw(v => !v)} tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg"
-              style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}>
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </FieldInput>
-
-          {error && <p className="text-sm" style={{ color: "#ef4444" }}>{error}</p>}
-
-          <button type="submit" disabled={loading}
-            className="w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 mt-1"
-            style={loading ? btnLoading : btnPrimary}
-            onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.boxShadow = "0 4px 28px rgba(23,168,130,0.45)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(23,168,130,0.30)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-            {loading ? <span className="flex items-center justify-center gap-2"><Spinner /> Signing in…</span> : "Sign in"}
-          </button>
-        </form>
-
-        <div className="mt-6 flex flex-col items-center gap-3">
-          <button style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#17a882")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted-foreground)")}>
-            Forgot password?
-          </button>
-          <div className="w-full h-px" style={{ background: "var(--border)" }} />
-          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-            {"Don't have an account? "}
-            <button onClick={() => navigate("/register")} style={{ color: "#17a882", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#0d8f6e")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#17a882")}>
-              Register
-            </button>
+      <Card className="w-full rounded-2xl card-elevated border-border">
+        <CardContent className="p-8">
+          <h2 className="text-xl font-semibold mb-1 text-card-foreground">Sign in</h2>
+          <p className="text-sm mb-7 text-muted-foreground">
+            Welcome back. Enter your credentials to continue.
           </p>
-        </div>
-      </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <FieldInput
+              id="phone"
+              label="Phone Number"
+              type="tel"
+              placeholder="123-456-7890"
+              value={phone}
+              onChange={setPhone}
+              autoComplete="tel"
+            />
+
+            <FieldInput
+              id="password"
+              label="Password"
+              type={showPw ? "text" : "password"}
+              placeholder="Enter your password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="current-password"
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPw((v) => !v)}
+                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-pressed={showPw}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </Button>
+            </FieldInput>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              aria-busy={loading}
+              size="lg"
+              className="w-full rounded-xl py-3.5 h-auto text-sm font-semibold shadow-[0_4px_20px_rgba(13,143,110,0.30)] hover:bg-primary-hover active:bg-primary-active hover:shadow-[0_4px_28px_rgba(13,143,110,0.45)] mt-1"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner /> Signing in…
+                </span>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <Button
+              type="button"
+              variant="link"
+              className="text-muted-foreground hover:text-primary-text h-auto p-0"
+            >
+              Forgot password?
+            </Button>
+            <div className="w-full h-px bg-border" />
+            <p className="text-sm text-muted-foreground">
+              {"Don't have an account? "}
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => navigate("/register")}
+                className="text-primary-text hover:text-primary-hover font-semibold h-auto p-0"
+              >
+                Register
+              </Button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </AuthShell>
   );
 }

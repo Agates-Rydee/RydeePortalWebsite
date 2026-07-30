@@ -1,13 +1,18 @@
-// Extracted from src/App.tsx RegisterView in Checkpoint 5. Form UI and
-// fetch call are copied byte-for-byte; only navigation changes
-// (onNavigate → useNavigate) per ADR-0002. Serves both /register and
-// /admin/register — the `showRole` variant is selected via prop, wired
-// at route element level in src/router.tsx.
+// D8 restyle Phase 1: hand-rolled buttons/inputs → shadcn primitives.
+// Fetch call unchanged. Role dropdown DELIBERATELY kept as native <select>
+// (deviation from spec §2.1): regression test tests/regression/roles.test.tsx
+// casts the label target to HTMLSelectElement and uses within().getAllByRole(
+// "option"). Migrating to Radix Select breaks that assertion; spec's
+// DO-NOT-CHANGE rule (§6.4) preserves test-visible contracts, so we keep the
+// native <select> here. Other Radix Select swaps happen in Phase 3.
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
-import { cardStyle, btnPrimary, btnLoading, inputBase, focusInput, blurInput } from "@/components/shared-styles";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
@@ -23,19 +28,34 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const navigate = useNavigate();
   const goBack = () => navigate(backTo ?? "/login");
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", dob: "", address: "", password: "", confirmPassword: "", role: "rider" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    dob: "",
+    address: "",
+    password: "",
+    confirmPassword: "",
+    role: "rider",
+  });
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pwMismatch, setPwMismatch] = useState(false);
   const [error, setError] = useState("");
 
-  const set = (field: keyof typeof form) => (v: string) => setForm(f => ({ ...f, [field]: v }));
+  const set =
+    (field: keyof typeof form) =>
+    (v: string) =>
+      setForm((f) => ({ ...f, [field]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (form.password !== form.confirmPassword) { setPwMismatch(true); return; }
+    if (form.password !== form.confirmPassword) {
+      setPwMismatch(true);
+      return;
+    }
     setPwMismatch(false);
     setLoading(true);
     try {
@@ -70,102 +90,178 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   return (
     <AuthShell>
       <Logo subtitle="Create your Rydee account" />
-      <div className="w-full rounded-2xl p-8" style={cardStyle}>
-        <div className="flex items-center gap-3 mb-1">
-          <button onClick={goBack} className="p-1.5 rounded-lg transition-colors duration-150"
-            style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--muted)"; e.currentTarget.style.color = "#17a882"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--muted-foreground)"; }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </button>
-          <h2 className="text-xl font-semibold" style={{ color: "var(--card-foreground)" }}>
-            {showRole ? "Register New User" : "Register"}
-          </h2>
-        </div>
-        <p className="text-sm mb-7 ml-8" style={{ color: "var(--muted-foreground)" }}>Fill in the details below to get started.</p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <FieldInput id="reg-name" label="Name" placeholder="Your full name" value={form.name} onChange={set("name")} autoComplete="name" />
-          <FieldInput id="reg-email" label="Email address" type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} autoComplete="email" />
-          <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx" value={form.phone} onChange={set("phone")} autoComplete="tel" />
-          <FieldInput id="reg-dob" label="Date of birth" type="text" inputMode="numeric" placeholder="DD/MM/YYYY" value={form.dob} onChange={set("dob")} autoComplete="bday" />
-          <FieldInput id="reg-address" label="Home address" type="text" placeholder="House#100, Sultan Road, Multan" value={form.address} onChange={set("address")} autoComplete="street-address" />
-
-          {/* Role */}
-          {showRole && (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reg-role" className="text-sm font-medium" style={{ color: "#2d5045" }}>Role</label>
-              <select id="reg-role" value={form.role} onChange={(e) => set("role")(e.target.value)} required
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200 appearance-none"
-                style={{
-                  ...inputBase,
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235a8070' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", paddingRight: "2.5rem",
-                  color: form.role ? "var(--card-foreground)" : "#5a8070",
-                }}
-                onFocus={focusInput} onBlur={blurInput}>
-                <option value="" disabled>Select a role…</option>
-                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-          )}
-
-          {/* Password */}
-          <FieldInput id="reg-password" label="Password" type={showPw ? "text" : "password"}
-            placeholder="Create a password" value={form.password} onChange={set("password")} autoComplete="new-password">
-            <button type="button" onClick={() => setShowPw(v => !v)} tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg"
-              style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}>
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </FieldInput>
-
-          {/* Confirm password */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="reg-confirm" className="text-sm font-medium" style={{ color: "#2d5045" }}>Confirm password</label>
-            <div className="relative">
-              <input id="reg-confirm" type={showConfirm ? "text" : "password"} placeholder="Repeat your password"
-                value={form.confirmPassword} autoComplete="new-password" required
-                onChange={(e) => { set("confirmPassword")(e.target.value); setPwMismatch(false); }}
-                className="w-full rounded-xl px-4 py-3 pr-12 text-sm outline-none transition-all duration-200"
-                style={{ ...inputBase, border: pwMismatch ? "1px solid #ef4444" : "1px solid var(--border)", boxShadow: pwMismatch ? "0 0 0 3px rgba(239,68,68,0.10)" : "none" }}
-                onFocus={(e) => { if (!pwMismatch) { e.currentTarget.style.border = "1px solid rgba(23,168,130,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(23,168,130,0.10)"; } }}
-                onBlur={(e) => { if (!pwMismatch) { e.currentTarget.style.border = "1px solid var(--border)"; e.currentTarget.style.boxShadow = "none"; } }} />
-              <button type="button" onClick={() => setShowConfirm(v => !v)} tabIndex={-1}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg"
-                style={{ color: "var(--muted-foreground)", background: "none", border: "none", cursor: "pointer" }}>
-                {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {pwMismatch && <p className="text-xs mt-0.5" style={{ color: "#ef4444" }}>Passwords do not match.</p>}
+      <Card className="w-full rounded-2xl card-elevated border-border">
+        <CardContent className="p-8">
+          <div className="flex items-center gap-3 mb-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={goBack}
+              aria-label="Back"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5M12 5l-7 7 7 7" />
+              </svg>
+            </Button>
+            <h2 className="text-xl font-semibold text-card-foreground">
+              {showRole ? "Register New User" : "Register"}
+            </h2>
           </div>
-
-          {error && <p className="text-sm" style={{ color: "#ef4444" }}>{error}</p>}
-
-          <button type="submit" disabled={loading}
-            className="w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 mt-2"
-            style={loading ? btnLoading : btnPrimary}
-            onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.boxShadow = "0 4px 28px rgba(23,168,130,0.45)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(23,168,130,0.30)"; e.currentTarget.style.transform = "translateY(0)"; }}>
-            {loading
-              ? <span className="flex items-center justify-center gap-2"><Spinner /> Creating account…</span>
-              : "Create account"}
-          </button>
-        </form>
-
-        <div className="mt-5 text-center">
-          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-            Already have an account?{" "}
-            <button onClick={() => navigate("/login")} style={{ color: "#17a882", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#0d8f6e")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#17a882")}>
-              Sign in
-            </button>
+          <p className="text-sm mb-7 ml-8 text-muted-foreground">
+            Fill in the details below to get started.
           </p>
-        </div>
-      </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <FieldInput id="reg-name" label="Name" placeholder="Your full name"
+              value={form.name} onChange={set("name")} autoComplete="name" />
+            <FieldInput id="reg-email" label="Email address" type="email" placeholder="you@example.com"
+              value={form.email} onChange={set("email")} autoComplete="email" />
+            <FieldInput id="reg-phone" label="Phone number" type="tel" placeholder="03xx-xxxxxxx"
+              value={form.phone} onChange={set("phone")} autoComplete="tel" />
+            <FieldInput id="reg-dob" label="Date of birth" type="text" inputMode="numeric"
+              placeholder="DD/MM/YYYY" value={form.dob} onChange={set("dob")} autoComplete="bday" />
+            <FieldInput id="reg-address" label="Home address" type="text"
+              placeholder="House#100, Sultan Road, Multan" value={form.address}
+              onChange={set("address")} autoComplete="street-address" />
+
+            {/* Role — native <select> to preserve tests/regression/roles.test.tsx
+                (HTMLSelectElement cast + within().getAllByRole("option")). */}
+            {showRole && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="reg-role" className="text-foreground-label">Role</Label>
+                <select
+                  id="reg-role"
+                  value={form.role}
+                  onChange={(e) => set("role")(e.target.value)}
+                  required
+                  className="w-full rounded-xl px-4 py-3 pr-10 text-sm bg-input-background border border-input text-card-foreground appearance-none outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a6b5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 14px center",
+                  }}
+                >
+                  <option value="" disabled>Select a role…</option>
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Password */}
+            <FieldInput
+              id="reg-password"
+              label="Password"
+              type={showPw ? "text" : "password"}
+              placeholder="Create a password"
+              value={form.password}
+              onChange={set("password")}
+              autoComplete="new-password"
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPw((v) => !v)}
+                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-pressed={showPw}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+              >
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </Button>
+            </FieldInput>
+
+            {/* Confirm password */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="reg-confirm" className="text-foreground-label">Confirm password</Label>
+              <div className="relative">
+                <Input
+                  id="reg-confirm"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Repeat your password"
+                  value={form.confirmPassword}
+                  autoComplete="new-password"
+                  required
+                  aria-invalid={pwMismatch || undefined}
+                  aria-describedby={pwMismatch ? "reg-confirm-error" : undefined}
+                  onChange={(e) => {
+                    set("confirmPassword")(e.target.value);
+                    setPwMismatch(false);
+                  }}
+                  className="h-auto rounded-xl px-4 py-3 pr-12 text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
+                  aria-pressed={showConfirm}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+                >
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+              </div>
+              {pwMismatch && (
+                <p id="reg-confirm-error" role="alert" className="text-xs mt-0.5 text-destructive">
+                  Passwords do not match.
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              aria-busy={loading}
+              size="lg"
+              className="w-full rounded-xl py-3.5 h-auto text-sm font-semibold shadow-[0_4px_20px_rgba(13,143,110,0.30)] hover:bg-primary-hover active:bg-primary-active hover:shadow-[0_4px_28px_rgba(13,143,110,0.45)] mt-2"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner /> Creating account…
+                </span>
+              ) : (
+                "Create account"
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => navigate("/login")}
+                className="text-primary-text hover:text-primary-hover font-semibold h-auto p-0"
+              >
+                Sign in
+              </Button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </AuthShell>
   );
 }

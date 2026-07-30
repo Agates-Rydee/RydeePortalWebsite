@@ -8,23 +8,43 @@
   --card-foreground: #1e3040;
   --popover: #ffffff;
   --popover-foreground: #1e3040;
-  --primary: #17a882;
+  /* D8 palette A: primary darkened for AA (white text >= 4.5:1). */
+  --primary: #0d8f6e;
   --primary-foreground: #ffffff;
+  --primary-hover: #0a7c5f;
+  --primary-active: #086a51;
+  --primary-text: #0f7c63;
+  /* Brand-bright — decorative only (badge fills, ring glow); NOT for text on white. */
+  --brand-bright: #17a882;
   --secondary: #e4f5f0;
   --secondary-foreground: #1e3040;
   --muted: #e4f5f0;
-  --muted-foreground: #5a8070;
-  --accent: #17a882;
+  /* D8: AA fix — was #5a8070 (4.02:1 on #f0faf7). Now #4a6b5e (5.1:1). */
+  --muted-foreground: #4a6b5e;
+  --accent: #0d8f6e;
   --accent-foreground: #ffffff;
-  --destructive: #ef4444;
+  /* D8: AA fix — was #ef4444 (3.75:1). Now #dc2626 (4.52:1). */
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
+  /* Form label emphasis (WCAG AA on #f0faf7 ~10.5:1). */
+  --foreground-label: #1b4d3e;
+  /* Semantic state tokens (all AA on white). */
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --warning-muted: rgba(180, 83, 9, 0.12);
+  --success: #15803d;
+  --success-muted: rgba(21, 128, 61, 0.12);
+  --state-arriving: #a16207;
+  --state-arriving-muted: rgba(161, 98, 7, 0.12);
+  --state-idle: #dc2626;
+  --state-idle-muted: rgba(220, 38, 38, 0.12);
   --border: rgba(23, 168, 130, 0.15);
   --input: transparent;
   --input-background: #f0faf7;
   --switch-background: #b2ddd3;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #17a882;
+  --ring: #0d8f6e;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -95,6 +115,20 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-text: var(--primary-text);
+  --color-brand-bright: var(--brand-bright);
+  --color-foreground-label: var(--foreground-label);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-state-arriving: var(--state-arriving);
+  --color-state-arriving-muted: var(--state-arriving-muted);
+  --color-state-idle: var(--state-idle);
+  --color-state-idle-muted: var(--state-idle-muted);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-input-background: var(--input-background);
@@ -177,5 +211,33 @@
     font-size: var(--text-base);
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
+  }
+}
+
+/* D8: reusable elevated-card shadow (was inline cardStyle boxShadow). */
+@layer components {
+  .card-elevated {
+    box-shadow:
+      0 0 0 1px rgb(23 168 130 / 0.06),
+      0 8px 40px rgb(23 168 130 / 0.10);
+  }
+  .card-elevated-hover:hover {
+    box-shadow:
+      0 0 0 1px rgb(23 168 130 / 0.20),
+      0 8px 40px rgb(23 168 130 / 0.16);
+  }
+}
+
+/* D8: respect prefers-reduced-motion — kill pings + shorten transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-ping,
+  .animate-spin {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

@@ -6,3 +6,9 @@ dist/
 .vscode/
 .idea/
 *.local
+
+# Playwright E2E artifacts (opt-in, not part of default gates)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/

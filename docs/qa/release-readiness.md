@@ -266,3 +266,55 @@ Four reject paths, all clearing storage before returning null:
 
 ### Ship recommendation
 D9 client-side scope is complete, F1-safe, and well-isolated for the future token upgrade. Sign off. Token-based auth + server-side revocation properly parked as D17.
+
+---
+
+## Pre-Push Merge Review — b0ef29c (2026-07-29)
+
+**Verdict:** ✅ PUSH-SAFE
+
+**Scope:** Local merge commit `b0ef29c` merging origin/main (3 commits: 181b4a9 + 3f197d2 + 2c63f6c, written against pre-C4 App.tsx layout) into the restructured feature-folder + react-router + MSW app. Not yet pushed.
+
+### 1. Merge Correctness
+- ✅ No conflict markers anywhere in `src/` or `docs/` (`rg` clean).
+- ✅ `src/app/` absent — pre-restructure layout not resurrected.
+- ✅ Working tree clean; branch 17 commits ahead of origin/main.
+- ✅ Merge commit message documents every per-file resolution with rationale.
+
+### 2. Remote Intent Preservation
+- ✅ **AdminDashboard/OperatorDashboard**: origin intent (STATS constants → live `POST /GetAll/UnregisteredRiders`, filter `activation_status === "pending"`, computed total/active/pending, "—" fallback) ported faithfully. Improvements over origin: cancellation-safe (`cancelled` flag), URL from `@/lib/config` per H6, case-insensitive status match tolerant of `activationStatus` camelCase variant, typed response, `credentials: "include"`, non-fatal catch.
+- ✅ **RiderDashboard null-safe fix** (`profile?.currentLocation?.lat/lon` — the real bug fix in 181b4a9) retained on all 3 call sites.
+- ✅ **PendingRiders rewrite** intentionally NOT taken — richer mock-driven UX (CNIC / verification docs / block-rider / area dropdown / PIN) preserved; migration to live endpoint tracked as **D18** in `docs/design/migration-plan.md`. Rationale documented in merge commit + D18 entry.
+- ✅ **`data.profile.role = data.role` overwrite** from 181b4a9 = the exact D15 pattern already tracked. No new work needed.
+- ✅ Nothing else silently lost.
+
+### 3. Hard Rules
+- ✅ **H1** — `LoginPage` still sends `{ phone, password }`; `RegisterPage` still sends `{ name, email, phoneNumber, dob, address, password, role }`; both retain `credentials: "include"`. Byte-identical.
+- ✅ **H2** — `ROLES = ["Operator", "Customer", "Rider"]` unwidened.
+- ✅ **H3** — Customer seed (`phone: 0300444444`, role: "Customer") intact in `src/mocks/handlers/auth.ts`; F1 tripwire preserved.
+- ✅ **H5** — `git ls-files .env` empty (untracked). Note: origin commit 181b4a9 **did add a `.env` with a real Google Maps key into origin history** (later removed by 2c63f6c) — the leaked-key rotation item already in the register (`🔑 Google Maps API key rotation, Pending user action (dandkhan)`) still applies post-merge; nothing new to add.
+- ✅ **H6** — new endpoint has (a) constant `API_GET_UNREGISTERED_RIDERS_URL` in `src/lib/config.ts`, (b) MSW handler `src/mocks/handlers/riders.ts` registered in `handlers/index.ts`, (c) ADR-0003 contract-table row + footnote ² added in same commit. Three-way consistency confirmed.
+- ✅ **H7** — `src/features/auth/session.ts` untouched in merge range (`git log 90373b5..b0ef29c` empty for that path).
+- ✅ **H4** (`components/ui/`) — untouched; **H8** (guard changes) — not applicable, router/guards untouched.
+
+### 4. New MSW Handler — `src/mocks/handlers/riders.ts`
+- ✅ Response shape `{ riders: [{ name, phone, activation_status, area? }] }` matches what both dashboards parse (`data.riders as Array<...>`, filter on `activation_status`).
+- ✅ Seed: **8 pending + 3 active = 11 total** — matches the numbers in the merge commit message. Dashboards will render total=11, active=3, pending=8 in dev with MSW on.
+- ✅ Handler URL imported from `@/lib/config` (H6).
+
+### 5. Gates (Rerun)
+| Gate | Result |
+|------|--------|
+| `npm run lint` | 0 errors / 14 warnings (all pre-existing react-refresh warnings — tracked as open item) |
+| `npm run typecheck` | 0 errors |
+| `npm run typecheck:strict` | 0 errors |
+| `npm run build` | ✅ 597.24 kB / **168.69 kB gzip** (+0.32% vs 168.15 baseline — within ±2% budget) |
+| MSW dist purity | `rg -l msw dist/assets/` = **0 hits** ✅ |
+
+### Findings
+- **None blocking.** One informational: origin history contains a leaked Maps API key in commit 181b4a9 — this is inherited by the local branch on push. The key-rotation item already sits in the deferred register under user (dandkhan); D13 (optional git-history rewrite) remains the mitigation path. No new remediation work triggered by this merge.
+
+### Sign-off
+Pre-push gate: **PUSH-SAFE.** All H-rules respected, all gates green, remote intent faithfully ported, deferrals documented in D18. Cleared for `git push origin main`.
+
+— QA-MergeReview (sub-agent, deployed by SWE Team Lead) · 2026-07-29

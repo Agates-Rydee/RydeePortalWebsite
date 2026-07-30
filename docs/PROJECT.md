@@ -12,7 +12,7 @@ RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing plat
 
 ## Current State (as of 2026-07-30)
 
-Iteration 3 — D8 shadcn Restyle is **COMPLETE** (2026-07-30). shadcn/ui primitives now adopted across all pages and shared components. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, 44 regression tests passing. Bundle baseline reset to **192.90 kB gzip** (+22.83 kB from Iter 2 baseline; delta attributed to newly-reached Radix AlertDialog + Checkbox runtime; UX-approved trade for critical a11y fixes).
+Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shadcn Calendar + Popover DOB datepicker (react-day-picker v8, lazy-loaded chunk); clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **58 regression tests passing**. Bundle baselines reset: main **195.04 kB gzip**; async DobPicker chunk **28.64 kB**.
 
 | Area | Status |
 |------|--------|
@@ -30,6 +30,7 @@ Iteration 3 — D8 shadcn Restyle is **COMPLETE** (2026-07-30). shadcn/ui primit
 | Collaborator merge round (b0ef29c) | ✅ Done — see below |
 | **Iteration 2 — Hardening** | ✅ **COMPLETE 2026-07-30** |
 | **Iteration 3 — D8 shadcn Restyle** | ✅ **COMPLETE 2026-07-30** — commits `57545a6` / `38c773b` / `1a6962f` / `f3e195d`; QA SHIP; UX 5/5 deviation approvals |
+| **Iteration 4 — Form Validation + Datepicker** | ✅ **COMPLETE 2026-07-30** — commits `f9fcfc0` / `9948996` / `4252e13` / `7693215` / `731dff6` / `1dc7781` / `532391d`; QA SHIP; 3× INFO findings only |
 
 **D8 restyle summary:**
 - shadcn primitives adopted across all pages (auth, dashboards, riders) — Radix `<Checkbox>`, `<AlertDialog>`, `<Button>`, `<Card>`, `<Input>`, `<Label>`, `<Badge>`, `<Select>`, `<Table>` in use
@@ -126,6 +127,37 @@ Batched execution, QA-gated before each push. All items closed.
 
 ---
 
+## Iteration 4 — Form Validation, Datepicker & UX Polish ✅ COMPLETE 2026-07-30
+
+7-commit execution; QA SHIP verdict (`docs/qa/iter4-review.md`); 3× INFO findings resolved.
+
+| Commit | Scope |
+|--------|-------|
+| `f9fcfc0` | fix(styles): cursor-pointer global CSS rule — Tailwind v4 preflight root cause |
+| `9948996` | fix(riders): `.select-field` class restores PendingRiders select chrome |
+| `4252e13` | feat(dashboards): clickable StatCard as semantic `<button>` w/ aria-label + motion-reduce |
+| `7693215` | feat(auth): form validation Login+Register per matrix, age 18–100, on-blur+submit, ARIA wiring, dob DD/MM/YYYY→ISO |
+| `731dff6` | feat(auth): shadcn Calendar+Popover DOB datepicker, react-day-picker v8 dropdown-buttons 1940..current−18, ADR-0003 dob footnote |
+| `1dc7781` | perf(auth): code-split DobPicker lazy chunk |
+| `532391d` | test: 14 additive regression tests (iter4-additive.test.tsx) |
+
+**Product decisions (owner: Danial Khan, 2026-07-30):**
+1. DOB displays DD/MM/YYYY in UI; submits ISO YYYY-MM-DD — documented in ADR-0003 footnote.
+2. Minimum age **18** (supersedes spec §1.3/§2.3 draft value of 16); maximum 100.
+
+**Iteration 4 gate results (final):** lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 2017 modules / **195.04 kB gzip** (within ±2% band) · test **58/58** ✅
+
+**Bundle baselines reset:**
+- Main bundle: **195.04 kB gzip** (band ±2% = 191.1–198.9 kB)
+- Async DobPicker chunk: **28.64 kB gzip** (loads on first picker open only)
+
+**QA F-findings (all INFO):**
+- F1 — hash citation in review refers to `c0c9163` but actual tip is `1dc7781` (identical semantics; docs-only note)
+- F2 — spec §1.3/§2.3 still shows 16-100 draft; resolved by amendment in `docs/ux/iter4-spec.md`
+- F3 — cursor rule improvement is spec-sample deviation; implementation superior; no action
+
+---
+
 ## Key Decisions
 
 | Decision | Detail | ADR / Doc |
@@ -146,7 +178,11 @@ Batched execution, QA-gated before each push. All items closed.
 | PendingRiders live-endpoint migration deferred | Mock-driven UX preserved; migration tracked as D18 | D18 |
 | D13 (git history rewrite) — optional/low-priority | Google Maps key rotated (2026-07-30); old history purge is cosmetic only now | D13 |
 | react-router ^7.18.2 security patch | Patched in `6f4e165`; v8 major upgrade declined (out of scope); bundle baseline reset to 170.07 kB gzip | D10 |
-| Bundle baseline reset (Iter 3) | 192.90 kB gzip; +22.83 kB = Radix AlertDialog + Checkbox runtime; UX-approved; ±2% from here | [d8-restyle-review.md](qa/d8-restyle-review.md) §5 |
+| Bundle baseline reset (Iter 3) | 192.90 kB gzip; +22.83 kB = Radix AlertDialog + Checkbox runtime; UX-approved | [d8-restyle-review.md](qa/d8-restyle-review.md) §5 |
+| DOB wire format (Iter 4) | UI displays DD/MM/YYYY; `dob` field submitted as ISO YYYY-MM-DD — product decision 2026-07-30, documented in ADR-0003 footnote | ADR-0003 |
+| Minimum registration age 18 (Iter 4) | Supersedes spec §1.3/§2.3 draft value of 16; enforced in validation + datepicker year bounds — product decision 2026-07-30 | [iter4-spec.md amendment](ux/iter4-spec.md) |
+| DobPicker lazy chunk (Iter 4) | react-day-picker heavy; code-split via `React.lazy` — 28.64 kB gzip async, loads on first picker open | `1dc7781` |
+| Bundle baseline reset (Iter 4) | Main **195.04 kB gzip** (±2% band 191.1–198.9 kB); DobPicker async chunk 28.64 kB — reset in `532391d` | [iter4-review.md](qa/iter4-review.md) §1 |
 
 ---
 
@@ -184,6 +220,10 @@ Batched execution, QA-gated before each push. All items closed.
 
 **Verdict:** ✅ SHIP. All gates green; H1/H2/H3/H4/H6/H7/H8 verified via targeted diff; all major a11y findings closed; bundle 192.90 kB gzip with plausible attribution; 5/5 documented deviations present in-file. F1–F3 are P3 trivia → D19/D20/D21. See `docs/qa/d8-restyle-review.md`.
 
+### Iteration 4 Review (2026-07-30)
+
+**Verdict:** ✅ **SHIP**. Gates at `532391d`: lint 0e/0w · typecheck 0 · typecheck:strict 0 · build 195.04 kB gzip (in band) · test 58/58. H1–H8 all respected. 3 INFO findings: F1 hash citation (docs-only), F2 spec age draft resolved by amendment in `docs/ux/iter4-spec.md`, F3 cursor rule improvement (no action). See `docs/qa/iter4-review.md`.
+
 ---
 
 ## Open Items — Deferred Work Register
@@ -212,7 +252,7 @@ Batched execution, QA-gated before each push. All items closed.
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — gzip baseline **192.90 kB** (reset Iter 3); ±2% band = 189.0–196.8 kB | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **195.04 kB** (reset Iter 4); ±2% band = 191.1–198.9 kB; DobPicker async 28.64 kB | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 
 ---
@@ -222,7 +262,7 @@ Batched execution, QA-gated before each push. All items closed.
 | Convention | Detail |
 |-----------|--------|
 | Commit style | `chore/refactor/feat/fix/docs(scope): description`; every commit ends with all gates green |
-| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (44 regression tests) — all required before merging |
+| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (58 regression tests) — all required before merging |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — Node 20, `npm ci` cache, push/PR |
 | ADRs | `docs/adr/NNNN-slug.md` — Proposed → Accepted/Rejected/Superseded; update in same commit as any shape change |
 | AGENTS.md hard rules | **H1–H8 bind all contributors and AI coding tools.** H1 API contract frozen, H2 never widen ROLES, H3 never delete Customer seed, H4 don't edit `components/ui/`, H5 never commit `.env`, H6 handlers import URLs from `lib/config.ts`, H7 auth storage only via `session.ts`, H8 guard changes require tracing PublicOnly + ProtectedRoute |
@@ -249,4 +289,6 @@ Batched execution, QA-gated before each push. All items closed.
 | QA C5 Review | `docs/qa/c5-review.md` |
 | QA C6/C7 + D9 + Merge Review b0ef29c | `docs/qa/release-readiness.md` |
 | QA D8 Restyle Review | `docs/qa/d8-restyle-review.md` |
+| UX Iteration 4 Spec (+ product decisions amendment) | `docs/ux/iter4-spec.md` |
+| QA Iteration 4 Review | `docs/qa/iter4-review.md` |
 | MSW Developer Guide (seeds, contract, troubleshooting) | `src/mocks/README.md` |

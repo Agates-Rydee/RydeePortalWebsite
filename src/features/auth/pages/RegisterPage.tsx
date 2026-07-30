@@ -5,35 +5,27 @@
 // "option"). Migrating to Radix Select breaks that assertion; spec's
 // DO-NOT-CHANGE rule (§6.4) preserves test-visible contracts, so we keep the
 // native <select> here. Other Radix Select swaps happen in Phase 3.
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Eye, EyeOff, CalendarIcon } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePickerField } from "@/components/DatePickerField";
+import { formatDobDisplay } from "@/components/date-helpers";
 import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
-
-// Iter 4 phase 6: dynamic import splits react-day-picker + date-fns AND
-// @radix-ui/react-popover (+ FocusScope, DismissableLayer, Presence, Popper)
-// into a separate async chunk. The main chunk keeps only a static trigger
-// button; the first click mounts <DobPicker> which auto-opens on load.
-const DobPicker = lazy(() => import("./components/DobPicker"));
 
 // Iter 4 §2: min age 18 per product decision 2.
 const DOB_MAX_YEAR = new Date().getFullYear() - 18;
 const DOB_MIN_YEAR = 1940;
 
-// DD/MM/YYYY <-> Date helpers (isolated so the picker + validators share).
-function formatDobDisplay(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = String(d.getFullYear());
-  return `${dd}/${mm}/${yyyy}`;
-}
+// Parse DD/MM/YYYY -> Date for defensive submit-time validation. The picker
+// itself never produces an invalid or out-of-range string, but the validator
+// runs regardless (belt-and-suspenders + covers the empty state).
 function parseDobDisplay(v: string): Date | undefined {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
   if (!m) return undefined;
@@ -71,11 +63,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const [loading, setLoading] = useState(false);
   const [pwMismatch, setPwMismatch] = useState(false);
   const [error, setError] = useState("");
-  // Iter 4 phase 6: mount flag for the lazy-loaded DobPicker. Stays false
-  // until the user clicks the calendar icon; once true, the async chunk
-  // downloads and the Popover auto-opens. Remains mounted afterwards so
-  // subsequent opens are instant.
-  const [pickerMounted, setPickerMounted] = useState(false);
 
   // Iter 4 §1: per-field error map. Keys mirror form field ids.
   type FieldKey = "name" | "email" | "phone" | "dob" | "address" | "password" | "role";
@@ -287,65 +274,37 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               errorMessage={fieldErrors.phone}
               autoComplete="tel"
             />
-            {/* Iter 4 §2: text input remains the primary labeled control (typeable
-                DD/MM/YYYY); calendar icon opens a Popover with year+month dropdowns
-                (react-day-picker v8 captionLayout=dropdown-buttons, fromYear/toYear
-                bounded 1940..currentYear-18). Selecting a date writes DD/MM/YYYY
-                back into the input; submit converts to ISO YYYY-MM-DD. */}
-            <FieldInput
-              id="reg-dob"
-              label="Date of birth"
-              type="text"
-              inputMode="numeric"
-              placeholder="DD/MM/YYYY"
-              value={form.dob}
-              onChange={(v) => { set("dob")(v); clearFieldError("dob"); }}
-              onBlur={handleBlur("dob")}
-              errorMessage={fieldErrors.dob}
-              autoComplete="bday"
-            >
-              {/* Iter 4 phase 6: static trigger stays in the main chunk. First
-                  click flips pickerMounted=true, React.lazy fetches DobPicker
-                  (Popover + Calendar + react-day-picker + date-fns as a single
-                  ~17 kB gzip async chunk), which then auto-opens on mount. */}
-              {!pickerMounted && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Open date picker"
-                  onClick={() => setPickerMounted(true)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
-                >
-                  <CalendarIcon size={16} aria-hidden="true" />
-                </Button>
-              )}
-              {pickerMounted && (
-                <Suspense
-                  fallback={
-                    <div
-                      role="status"
-                      aria-label="Loading date picker"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center text-muted-foreground"
-                    >
-                      <Spinner />
-                    </div>
-                  }
-                >
-                  <DobPicker
-                    selected={parseDobDisplay(form.dob)}
-                    onSelect={(d) => {
-                      if (!d) return;
-                      set("dob")(formatDobDisplay(d));
-                      clearFieldError("dob");
-                    }}
-                    defaultMonth={parseDobDisplay(form.dob) ?? new Date(DOB_MAX_YEAR, 0, 1)}
-                    fromYear={DOB_MIN_YEAR}
-                    toYear={DOB_MAX_YEAR}
-                  />
-                </Suspense>
-              )}
-            </FieldInput>
+            {/* Iter 4.1 hotfix: shadcn-canonical DOB DatePickerField.
+                Owner feedback: the previous typeable-input + ghost-icon trigger
+                failed discoverability. Now the trigger IS the field — a full-
+                width outline <Button> with a CalendarIcon showing DD/MM/YYYY or
+                the muted "DD/MM/YYYY" placeholder. Typed entry is REMOVED
+                (owner-approved trade). Age constraints enforced by the picker
+                bounds (fromYear/toYear = 1940..currentYear-18) so the picker
+                cannot produce an out-of-range value; the validator still runs
+                on submit as a defensive check + to cover the empty state.
+                Phase-6 lazy split PRESERVED: only the outline Button trigger +
+                mount flag live in the main chunk; Popover + Calendar load on
+                first click. */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="reg-dob" className="text-foreground-label">
+                Date of birth
+              </Label>
+              <DatePickerField
+                id="reg-dob"
+                value={parseDobDisplay(form.dob)}
+                onChange={(d) => {
+                  set("dob")(d ? formatDobDisplay(d) : "");
+                  clearFieldError("dob");
+                }}
+                onClose={handleBlur("dob")}
+                fromYear={DOB_MIN_YEAR}
+                toYear={DOB_MAX_YEAR}
+                placeholder="DD/MM/YYYY"
+                errorId="reg-dob-error"
+                errorMessage={fieldErrors.dob}
+              />
+            </div>
             <FieldInput
               id="reg-address"
               label="Home address"

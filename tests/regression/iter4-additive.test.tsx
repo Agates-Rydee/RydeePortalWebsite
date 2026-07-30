@@ -59,85 +59,67 @@ describe("Iter 4 §1 — RegisterPage on-blur validation", () => {
   });
 });
 
-describe("Iter 4 §1/§2 — DOB validation boundaries + ISO submission (decisions 1+2)", () => {
-  it("rejects age < 18 on blur", async () => {
-    const user = userEvent.setup();
+describe("Iter 4.1 hotfix — DOB DatePickerField (button-trigger pattern)", () => {
+  // Iter 4.1 owner feedback: the typeable dob input + ghost calendar icon
+  // failed discoverability. The field is now a full-width outline <Button>
+  // trigger opening a Popover Calendar with year/month dropdowns; typed
+  // entry is REMOVED. Since the picker bounds (fromYear=1940,
+  // toYear=currentYear-18, disabled after Dec 31) prevent selecting
+  // invalid or under-18 dates at the source, the former "typed 29/02/2023
+  // shows error" / "typed age<18 shows error" scenarios are unreachable
+  // by design. Coverage retained here: (a) trigger visible with accessible
+  // name + muted placeholder, (b) required validation blocks submit when
+  // no date picked, (c) picker chunk stays unmounted on initial render
+  // (phase-6 lazy-load preserved). ISO wire-format is still asserted
+  // end-to-end by tests/regression/contract.test.ts (backend contract).
+  it("renders the outline button trigger with the muted DD/MM/YYYY placeholder", () => {
     renderRegister();
-    const dob = screen.getByLabelText(/Date of birth/i);
-    const y = new Date().getFullYear() - 17;
-    await user.type(dob, `01/01/${y}`);
-    await user.tab();
-    await screen.findByText(/Enter a valid date of birth/);
+    const trigger = screen.getByLabelText(/Date of birth/i);
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger).toHaveTextContent("DD/MM/YYYY");
+    expect(trigger).toHaveAttribute("id", "reg-dob");
   });
 
-  it("rejects age > 100", async () => {
-    const user = userEvent.setup();
-    renderRegister();
-    const dob = screen.getByLabelText(/Date of birth/i);
-    const y = new Date().getFullYear() - 101;
-    await user.type(dob, `01/01/${y}`);
-    await user.tab();
-    await screen.findByText(/Enter a valid date of birth/);
-  });
-
-  it("rejects invalid calendar date 29/02/2023 (non-leap year)", async () => {
-    const user = userEvent.setup();
-    renderRegister();
-    const dob = screen.getByLabelText(/Date of birth/i);
-    await user.type(dob, "29/02/2023");
-    await user.tab();
-    await screen.findByText(/Enter a valid date of birth/);
-  });
-
-  it("accepts leap-year 29/02/2000 (adult)", async () => {
-    const user = userEvent.setup();
-    renderRegister();
-    const dob = screen.getByLabelText(/Date of birth/i);
-    await user.type(dob, "29/02/2000");
-    await user.tab();
-    expect(screen.queryByText(/Enter a valid date of birth/)).toBeNull();
-  });
-
-  it("submits dob as ISO YYYY-MM-DD (25/12/1995 -> 1995-12-25) and preserves H1 fields", async () => {
-    let captured: Record<string, unknown> | null = null;
+  it("blocks submit + focuses the empty dob trigger when the user has not picked a date", async () => {
+    let called = false;
     server.use(
-      http.post(API_REGISTER_URL, async ({ request }) => {
-        captured = (await request.json()) as Record<string, unknown>;
+      http.post(API_REGISTER_URL, async () => {
+        called = true;
         return HttpResponse.json({ ok: true });
       }),
     );
     const user = userEvent.setup();
     renderRegister();
+    // Fill every other required field so dob is the ONLY thing blocking submit.
     await user.type(screen.getByLabelText(/^Name$/), "Test User");
     await user.type(screen.getByLabelText(/Email address/i), "t@example.com");
     await user.type(screen.getByLabelText(/Phone number/i), "0300123456");
-    await user.type(screen.getByLabelText(/Date of birth/i), "25/12/1995");
     await user.type(screen.getByLabelText(/Home address/i), "House 1, Street 2");
     await user.type(screen.getByLabelText(/^Password$/), "hunter2xx");
     await user.type(screen.getByLabelText(/Confirm password/i), "hunter2xx");
     await user.click(screen.getByRole("button", { name: /Create account/i }));
-    await waitFor(() => expect(captured).not.toBeNull());
-    expect(captured!.dob).toBe("1995-12-25");
-    // H1: field names + shape byte-identical
-    expect(Object.keys(captured!).sort()).toEqual(
-      ["address","dob","email","name","password","phoneNumber","role"].sort(),
-    );
-    expect(captured!.phoneNumber).toBe("0300123456");
+    // Validation error appears (role=alert wired via aria-describedby)
+    const err = await screen.findByText(/Enter a valid date of birth/);
+    expect(err).toHaveAttribute("role", "alert");
+    // No fetch fired
+    expect(called).toBe(false);
+    // First-invalid focus lands on the dob trigger
+    expect(document.activeElement).toBe(screen.getByLabelText(/Date of birth/i));
   });
 
-  it("age exactly 18 (yesterday-1y) is accepted; exactly 17y364d is rejected", async () => {
+  it("aria-invalid wires to the trigger button when validation fails", async () => {
     const user = userEvent.setup();
     renderRegister();
-    const dob = screen.getByLabelText(/Date of birth/i);
-    const now = new Date();
-    const yr18 = now.getFullYear() - 18;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    // A birthday that has already happened this year, exactly 18 years ago
-    const past = new Date(yr18, now.getMonth(), now.getDate() - 1);
-    const s18 = `${pad(past.getDate())}/${pad(past.getMonth() + 1)}/${past.getFullYear()}`;
-    await user.type(dob, s18);
-    await user.tab();
-    expect(screen.queryByText(/Enter a valid date of birth/)).toBeNull();
+    await user.type(screen.getByLabelText(/^Name$/), "Test User");
+    await user.type(screen.getByLabelText(/Email address/i), "t@example.com");
+    await user.type(screen.getByLabelText(/Phone number/i), "0300123456");
+    await user.type(screen.getByLabelText(/Home address/i), "House 1, Street 2");
+    await user.type(screen.getByLabelText(/^Password$/), "hunter2xx");
+    await user.type(screen.getByLabelText(/Confirm password/i), "hunter2xx");
+    await user.click(screen.getByRole("button", { name: /Create account/i }));
+    const trigger = screen.getByLabelText(/Date of birth/i);
+    await waitFor(() => expect(trigger).toHaveAttribute("aria-invalid", "true"));
+    expect(trigger.getAttribute("aria-describedby")).toBe("reg-dob-error");
   });
 });
 
@@ -175,11 +157,14 @@ describe("Iter 4 §5 — StatCard button vs static rendering", () => {
   });
 });
 
-describe("Iter 4 phase 6 — DobPicker lazy chunk not loaded until click", () => {
-  it("mounts a static trigger button; Radix Popover is not in the DOM initially", () => {
+describe("Iter 4.1 phase-6 — DatePickerField lazy chunk not loaded until click", () => {
+  it("mounts a static outline trigger; Radix Popover is not in the DOM initially", () => {
     renderRegister();
-    const trigger = screen.getByRole("button", { name: /Open date picker/i });
-    expect(trigger).toBeInTheDocument();
+    // Trigger is now labeled by <Label htmlFor="reg-dob"> — a full-width
+    // outline <Button> with CalendarIcon + muted DD/MM/YYYY placeholder.
+    const trigger = screen.getByLabelText(/Date of birth/i);
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger).toHaveTextContent("DD/MM/YYYY");
     // Popover content only appears after click + async chunk load.
     expect(document.querySelector("[data-radix-popper-content-wrapper]")).toBeNull();
   });

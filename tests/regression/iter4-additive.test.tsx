@@ -157,15 +157,25 @@ describe("Iter 4 §5 — StatCard button vs static rendering", () => {
   });
 });
 
-describe("Iter 4.1 phase-6 — DatePickerField lazy chunk not loaded until click", () => {
-  it("mounts a static outline trigger; Radix Popover is not in the DOM initially", () => {
+describe("Iter 4.4 — DatePickerField popover subtree gated on click", () => {
+  // Iter 4.4 simplification (2026-07-30): the React.lazy / Suspense split for
+  // the popover was dropped in favor of the canonical static shadcn pattern
+  // (owner decision — at ~224 kB total, micro-splitting isn't worth the code
+  // + loading-state complexity). The POPOVER-CLOSED-until-click contract is
+  // still meaningful (Radix doesn't mount PopoverContent while closed), so we
+  // keep asserting it — but the lazy-chunk aspect is gone.
+  it("mounts a static outline trigger; Radix PopoverContent is absent until clicked", async () => {
+    const user = userEvent.setup();
     renderRegister();
-    // Trigger is now labeled by <Label htmlFor="reg-dob"> — a full-width
-    // outline <Button> with CalendarIcon + muted DD/MM/YYYY placeholder.
     const trigger = screen.getByLabelText(/Date of birth/i);
     expect(trigger.tagName).toBe("BUTTON");
     expect(trigger).toHaveTextContent("DD/MM/YYYY");
-    // Popover content only appears after click + async chunk load.
+    // Closed popover: content wrapper is not in the DOM.
     expect(document.querySelector("[data-radix-popper-content-wrapper]")).toBeNull();
+    // Click opens it — Radix mounts PopoverContent into the portal.
+    await user.click(trigger);
+    await waitFor(() =>
+      expect(document.querySelector("[data-radix-popper-content-wrapper]")).not.toBeNull(),
+    );
   });
 });

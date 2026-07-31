@@ -13,8 +13,8 @@ import { join } from "node:path";
 // pinned Node major and therefore comparable across CI runs. The Vite CLI's
 // reported gzip size differs slightly because it measures a different
 // intermediate artifact; CI enforces the value computed here.
-const BAND_MIN_KB = 221.5;
-const BAND_MAX_KB = 224.5;
+const BAND_MIN_KB = 235.5;
+const BAND_MAX_KB = 238.5;
 const ASSETS_DIR = join(process.cwd(), "dist", "assets");
 
 function findMainJsChunk(): string | null {

@@ -4,9 +4,9 @@ import LoginPage from "@/features/auth/pages/LoginPage";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import RiderLocationView from "@/features/riders/RiderLocationView";
 import { RootLayout, IndexRedirect } from "@/router-layout";
+import { DashboardLayout } from "@/features/layout/DashboardLayout";
 import {
-  AdminDashboardRoute,
-  OperatorDashboardRoute,
+  DashboardRoute,
   RiderDashboardRoute,
 } from "@/features/dashboards/routes";
 import {
@@ -37,27 +37,30 @@ export const router = createBrowserRouter([
       },
 
       {
-        element: <ProtectedRoute allow={["Admin"]} />,
+        element: <DashboardLayout />,
         children: [
-          { path: "admin",           element: <AdminDashboardRoute /> },
-          { path: "admin/register",  element: <RegisterPage showRole backTo="/admin" /> },
-        ],
-      },
-
-      {
-        element: <ProtectedRoute allow={["Admin", "Operator"]} />,
-        children: [
-          { path: "admin/active-riders",             element: <ActiveRidersRoute /> },
-          { path: "admin/pending-riders",            element: <PendingRidersRoute /> },
-          { path: "admin/all-riders",                element: <AllRidersRoute /> },
-          { path: "admin/riders/:riderId/location",  element: <RiderLocationView /> },
-        ],
-      },
-
-      {
-        element: <ProtectedRoute allow={["Operator"]} />,
-        children: [
-          { path: "operator", element: <OperatorDashboardRoute /> },
+          {
+            element: <ProtectedRoute allow={["Admin"]} />,
+            children: [
+              { path: "admin",           element: <DashboardRoute /> },
+              { path: "admin/register",  element: <RegisterPage showRole backTo="/admin" /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute allow={["Admin", "Operator"]} />,
+            children: [
+              { path: "admin/active-riders",             element: <ActiveRidersRoute /> },
+              { path: "admin/pending-riders",            element: <PendingRidersRoute /> },
+              { path: "admin/all-riders",                element: <AllRidersRoute /> },
+              { path: "admin/riders/:riderId/location",  element: <RiderLocationView /> },
+            ],
+          },
+          {
+            element: <ProtectedRoute allow={["Operator"]} />,
+            children: [
+              { path: "operator", element: <DashboardRoute /> },
+            ],
+          },
         ],
       },
 

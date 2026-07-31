@@ -1,20 +1,14 @@
 import { useEffect, useState } from "react";
-import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
+import { useNavigate } from "react-router";
 import { StatCard } from "@/features/dashboards/components/StatCard";
 import { getUnregisteredRiders } from "@/api/riders";
-import type { Profile } from "@/types/profile";
-
-interface Props {
-  onNavigate: (p: string) => void;
-  onLogout: () => void;
-  profile: Profile | null;
-}
 
 interface UnregisteredRidersResponse {
   riders?: Array<Record<string, unknown>>;
 }
 
-export default function OperatorDashboard({ onNavigate, onLogout, profile }: Props) {
+export default function Dashboard() {
+  const navigate = useNavigate();
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [totalRiders, setTotalRiders] = useState<number | null>(null);
   const [activeRiders, setActiveRiders] = useState<number | null>(null);
@@ -24,8 +18,6 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
 
     const loadPending = async (): Promise<void> => {
       try {
-        // The API wrapper throws an ApiError on non-ok responses; falling
-        // through to the catch preserves the previous console.error path.
         const data = (await getUnregisteredRiders()) as UnregisteredRidersResponse;
 
         if (!data || !Array.isArray(data.riders)) {
@@ -46,7 +38,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
         setTotalRiders(total);
         setActiveRiders(active);
       } catch (err) {
-        console.error("OperatorDashboard: failed to load unregistered riders", err);
+        console.error("Dashboard: failed to load unregistered riders", err);
       }
     };
 
@@ -58,14 +50,12 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col bg-background"
+      className="flex-1 w-full flex flex-col bg-background"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      <DashboardHeader roleLabel="Operator" userName={profile?.name} onLogout={onLogout} />
-
       <main className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Operator Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm mt-1 text-muted-foreground">
             Manage users, riders, and operations across Karachi.
           </p>
@@ -75,6 +65,8 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
           <StatCard
             label="Total Riders"
             value={totalRiders}
+            onClick={() => navigate("/admin/all-riders")}
+            hint="View all riders →"
             icon={
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
@@ -90,7 +82,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
             label="Active Riders"
             value={activeRiders}
             valueClassName="text-primary"
-            onClick={() => onNavigate("active-riders")}
+            onClick={() => navigate("/admin/active-riders")}
             hint="Tap to view live map →"
             icon={
               <span className="relative flex h-4 w-4">
@@ -104,7 +96,7 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
             label="Pending Riders"
             value={pendingCount}
             valueClassName="text-warning"
-            onClick={() => onNavigate("pending-riders")}
+            onClick={() => navigate("/admin/pending-riders")}
             hint="Tap to review applications →"
             iconBgClassName="bg-warning-muted"
             icon={

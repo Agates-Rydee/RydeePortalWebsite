@@ -40,8 +40,8 @@ client-side `/^\d{10}$/` check in `LoginPage.tsx`).
 | Role | Phone | Password | What you'll see |
 |---|---|---|---|
 | Rider | `0300111111` | `rider` | Lands on `/rider` (RiderDashboard) |
-| Admin | `0300222222` | `admin` | Lands on `/admin` (AdminDashboard) |
-| Operator | `0300333333` | `operator` | Lands on `/operator` (OperatorDashboard) |
+| Admin | `0300222222` | `admin` | Lands on `/admin` (Dashboard) |
+| Operator | `0300333333` | `operator` | Lands on `/operator` (Dashboard) |
 | Customer | `0300444444` | `customer` | Bounces back to `/login` (see below) |
 
 ### About the Customer seed

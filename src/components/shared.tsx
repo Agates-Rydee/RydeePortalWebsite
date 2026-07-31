@@ -65,9 +65,7 @@ export function Spinner() {
   );
 }
 
-// FieldInput wraps shadcn Input + Label. CSS-only focus states via the
-// Input primitive's built-in focus-visible ring — the pre-D8 JS focus/blur
-// handlers are gone. `rounded-xl px-4 py-3` preserves the Rydee pill shape.
+// FieldInput wraps the shadcn Input and Label. Focus styling is CSS-only via the Input's built-in focus-visible ring.
 export function FieldInput({
   id,
   label,
@@ -91,17 +89,16 @@ export function FieldInput({
   placeholder?: string;
   value: string;
   onChange?: (v: string) => void;
-  /** Iter 4 §1: on-blur validation hook. */
+  /** Optional callback fired when the input loses focus. */
   onBlur?: () => void;
   autoComplete?: string;
   inputMode?: "text" | "numeric" | "tel" | "email" | "url" | "search" | "decimal" | "none";
   required?: boolean;
   readOnly?: boolean;
-  /** Legacy boolean flag — kept for callers that manage the error <p> themselves. */
+  /** Marks the field as invalid for callers that manage their own error message rendering. */
   error?: boolean;
   errorId?: string;
-  /** Iter 4 §1: when set, renders <p role="alert" id=errorId> below the field and
-   *  wires aria-invalid + aria-describedby automatically. */
+  /** When set, renders an alert paragraph below the field and wires the correct aria-invalid and aria-describedby attributes automatically. */
   errorMessage?: string;
   children?: React.ReactNode;
 }) {

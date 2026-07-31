@@ -1,7 +1,3 @@
-// Operator dashboard. D8 Phase 2 restyle: symmetric to AdminDashboard —
-// header + stat cards via shared components; JS hover handlers gone.
-//
-// Live pending fetch unchanged from merge b0ef29c.
 import { useEffect, useState } from "react";
 import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
 import { StatCard } from "@/features/dashboards/components/StatCard";

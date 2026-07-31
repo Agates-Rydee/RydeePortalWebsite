@@ -1,7 +1,3 @@
-// D8 restyle Phase 1: hand-rolled buttons/inputs → shadcn primitives.
-// Fetch call + all test-visible text (labels "Phone Number" / "Password",
-// button "Sign in", client error "valid phone number", server error
-// passthrough) is unchanged — see docs/ux/restyle-spec.md §6.4.
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
@@ -22,17 +18,12 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  // General/server error (existing behavior — non-field). Kept as-is for
-  // test-visible contract (Invalid phone or password passthrough, etc.).
   const [error, setError] = useState("");
-  // Iter 4 §1: per-field errors, set on-blur or on-submit.
   const [phoneError, setPhoneError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
   const isValidPhone = (value: string) => /^\d{10}$/.test(value);
 
-  // Test-visible strings preserved verbatim (login-flow.test.tsx expects
-  // /valid phone number/i). Password error copy is new (additive).
   const PHONE_ERR = "Please enter a valid phone number.";
   const PASSWORD_ERR = "Please enter your password.";
 
@@ -49,8 +40,7 @@ export default function LoginPage() {
     setPasswordError(pwErr);
 
     if (pErr) {
-      // Field-level <p role="alert"> announces; do NOT duplicate in the
-      // general error <p> (would break findByText with a duplicate match).
+      // Field-level alert already announces; skip the general error message so screen readers do not read a duplicate.
       document.getElementById("phone")?.focus();
       return;
     }
@@ -62,7 +52,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // ─── byte-for-byte from old LoginView.handleSubmit ──────
       const response = await fetch(API_LOGIN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,13 +67,12 @@ export default function LoginPage() {
       const data = await response.json();
       const topLevelRole: string = data.role ?? data.user?.role ?? "";
       const profile = data.profile as Profile | undefined;
-      // ─── end verbatim fetch ─────────────────────────────────
 
       if (!profile) {
         throw new Error("Login response missing profile");
       }
 
-      // D15: normalize role at the response boundary (see original commit).
+      // Normalise the role at the response boundary so downstream code can trust a single field.
       const canonicalRole = profile.role || topLevelRole;
       const normalizedProfile: Profile = { ...profile, role: canonicalRole };
       auth.login(normalizedProfile);

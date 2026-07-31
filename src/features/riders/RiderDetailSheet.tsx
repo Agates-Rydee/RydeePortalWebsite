@@ -1,8 +1,3 @@
-// Row → detail Sheet for AllRiders (UX spec §fast-follow #2).
-// Read-only. Renders full rider record with "—" for absent best-effort fields.
-// Keyboard: Esc closes (Radix default), focus returns to the trigger row
-// (Radix default via `SheetTrigger`/uncontrolled) — here controlled + explicit
-// focus restore via the `onOpenChange` callback in the parent.
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -51,7 +46,6 @@ export interface RiderDetailSheetProps {
 }
 
 export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetProps) {
-  // Guard: never render fields when row is null (initial mount, pre-open).
   const fields: Field[] = row
     ? [
         { label: "Full name", value: row.name || "—" },

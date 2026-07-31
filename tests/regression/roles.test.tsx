@@ -1,6 +1,3 @@
-// F2 (major security regression, QA C5): ROLES must never include Admin.
-// H3: Customer seed (0300444444) is the F1 regression tripwire and must
-// remain present in the MSW handlers.
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -10,8 +7,8 @@ import { API_LOGIN_URL } from "@/lib/config";
 
 describe("F2 — ROLES contract (never widen)", () => {
   it("ROLES is exactly ['Operator','Customer','Rider']", () => {
-    // Hard equality on both the set of values AND the order. Set order is
-    // the ADR-anchored source of truth for the /admin/register dropdown.
+    // The exact order matters: it drives the option order in the admin
+    // register dropdown, which regression-sensitive tests depend on.
     expect([...ROLES]).toEqual(["Operator", "Customer", "Rider"]);
   });
 
@@ -19,7 +16,6 @@ describe("F2 — ROLES contract (never widen)", () => {
     for (const r of ROLES) {
       expect(r.toLowerCase()).not.toBe("admin");
     }
-    // Fail loudly if anyone tries to sneak it back in with a widened type.
     expect((ROLES as readonly string[]).includes("Admin")).toBe(false);
   });
 
@@ -34,7 +30,6 @@ describe("F2 — ROLES contract (never widen)", () => {
       .getAllByRole("option")
       .map((o) => (o as HTMLOptionElement).value.toLowerCase());
     expect(options).not.toContain("admin");
-    // Positive: the three real roles ARE offered.
     expect(options).toEqual(expect.arrayContaining(["operator", "customer", "rider"]));
   });
 });
@@ -50,8 +45,9 @@ describe("H3 — Customer seed (F1 tripwire) present in MSW handlers", () => {
     expect(res.status).toBe(200);
     const data = (await res.json()) as { profile: { role: string } };
     expect(data.profile.role).toBe("Customer");
-    // Confirms the F1 unknown-role path is exercisable end-to-end:
-    // roleHome("Customer") is /login → PublicOnly must logout on rehydrate.
+    // Customer maps to /login in roleHome, so a rehydrated Customer session
+    // must trigger the PublicOnly logout path rather than looping back through
+    // the guards.
     expect(roleHome(data.profile.role)).toBe("/login");
   });
 });

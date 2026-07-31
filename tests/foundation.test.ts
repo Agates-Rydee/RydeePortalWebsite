@@ -1,7 +1,3 @@
-// Foundation smoke — proves the msw/node harness is wired to
-// src/mocks/handlers and jsdom is up. The real regression suite lives in
-// tests/regression/**. If this file breaks, the setup is broken; nothing
-// downstream will run correctly.
 import { describe, expect, it } from "vitest";
 import { API_LOGIN_URL } from "@/lib/config";
 

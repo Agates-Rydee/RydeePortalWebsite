@@ -1,10 +1,3 @@
-// D8 Phase 3 restyle: full form migration.
-// - Native <select> styled with shadcn tokens (rider-select, area-select) — kept
-//   native to keep gzip inside the +8-12 kB budget; Radix Select+popper adds ~20 kB.
-// - Div-as-checkbox -> Radix Checkbox (critical a11y fix: keyboard + SR).
-// - window.confirm -> shadcn AlertDialog (destructive, focus-trapped).
-// - Inline "Saved" pill -> live-region banner (role=status, auto-dismiss ~2s).
-// - Buttons via shadcn Button variants; all JS hover handlers removed.
 import { useState, useEffect } from "react";
 import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
 import { KARACHI_AREAS, VERIFICATION_DOCS } from "@/features/riders/constants";
@@ -47,10 +40,9 @@ interface UnregisteredRidersResponse {
 }
 
 function toPendingRider(raw: Record<string, unknown>, idx: number): PendingRider {
-  // Wire shape reconciliation (D18): backend contract only firmly guarantees
-  // name / phone / activation_status (see ADR-0003). id / dob / cnic /
-  // documents / pin are best-effort — fall back to page-local defaults when
-  // absent so the review form still renders.
+  // Only name, phone, and activation status are firmly guaranteed by the
+  // backend; every other field falls back to a safe local default so the review
+  // form can still render when optional data is missing from the response.
   const id = typeof raw.id === "number" ? raw.id : idx + 1;
   const documents = Array.isArray(raw.documents)
     ? (raw.documents as unknown[]).filter((d): d is string => typeof d === "string")
@@ -61,7 +53,7 @@ function toPendingRider(raw: Record<string, unknown>, idx: number): PendingRider
     phone: typeof raw.phone === "string" ? raw.phone : "",
     dob: typeof raw.dob === "string" ? raw.dob : "",
     cnic: typeof raw.cnic === "string" ? raw.cnic : "",
-    // Wire alias (2026-07-30): backend Profile uses `rideArea`; accept either.
+    // Accept either area or the rideArea alias returned by some backend paths.
     area:
       typeof raw.area === "string"
         ? raw.area
@@ -74,13 +66,11 @@ function toPendingRider(raw: Record<string, unknown>, idx: number): PendingRider
 }
 
 function isPending(raw: Record<string, unknown>): boolean {
-  // Wire alias (2026-07-30): backend may send string `activation_status` or
-  // boolean `activated`. Resolution rule (see ADR-0003 riders row):
-  //   1. If activation_status is present & non-empty, IT WINS (case-insensitive
-  //      match against "pending").
-  //   2. Otherwise, if activated === true, treat as ACTIVE → NOT pending.
-  //   3. Otherwise, treat as pending (endpoint returns the unregistered
-  //      subset — no explicit status means unregistered).
+  // Three-tier pending resolution: a non-empty activation status string always
+  // wins and is compared case-insensitively; otherwise a boolean activated flag
+  // of true means the rider is active (not pending); otherwise the rider is
+  // treated as pending, which matches the semantics of this endpoint returning
+  // the unregistered subset when neither field is populated.
   const rawStatus = raw.activation_status ?? raw.activationStatus;
   const status = String(rawStatus ?? "").toLowerCase().trim();
   if (status !== "") {
@@ -193,7 +183,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
       className="min-h-screen flex flex-col bg-background"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* Header */}
       <header className="w-full flex items-center justify-between px-6 py-4 bg-card border-b border-border">
         <div className="flex items-center gap-4">
           <BackButton onClick={onBack} label="Dashboard" />
@@ -243,7 +232,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
 
         {!loading && !loadError && activeRiders.length > 0 && (
         <>
-        {/* Rider picker — native <select> styled with shadcn tokens */}
         <div className="flex flex-col gap-1.5 mb-8">
           <Label htmlFor="rider-select" className="text-foreground-label">
             Select pending rider
@@ -263,7 +251,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
           </select>
         </div>
 
-        {/* Rider form */}
         {form && (
           <Card className="rounded-2xl p-7 gap-5 card-elevated border-border">
             <h2 className="text-lg font-semibold text-card-foreground mb-1">Rider Profile</h2>
@@ -287,7 +274,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
               />
             </FormField>
 
-            {/* Area — native <select> styled with shadcn tokens */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="pr-area" className="text-foreground-label">
                 Geographic area of interest
@@ -307,14 +293,8 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
               </select>
             </div>
 
-            {/* DOB + Age side by side */}
             <div className="grid grid-cols-2 gap-4">
               <FormField id="pr-dob" label="Date of birth">
-                {/* Iter 4.1 hotfix: shadcn-canonical DatePickerField replaces
-                    the native <input type=date>. State stays ISO YYYY-MM-DD
-                    internally (calcAge + seeds use new Date(dob)); the picker
-                    displays DD/MM/YYYY on the outline button. Bounds
-                    1940..currentYear-18 (riders are 18+). */}
                 <DatePickerField
                   id="pr-dob"
                   value={form.dob ? new Date(form.dob) : undefined}
@@ -347,7 +327,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
               />
             </FormField>
 
-            {/* Verification documents — Radix Checkbox (major a11y fix) */}
             <fieldset className="flex flex-col gap-2 border-0 p-0 m-0">
               <legend className="text-sm font-medium text-foreground-label mb-1">
                 Verification documents
@@ -400,7 +379,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
               />
             </FormField>
 
-            {/* Action buttons */}
             <div className="flex gap-3 mt-2 flex-wrap">
               <Button
                 type="button"
@@ -477,7 +455,6 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
         )}
       </main>
 
-      {/* Live-region banner (replaces sonner toast; zero dep footprint) */}
       {notice && (
         <div
           role="status"

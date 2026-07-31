@@ -1,12 +1,6 @@
-// D16 regression: post-register navigation uses `{ replace: true }` so the
-// browser back-button doesn't return the user to the filled-in Register form.
-// Renders the real RegisterPage against the msw/node handlers and asserts
-// that navigating back does NOT return to /register.
-//
-// The DOB DatePickerField is a Popover+Calendar which is fiddly to drive
-// through userEvent in jsdom. We stub it with a plain <input> whose value
-// is DD/MM/YYYY, which matches the same string contract the real component
-// emits into `form.dob` (see RegisterPage.tsx `formatDobDisplay`).
+// The date-picker popover is difficult to drive through userEvent inside
+// jsdom, so it is stubbed with a plain input that emits the same DD/MM/YYYY
+// string contract the real component produces.
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@testing-library/react";

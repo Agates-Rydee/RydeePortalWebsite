@@ -1,27 +1,15 @@
-// MSW handlers for the auth surface. Endpoints are built from the same
-// src/lib/config.ts constants the app fetches, so contract can't drift.
-// ADR-0003 §"Contract fidelity" is authoritative.
-//
-// F6 fix (QA 2026-07-29): LoginPage submits `{ phone, password }`, NOT
-// `{ email, password }` — verified against the byte-for-byte fetch call
-// in src/features/auth/pages/LoginPage.tsx. Handlers match on phone.
-// Seeds retain `email` for register-collision realism.
 import { http, HttpResponse } from "msw";
 import { API_LOGIN_URL, API_REGISTER_URL } from "@/lib/config";
 
-// Per-role 10-digit memorable phone numbers. LoginPage validates
-// /^\d{10}$/ before submit, so seeds must be exactly 10 digits.
 const seed = [
   {
     email: "rider@example.com",
-    phone: "0300111111", // Rider
+    phone: "0300111111",
     password: "rider",
     profile: {
       role: "Rider",
       name: "Rida Rider",
       address: "12 Sea View Rd, Karachi",
-      // RiderDashboard reads these three despite them not being on the canonical
-      // Profile interface (D6). Include so the dashboard renders correctly.
       area: "Clifton",
       dob: "1995-03-14",
       joiningDate: "2024-06-01",
@@ -37,7 +25,7 @@ const seed = [
   },
   {
     email: "admin@example.com",
-    phone: "0300222222", // Admin
+    phone: "0300222222",
     password: "admin",
     profile: {
       role: "Admin",
@@ -55,7 +43,7 @@ const seed = [
   },
   {
     email: "operator@example.com",
-    phone: "0300333333", // Operator
+    phone: "0300333333",
     password: "operator",
     profile: {
       role: "Operator",
@@ -73,8 +61,9 @@ const seed = [
   },
   {
     email: "customer@example.com",
-    phone: "0300444444", // Customer — intentionally exercises the F1
-    password: "customer",  // unknown-role logout path (Customer has no dashboard).
+    // Do not delete this user: logging in as Customer exercises the unknown-role logout path that guards against redirect loops.
+    phone: "0300444444",
+    password: "customer",
     profile: {
       role: "Customer",
       name: "Cara Customer",

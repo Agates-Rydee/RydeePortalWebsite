@@ -1,10 +1,3 @@
-// Seed data for MSW handlers (ADR-0003). Moved from src/app/data/mockData.ts
-// in Checkpoint 4. Byte-for-byte content preserved.
-//
-// D18 (2026-07-30): PENDING_RIDERS removed — PendingRiders now fetches
-// from POST /GetAll/UnregisteredRiders (MSW-backed in dev, real backend
-// in prod). KARACHI_AREAS + VERIFICATION_DOCS relocated to
-// src/features/riders/constants.ts (UI constants, not API seeds).
 import type { ActiveRider } from "@/types/rider";
 
 export const INITIAL_ACTIVE_RIDERS: ActiveRider[] = [

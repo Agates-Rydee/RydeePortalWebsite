@@ -6,7 +6,7 @@ import type { ActiveRider, RiderState } from "@/types/rider";
 import { BackButton, Logo } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 
-// AA-safe hex values sourced from theme tokens (leaflet Popup requires inline styles).
+// The Leaflet Popup only accepts inline styles, so these AA-safe hex values are copied from the theme tokens.
 const STATE_HEX: Record<RiderState, string> = {
   dispatching: "#15803d", // --success
   arriving:    "#a16207", // --state-arriving
@@ -62,7 +62,7 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background font-sans">
-      {/* Header — isolate keeps header + stat bar above the map without global z-index leaks */}
+      {/* Using `isolate` here keeps the header and stat bar above the map without leaking a global z-index stack. */}
       <header className="w-full flex items-center justify-between px-6 py-4 isolate z-10 bg-card border-b border-border">
         <div className="flex items-center gap-4">
           <BackButton onClick={onBack} label="Dashboard" />
@@ -80,7 +80,6 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
         </Badge>
       </header>
 
-      {/* Stat pills */}
       <div className="flex gap-3 px-6 py-4 flex-wrap isolate z-[9] bg-background">
         {(["dispatching", "arriving", "idle"] as RiderState[]).map(s => (
           <Badge key={s} className={`${STATE_BADGE_CLASS[s]} gap-2 px-4 py-2 text-sm font-medium rounded-full`}>
@@ -93,7 +92,6 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
         </Badge>
       </div>
 
-      {/* Map */}
       <div className="flex-1 relative" style={{ minHeight: 0 }}>
         <MapContainer
           center={[24.8607, 67.0011]}

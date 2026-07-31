@@ -1,7 +1,3 @@
-// ADR-0004 — AllRiders admin data table regression suite.
-// Covers: tab filtering + counts, search across name/phone/CNIC with debounce,
-// sort toggling + aria-sort, pagination reset-on-filter, alias mapping,
-// empty/error states, route guard, and route rendering.
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -16,8 +12,8 @@ import { server } from "../setup";
 
 const seedRiders: Array<Record<string, unknown>> = [
   { id: 1, name: "Alice Ahmed",   phone: "0300-1000001", cnic: "42101-1000001-1", activation_status: "active",     area: "DHA",     joinedAt: "2026-07-25" },
-  { id: 2, name: "Bob Bhatti",    phone: "0300-1000002", cnic: "42101-1000002-2", activation_status: "pending",    rideArea: "Clifton", joinedAt: "2026-07-24" }, // rideArea alias
-  { id: 3, name: "Carol Chen",    phone: "0300-1000003", cnic: "42101-1000003-3", activated: true,                 area: "Saddar",  joinedAt: "2026-07-23" }, // activated=true, no activation_status
+  { id: 2, name: "Bob Bhatti",    phone: "0300-1000002", cnic: "42101-1000002-2", activation_status: "pending",    rideArea: "Clifton", joinedAt: "2026-07-24" },
+  { id: 3, name: "Carol Chen",    phone: "0300-1000003", cnic: "42101-1000003-3", activated: true,                 area: "Saddar",  joinedAt: "2026-07-23" },
   { id: 4, name: "Danish Dar",    phone: "0300-1000004", cnic: "42101-1000004-4", activation_status: "blocked",    area: "Malir",   joinedAt: "2026-07-22" },
   { id: 5, name: "Erum Eshan",    phone: "0300-1000005", cnic: "42101-1000005-5", activation_status: "offboarded", area: "Korangi", joinedAt: "2026-07-21" },
   { id: 6, name: "Farhan Faisal", phone: "0300-1000006", cnic: "42101-1000006-6", activation_status: "active",     area: "Nazimabad", joinedAt: "2026-07-20" },
@@ -67,11 +63,9 @@ describe("AllRiders — data load + rendering", () => {
   it("renders rows after fetch and honors wire aliases (rideArea + activated boolean)", async () => {
     mockRiders();
     renderRoute();
-    // Bob was sent with `rideArea: "Clifton"` — must appear as Clifton via mapper.
     expect(await screen.findByText("Bob Bhatti")).toBeInTheDocument();
     const bobRow = screen.getByText("Bob Bhatti").closest("tr")!;
     expect(within(bobRow).getByText("Clifton")).toBeInTheDocument();
-    // Carol was sent with `activated: true` and no activation_status → Active.
     const carolRow = screen.getByText("Carol Chen").closest("tr")!;
     expect(within(carolRow).getByText("Active")).toBeInTheDocument();
   });
@@ -109,7 +103,6 @@ describe("AllRiders — status tabs + live counts", () => {
     const user = userEvent.setup();
     renderRoute();
     await screen.findByText("Alice Ahmed");
-    // Counts: total=12; active=8; pending=2; blocked=1; offboarded=1.
     expect(screen.getByTestId("fqa-count-all")).toHaveTextContent("12");
     expect(screen.getByTestId("fqa-count-active")).toHaveTextContent("8");
     expect(screen.getByTestId("fqa-count-pending")).toHaveTextContent("2");
@@ -131,7 +124,8 @@ describe("AllRiders — search (debounced 300ms) across name/phone/CNIC", () => 
     await screen.findByText("Alice Ahmed");
     const search = screen.getByLabelText(/search riders/i);
     await user.type(search, "farhan");
-    // Before debounce fires, list unchanged.
+    // The 300 ms debounce has not yet elapsed, so the visible list should
+    // still show the pre-typing rows.
     expect(screen.getByText("Alice Ahmed")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(350);
@@ -146,14 +140,12 @@ describe("AllRiders — search (debounced 300ms) across name/phone/CNIC", () => 
     const user = userEvent.setup();
     renderRoute();
     await screen.findByText("Alice Ahmed");
-    // Phone substring
     const search = screen.getByLabelText(/search riders/i);
     await user.type(search, "1000004");
     await waitFor(() => {
       expect(screen.getByText("Danish Dar")).toBeInTheDocument();
       expect(screen.queryByText("Alice Ahmed")).toBeNull();
     });
-    // Clear + CNIC substring
     await user.clear(search);
     await user.type(search, "42101-1000005");
     await waitFor(() => {
@@ -178,14 +170,12 @@ describe("AllRiders — sort cycle + aria-sort", () => {
     await user.click(button);
     expect(nameHeader).toHaveAttribute("aria-sort", "descending");
     await user.click(button);
-    // 3rd click → back to default (joinedAt desc); Name aria-sort resets to none.
     expect(nameHeader).toHaveAttribute("aria-sort", "none");
   });
 });
 
 describe("AllRiders — pagination resets on filter/tab/search change", () => {
   it("changing tab from a non-first page resets to page 1", async () => {
-    // 12 rows → 2 pages at pageSize=10. Go to page 2, switch tab, expect page 1.
     mockRiders();
     const user = userEvent.setup();
     renderRoute();
@@ -236,8 +226,6 @@ describe("AllRiders — Export button (E2)", () => {
     await waitFor(() =>
       expect(screen.getByText(/no riders found/i)).toBeInTheDocument(),
     );
-    // With 0 rows, the Export button is not rendered (toolbar path unchanged)?
-    // It IS rendered (toolbar is above table) — just disabled.
     const btn = screen.getByRole("button", { name: /export csv \(0 rows\)/i });
     expect(btn).toBeDisabled();
   });
@@ -250,8 +238,9 @@ describe("AllRiders — pagination summary aria-live (E3)", () => {
     await screen.findByText("Alice Ahmed");
     const nodes = screen.getAllByText(/showing 1–10 of 12 riders/i);
     const visible = nodes.find((n) => n.tagName.toLowerCase() === "p");
-    // Regression: prior impl had role="status" + aria-live="polite" on this
-    // <p>, which announced on every keystroke. Now plain text.
+    // A previous version placed role=status and aria-live=polite on the
+    // visible paragraph, which caused an announcement on every keystroke; this
+    // assertion locks in that the visible paragraph is now plain text.
     expect(visible).toBeTruthy();
     expect(visible!.getAttribute("role")).toBeNull();
     expect(visible!.getAttribute("aria-live")).toBeNull();
@@ -261,7 +250,6 @@ describe("AllRiders — pagination summary aria-live (E3)", () => {
     mockRiders();
     renderRoute();
     await screen.findByText("Alice Ahmed");
-    // Two matches: visible <p> + sr-only mirror. Sr-only carries aria-live.
     const nodes = screen.getAllByText(/showing 1–10 of 12 riders/i);
     expect(nodes.length).toBeGreaterThanOrEqual(2);
     const live = nodes.find((n) => n.getAttribute("aria-live") === "polite");
@@ -276,23 +264,18 @@ describe("AllRiders — URL-persisted filters (F1)", () => {
     renderRoute({
       path: "/admin/all-riders?status=active&q=carol&sort=name&dir=asc&pageSize=25",
     });
-    // Search input pre-filled
     const search = await screen.findByLabelText(/search riders/i);
     expect(search).toHaveValue("carol");
-    // Tab reflects status=active
     const activeTab = screen.getByRole("tab", { name: /^active/i });
     expect(activeTab).toHaveAttribute("aria-selected", "true");
-    // Sort: Name column ascending
     const nameHeader = screen.getByRole("columnheader", { name: /name/i });
     expect(nameHeader).toHaveAttribute("aria-sort", "ascending");
-    // Page size select
     expect(screen.getByLabelText(/rows per page/i)).toHaveValue("25");
   });
 
   it("writes state to URL as filters change; defaults omitted", async () => {
     mockRiders();
     const user = userEvent.setup();
-    // Use a probe route to observe the memory-router's search string.
     const router = createMemoryRouter(
       [
         {
@@ -316,14 +299,11 @@ describe("AllRiders — URL-persisted filters (F1)", () => {
     saveSession({ role: "Admin" });
     render(<RouterProvider router={router} />);
     await screen.findByText("Alice Ahmed");
-    // Default state → empty query string.
     expect(router.state.location.search).toBe("");
-    // Change tab → status appears in URL.
     await user.click(screen.getByRole("tab", { name: /blocked/i }));
     await waitFor(() => {
       expect(router.state.location.search).toMatch(/status=blocked/);
     });
-    // Back to "all" → status param drops from URL again.
     await user.click(screen.getByRole("tab", { name: /^all/i }));
     await waitFor(() => {
       expect(router.state.location.search).not.toMatch(/status=/);
@@ -335,7 +315,6 @@ describe("AllRiders — URL-persisted filters (F1)", () => {
     renderRoute({
       path: "/admin/all-riders?status=garbage&sort=bogus&dir=weird&pageSize=999&page=-4",
     });
-    // Loads with default tab (all), default sort (joinedAt desc), pageSize 10.
     await screen.findByText("Alice Ahmed");
     const allTab = screen.getByRole("tab", { name: /^all/i });
     expect(allTab).toHaveAttribute("aria-selected", "true");
@@ -352,12 +331,10 @@ describe("AllRiders — row → detail Sheet (F3)", () => {
     await user.click(row);
     const sheet = await screen.findByTestId("fqa-rider-detail-sheet");
     expect(sheet).toBeInTheDocument();
-    // Content: name in title, phone/CNIC/area in body.
     expect(within(sheet).getByRole("heading", { name: "Alice Ahmed" })).toBeInTheDocument();
     expect(within(sheet).getByText("0300-1000001")).toBeInTheDocument();
     expect(within(sheet).getByText("42101-1000001-1")).toBeInTheDocument();
     expect(within(sheet).getByText("DHA")).toBeInTheDocument();
-    // Missing best-effort fields render as "—".
     expect(within(sheet).getAllByText("—").length).toBeGreaterThan(0);
   });
 

@@ -1,12 +1,3 @@
-// MSW handlers for the riders/registration surface. Two endpoints:
-//   1. POST /GetAll/UnregisteredRiders — pending/unregistered subset (D18).
-//   2. POST /GetAll/Riders — unified all-riders roster (ADR-0004).
-//
-// URLs come from src/lib/config.ts (H6). Contract lives in ADR-0003's table —
-// keep both in sync (H6). AllRiders seeds intentionally exercise BOTH wire
-// alias paths so `toAllRidersRow` is honestly tested:
-//   - some rows use `area`, some `rideArea`
-//   - some rows use `activation_status`, others use boolean `activated`
 import { http, HttpResponse } from "msw";
 import {
   API_GET_ALL_RIDERS_URL,
@@ -39,16 +30,14 @@ const unregisteredSeeds: MockUnregisteredRider[] = [
   { id: 103, name: "Zain ul Abidin", phone: "0300-3333333", activation_status: "active", area: "Gulshan-e-Iqbal" },
 ];
 
-// ADR-0004 seeds — 18 riders across all 4 statuses. Wire alias coverage:
-//   - Alia (id 202) uses `rideArea` (not `area`) → mapper must resolve it.
-//   - Faisal (id 204) sends `activated:true` WITHOUT activation_status → mapper
-//     must classify as active.
-//   - Others use the canonical `area` + `activation_status` fields.
+// Seed rows deliberately mix wire-field aliases so the mapper is exercised end-to-end:
+// one row uses `rideArea` instead of `area`, and another uses boolean `activated`
+// without an `activation_status` string.
 const allRidersSeeds: Array<Record<string, unknown>> = [
   { id: 201, name: "Muhammad Imran", phone: "0312-4561234", cnic: "42101-7654321-3", activation_status: "pending",    area: "DHA",             joinedAt: "2026-07-20" },
-  { id: 202, name: "Alia Rehman",    phone: "0321-1234500", cnic: "42101-1111111-1", activation_status: "active",     rideArea: "Clifton",     joinedAt: "2026-07-15" }, // rideArea alias
+  { id: 202, name: "Alia Rehman",    phone: "0321-1234500", cnic: "42101-1111111-1", activation_status: "active",     rideArea: "Clifton",     joinedAt: "2026-07-15" },
   { id: 203, name: "Naveed Akhtar",  phone: "0321-9876543", cnic: "42201-1234567-1", activation_status: "pending",    area: "Gulshan-e-Iqbal", joinedAt: "2026-07-18" },
-  { id: 204, name: "Faisal Khan",    phone: "0300-9990001", cnic: "42301-2222222-2", activated: true,                 area: "Saddar",          joinedAt: "2026-07-10" }, // activated boolean, no activation_status
+  { id: 204, name: "Faisal Khan",    phone: "0300-9990001", cnic: "42301-2222222-2", activated: true,                 area: "Saddar",          joinedAt: "2026-07-10" },
   { id: 205, name: "Shoaib Malik",   phone: "0333-1122334", cnic: "42301-9988776-5", activation_status: "pending",    area: "Nazimabad",       joinedAt: "2026-07-22" },
   { id: 206, name: "Rizwan Ghafoor", phone: "0345-5544332", cnic: "42101-4433221-7", activation_status: "blocked",    area: "Malir",           joinedAt: "2026-06-30" },
   { id: 207, name: "Danish Mehmood", phone: "0300-7654321", cnic: "42401-6677889-2", activation_status: "active",     area: "North Karachi",   joinedAt: "2026-07-05" },

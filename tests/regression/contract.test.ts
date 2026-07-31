@@ -1,7 +1,3 @@
-// H1 — API fetch contract is FROZEN. These tests intercept the outgoing
-// fetch via msw/node runtime handlers, assert the JSON body has EXACTLY
-// the expected key set (no extra, no missing), and that credentials/content-type
-// are correct. Any drift here = pre-merge failure.
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../setup";
@@ -15,11 +11,7 @@ async function captureLoginBody(triggerBody: Record<string, unknown>) {
     http.post(API_LOGIN_URL, async ({ request }) => {
       seen = await request.json();
       contentType = request.headers.get("content-type");
-      // In fetch spec, request.credentials is not exposed on the server side
-      // (MSW request is a Fetch Request). We instead verify via cookie behavior:
-      // credentials:'include' allows Cookie header — we can't set one here, so
-      // we settle for shape + content-type. Presence of the request itself with
-      // fetch options credentials:'include' is the client-side contract.
+      // The server-side Fetch Request does not expose the client credentials flag, so this test verifies shape and content-type only.
       credentialsOk = true;
       return HttpResponse.json({ role: "Rider", profile: { role: "Rider" } });
     }),
@@ -41,7 +33,7 @@ describe("H1 — POST /user/login body shape", () => {
     });
     expect(status).toBe(200);
     expect(seen).toEqual({ phone: "0300111111", password: "rider" });
-    // Strict key-set check (guards against silent widening like `email`).
+    // Strict key-set check guards against a silent widening of the request body.
     expect(Object.keys(seen as object).sort()).toEqual(["password", "phone"]);
     expect(contentType).toMatch(/application\/json/i);
   });

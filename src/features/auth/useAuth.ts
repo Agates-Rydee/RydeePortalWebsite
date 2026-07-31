@@ -1,5 +1,3 @@
-// useAuth hook. Split from AuthProvider.tsx so AuthProvider.tsx exports
-// only components (react-refresh only-export-components).
 import { useContext } from "react";
 import { AuthContext, type AuthContextValue } from "./auth-context";
 

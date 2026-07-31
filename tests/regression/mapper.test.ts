@@ -1,5 +1,3 @@
-// ADR-0004 — wire → domain mapper unit tests. Alias rules must mirror
-// PendingRiders.toPendingRider (see mapper.ts header).
 import { describe, expect, it, vi } from "vitest";
 import { mapAllRidersResponse, toAllRidersRow } from "@/features/riders/mapper";
 

@@ -1,9 +1,3 @@
-// Admin dashboard. D8 Phase 2 restyle: header + stat cards extracted to
-// shared components (DashboardHeader, StatCard); JS hover handlers removed.
-//
-// Merge (2026-07-29): live pending fetch (POST /GetAll/UnregisteredRiders)
-// — logic UNCHANGED from b0ef29c. Endpoint from src/lib/config.ts (H6);
-// MSW handler + ADR-0003 cover request/response shape.
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,9 +83,6 @@ export default function AdminDashboard({ onNavigate, onLogout, profile }: Props)
         </div>
 
         <div className="flex flex-col gap-4">
-          {/* Register new user — interactive card. Card wraps a Button
-              (not asChild — shadcn Card is a plain div). Focus ring lives
-              on the inner Button so keyboard users get feedback. */}
           <Card className="rounded-2xl border border-[color:var(--brand-bright)]/30 card-elevated card-elevated-hover transition-shadow p-0">
             <Button
               type="button"

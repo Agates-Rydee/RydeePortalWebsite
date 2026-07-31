@@ -1,11 +1,3 @@
-// Hand-rolled RFC-4180 CSV serializer for the All Riders export (ADR-0004 §D2).
-// Zero dependencies — CSV-only, XLSX deferred (D23).
-//
-// Rules:
-//   - Fields containing comma, double-quote, CR, or LF are wrapped in "…".
-//   - Inner double-quotes are doubled ("" per RFC-4180).
-//   - Line ending is CRLF (\r\n).
-//   - Header row emitted first, then data rows in the given order.
 import type { AllRidersRow, RiderStatus } from "@/types/rider";
 
 const NEEDS_QUOTE = /[",\r\n]/;
@@ -24,7 +16,6 @@ const STATUS_LABEL: Record<RiderStatus, string> = {
   offboarded: "Offboarded",
 };
 
-// Column order matches UX spec §2.1 (minus Actions).
 export const CSV_HEADERS = [
   "Name",
   "Phone",
@@ -51,7 +42,7 @@ export function ridersToCsv(rows: readonly AllRidersRow[]): string {
   return [header, ...body].join("\r\n");
 }
 
-/** Local YYYY-MM-DD. Local (not UTC) to match "current-day" admin intuition. */
+/** Returns today's date as YYYY-MM-DD in local time so filenames match the admin's calendar day. */
 export function todayIso(now: Date = new Date()): string {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
@@ -63,9 +54,9 @@ export function csvFilename(statusTab: string, now: Date = new Date()): string {
   return `rydee-riders-${statusTab}-${todayIso(now)}.csv`;
 }
 
-/** Trigger a browser download for the given CSV text. Split for testability. */
+/** Triggers a browser download for the given CSV text. Split out so tests can call the serializer without touching the DOM. */
 export function downloadCsv(csv: string, filename: string): void {
-  // Prepend UTF-8 BOM so Excel opens non-ASCII fields correctly.
+  // Prepend the UTF-8 byte-order mark so Excel opens non-ASCII fields correctly.
   const blob = new Blob(["\uFEFF" + csv], {
     type: "text/csv;charset=utf-8;",
   });

@@ -1,4 +1,3 @@
-// ADR-0004 §D2 — CSV serializer edge-case coverage.
 import { describe, expect, it } from "vitest";
 import {
   csvEscape,
@@ -46,7 +45,7 @@ describe("ridersToCsv", () => {
     const csv = ridersToCsv(rows);
     const lines = csv.split("\r\n");
     expect(lines[0]).toBe(CSV_HEADERS.join(","));
-    // Row 1: name is quoted (comma + quote), area is quoted (newline).
+    // First data row: the name field contains a comma and quote (must be wrapped and doubled), and the area contains a newline (must be wrapped).
     expect(lines[1]).toBe(
       '"Imran, ""The Boss""",0300-1111111,42101-1111111-1,Active,"DHA\nPhase 5",2026-07-20',
     );

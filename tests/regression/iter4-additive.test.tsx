@@ -9,11 +9,6 @@ import { StatCard } from "@/features/dashboards/components/StatCard";
 import { API_REGISTER_URL } from "@/lib/config";
 import { server } from "../setup";
 
-// Iter 4 additive coverage — QA-Iter4. Does NOT modify the 44 baseline tests.
-// Exercises: on-blur validation, submit-time ISO conversion (incl. leap year
-// 29/02 + age-18/100 boundaries), StatCard button-vs-static, and the DobPicker
-// lazy chunk stays unmounted until user click.
-
 function renderRegister() {
   return render(
     <MemoryRouter initialEntries={["/register"]}>
@@ -60,18 +55,6 @@ describe("Iter 4 §1 — RegisterPage on-blur validation", () => {
 });
 
 describe("Iter 4.1 hotfix — DOB DatePickerField (button-trigger pattern)", () => {
-  // Iter 4.1 owner feedback: the typeable dob input + ghost calendar icon
-  // failed discoverability. The field is now a full-width outline <Button>
-  // trigger opening a Popover Calendar with year/month dropdowns; typed
-  // entry is REMOVED. Since the picker bounds (fromYear=1940,
-  // toYear=currentYear-18, disabled after Dec 31) prevent selecting
-  // invalid or under-18 dates at the source, the former "typed 29/02/2023
-  // shows error" / "typed age<18 shows error" scenarios are unreachable
-  // by design. Coverage retained here: (a) trigger visible with accessible
-  // name + muted placeholder, (b) required validation blocks submit when
-  // no date picked, (c) picker chunk stays unmounted on initial render
-  // (phase-6 lazy-load preserved). ISO wire-format is still asserted
-  // end-to-end by tests/regression/contract.test.ts (backend contract).
   it("renders the outline button trigger with the muted DD/MM/YYYY placeholder", () => {
     renderRegister();
     const trigger = screen.getByLabelText(/Date of birth/i);
@@ -90,7 +73,6 @@ describe("Iter 4.1 hotfix — DOB DatePickerField (button-trigger pattern)", () 
     );
     const user = userEvent.setup();
     renderRegister();
-    // Fill every other required field so dob is the ONLY thing blocking submit.
     await user.type(screen.getByLabelText(/^Name$/), "Test User");
     await user.type(screen.getByLabelText(/Email address/i), "t@example.com");
     await user.type(screen.getByLabelText(/Phone number/i), "0300123456");
@@ -98,12 +80,9 @@ describe("Iter 4.1 hotfix — DOB DatePickerField (button-trigger pattern)", () 
     await user.type(screen.getByLabelText(/^Password$/), "hunter2xx");
     await user.type(screen.getByLabelText(/Confirm password/i), "hunter2xx");
     await user.click(screen.getByRole("button", { name: /Create account/i }));
-    // Validation error appears (role=alert wired via aria-describedby)
     const err = await screen.findByText(/Enter a valid date of birth/);
     expect(err).toHaveAttribute("role", "alert");
-    // No fetch fired
     expect(called).toBe(false);
-    // First-invalid focus lands on the dob trigger
     expect(document.activeElement).toBe(screen.getByLabelText(/Date of birth/i));
   });
 
@@ -131,7 +110,6 @@ describe("Iter 4 §5 — StatCard button vs static rendering", () => {
     );
     const btn = screen.getByRole("button", { name: /View 5 pending riders/i });
     expect(btn.tagName).toBe("BUTTON");
-    // No nested interactive descendants
     expect(btn.querySelectorAll("button, a").length).toBe(0);
   });
 
@@ -158,21 +136,13 @@ describe("Iter 4 §5 — StatCard button vs static rendering", () => {
 });
 
 describe("Iter 4.4 — DatePickerField popover subtree gated on click", () => {
-  // Iter 4.4 simplification (2026-07-30): the React.lazy / Suspense split for
-  // the popover was dropped in favor of the canonical static shadcn pattern
-  // (owner decision — at ~224 kB total, micro-splitting isn't worth the code
-  // + loading-state complexity). The POPOVER-CLOSED-until-click contract is
-  // still meaningful (Radix doesn't mount PopoverContent while closed), so we
-  // keep asserting it — but the lazy-chunk aspect is gone.
   it("mounts a static outline trigger; Radix PopoverContent is absent until clicked", async () => {
     const user = userEvent.setup();
     renderRegister();
     const trigger = screen.getByLabelText(/Date of birth/i);
     expect(trigger.tagName).toBe("BUTTON");
     expect(trigger).toHaveTextContent("DD/MM/YYYY");
-    // Closed popover: content wrapper is not in the DOM.
     expect(document.querySelector("[data-radix-popper-content-wrapper]")).toBeNull();
-    // Click opens it — Radix mounts PopoverContent into the portal.
     await user.click(trigger);
     await waitFor(() =>
       expect(document.querySelector("[data-radix-popper-content-wrapper]")).not.toBeNull(),

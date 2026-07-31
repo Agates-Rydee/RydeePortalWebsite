@@ -3,10 +3,7 @@ import { RouterProvider } from "react-router";
 import { router } from "./router";
 import "./styles/index.css";
 
-// MSW boot — dev only, and only when explicitly enabled via VITE_ENABLE_MSW.
-// The dynamic import() + `import.meta.env.DEV` guard causes Vite/Rollup to
-// tree-shake the entire mocks/ subtree out of the production bundle. See
-// ADR-0003.
+// Mock service worker boot: dev only, gated on VITE_ENABLE_MSW. The dynamic import combined with the import.meta.env.DEV guard lets the bundler tree-shake the entire mocks tree out of production.
 async function enableMockingIfConfigured(): Promise<void> {
   if (!import.meta.env.DEV) return;
   if (import.meta.env.VITE_ENABLE_MSW !== "true") return;

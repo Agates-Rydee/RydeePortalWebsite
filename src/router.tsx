@@ -1,10 +1,3 @@
-// Route tree per ADR-0002.
-//
-// This module intentionally exports ONLY the router value — layout,
-// index redirect, and per-feature route adapters live alongside their
-// features (see src/router-layout.tsx, src/features/dashboards/routes.tsx,
-// src/features/riders/routes.tsx). Split completed 2026-07-30 to clear
-// the react-refresh/only-export-components lint warnings.
 import { Navigate, createBrowserRouter } from "react-router";
 import { ProtectedRoute, PublicOnly } from "@/features/auth/ProtectedRoute";
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -28,7 +21,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <IndexRedirect /> },
 
-      // Public-only (login / register)
       {
         element: <PublicOnly />,
         children: [
@@ -37,7 +29,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Rider
       {
         element: <ProtectedRoute allow={["Rider"]} />,
         children: [
@@ -45,7 +36,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Admin-only surface (dashboard + create-user)
       {
         element: <ProtectedRoute allow={["Admin"]} />,
         children: [
@@ -54,8 +44,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Rider-management views: shared by Admin AND Operator per ADR-0002
-      // (amended 2026-07-29 for QA F3 / user Option A).
       {
         element: <ProtectedRoute allow={["Admin", "Operator"]} />,
         children: [
@@ -66,7 +54,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Operator dashboard
       {
         element: <ProtectedRoute allow={["Operator"]} />,
         children: [
@@ -74,7 +61,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Catch-all
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },

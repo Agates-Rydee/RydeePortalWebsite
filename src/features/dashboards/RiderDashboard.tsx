@@ -1,6 +1,3 @@
-// Rider-role dashboard. D8 Phase 2: shared DashboardHeader + responsive
-// grid fix (was w-[850px] fixed; now w-full max-w-[850px]). Table body
-// migration to shadcn Table is deferred to Phase 4 per spec §7.
 import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
 import { Card } from "@/components/ui/card";
 import logoUrl from "@/assets/MapIcon.png";
@@ -51,7 +48,6 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
           </p>
         </div>
         <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(300px,40%)_1fr] gap-6">
-          {/* LEFT — Rider Profile table (shadcn Table migration → Phase 4) */}
           <Card className="rounded-2xl p-6 card-elevated border-border">
             <h2 className="text-xl font-bold mb-4 text-foreground">Rider Profile</h2>
             <table className="w-full border-collapse">
@@ -120,7 +116,6 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
             </table>
           </Card>
 
-          {/* RIGHT — Google Map (responsive: full width up to 850px cap) */}
           <div className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden">
             <GoogleMap
               center={center}

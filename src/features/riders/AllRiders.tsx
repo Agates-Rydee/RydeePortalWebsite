@@ -1,17 +1,3 @@
-// ADR-0004: All Riders admin data table. UX spec: docs/ux/riders-table-spec.md.
-//
-// Hand-rolled sort/filter/paginate over a client-side array — no TanStack
-// Table dep (band headroom, MVP scope). Rendered on shadcn <Table> primitives.
-// Endpoint URL from src/lib/config.ts (H6). Status enum:
-//   active | pending | blocked | offboarded (ADR-0004 §D3).
-//
-// Fast-follows (2026-07-31):
-//   • URL-persisted filters via useSearchParams — status, q, sort, dir, page,
-//     pageSize. Defaults omitted from the URL. Invalid params fall back to
-//     defaults silently (never throw).
-//   • Sticky <thead> on scroll (position: sticky).
-//   • Row → detail Sheet: click a row, Enter/Space when focused. Esc closes,
-//     focus returns to the row (Radix + explicit restore).
 import {
   useCallback,
   useEffect,
@@ -49,7 +35,6 @@ interface SortState {
   key: SortKey;
   dir: SortDir;
 }
-// Default sort: joinedAt desc (newest first) — UX spec §2.2.
 const DEFAULT_SORT: SortState = { key: "joinedAt", dir: "desc" };
 
 const STATUS_TABS: readonly StatusTab[] = [
@@ -98,10 +83,11 @@ function formatJoined(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/** Debounce a value by `ms` ms. Used for the 300ms search input. */
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
   useEffect(() => {
+    // Restart the timer whenever the input value changes; the returned value only
+    // updates after the caller stops changing it for the full delay window.
     const t = setTimeout(() => setV(value), ms);
     return () => clearTimeout(t);
   }, [value, ms]);
@@ -122,10 +108,6 @@ function compare(
   });
   return dir === "asc" ? cmp : -cmp;
 }
-
-// ─── URL param helpers ─────────────────────────────────────────────────
-// Read-once at mount, then written on every state change. Defaults are
-// omitted so URLs stay short and shareable. Invalid params → defaults.
 
 function readStatusTab(sp: URLSearchParams): StatusTab {
   const v = sp.get("status");
@@ -158,9 +140,9 @@ function readPage(sp: URLSearchParams): number {
 export default function AllRiders({ onBack }: { onBack: () => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read-once init from URL. State is source-of-truth after mount; the effect
-  // below writes back to the URL. This keeps refresh + back-button working
-  // without a two-way reactive loop (which would fight react-router).
+  // Snapshot the URL parameters at mount and treat local state as the source of
+  // truth from then on; a separate effect writes state back to the URL. This
+  // preserves refresh and back-button behaviour without a two-way reactive loop.
   const initialParams = useRef(searchParams).current;
 
   const [rows, setRows] = useState<AllRidersRow[] | null>(null);
@@ -176,9 +158,9 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
   const [page, setPage] = useState(() => readPage(initialParams));
   const [pageSize, setPageSize] = useState<PageSize>(() => readPageSize(initialParams));
 
-  // Row → detail Sheet state (F3). `activeRow` remains set while the Sheet
-  // closes so the exit animation renders content. Focus restore is handled
-  // by stashing the trigger element and restoring in onOpenChange.
+  // Keep activeRow set while the detail sheet is closing so the exit animation
+  // still has content to render. Focus is restored by stashing the trigger row
+  // element and calling focus() on it inside onOpenChange.
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<AllRidersRow | null>(null);
   const lastTriggerRef = useRef<HTMLTableRowElement | null>(null);
@@ -186,10 +168,10 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
   const handleSheetOpenChange = useCallback((open: boolean) => {
     setSheetOpen(open);
     if (!open) {
-      // Restore focus to the row that opened the Sheet (a11y contract).
       const el = lastTriggerRef.current;
       if (el && typeof el.focus === "function") {
-        // Defer to after Radix' own focus dance completes.
+        // Wait until Radix has finished its own focus handling before restoring
+        // focus to the originating row, otherwise Radix overwrites it.
         queueMicrotask(() => el.focus());
       }
     }
@@ -201,12 +183,10 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
     setSheetOpen(true);
   }, []);
 
-  // Reset page 1 whenever filters/search/tab/pageSize change.
   useEffect(() => {
     setPage(1);
   }, [statusTab, debouncedSearch, pageSize]);
 
-  // Sync state → URL. Defaults omitted so shared links stay minimal.
   useEffect(() => {
     const next = new URLSearchParams();
     if (statusTab !== "all") next.set("status", statusTab);
@@ -218,11 +198,12 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
     }
     if (page !== 1) next.set("page", String(page));
     if (pageSize !== DEFAULT_PAGE_SIZE) next.set("pageSize", String(pageSize));
-    // Only write if something changed — avoids replace-history churn.
+    // Skip the write when the serialised parameters have not changed so we do
+    // not churn the router history with identical replace() calls.
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
-    // We intentionally omit searchParams from deps: it's re-derived here.
+    // searchParams is intentionally omitted: this effect derives it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusTab, debouncedSearch, sort.key, sort.dir, page, pageSize, setSearchParams]);
 
@@ -259,7 +240,6 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
 
   const total = rows?.length ?? 0;
 
-  // Counts per status tab — computed once per data change; ignores search.
   const counts = useMemo(() => {
     const c: Record<StatusTab, number> = {
       all: 0,
@@ -274,7 +254,6 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
     return c;
   }, [rows]);
 
-  // Post-filter, pre-slice rows — used by table AND CSV export.
   const filteredRows = useMemo(() => {
     if (!rows) return [];
     const q = debouncedSearch.trim().toLowerCase();
@@ -287,7 +266,7 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
           r.cnic.toLowerCase().includes(q),
       );
     }
-    // Copy before sort to avoid mutating memoized upstream ref.
+    // Sort a copy so the memoised upstream array is never mutated in place.
     return [...out].sort((a, b) => compare(a, b, sort.key, sort.dir));
   }, [rows, statusTab, debouncedSearch, sort]);
 
@@ -300,7 +279,7 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
     setSort((prev) => {
       if (prev.key !== key) return { key, dir: "asc" };
       if (prev.dir === "asc") return { key, dir: "desc" };
-      // 3rd click on same column → back to default sort.
+      // Third click on the same column returns to the default sort state.
       return DEFAULT_SORT;
     });
   }, []);
@@ -333,11 +312,11 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
   const loading = rows === null && error === null;
   const empty = rows !== null && filteredRows.length === 0;
 
-  // Post-debounce announcement for AT users. `role=status`+`aria-live=polite`
-  // on the visible summary paragraph fired on every keystroke (E3). Instead
-  // we render a `sr-only` live region that mirrors the settled summary; the
-  // visible paragraph is plain text. Announcement text only changes when the
-  // *debounced* filter set changes — no per-keystroke chatter.
+  // The visible summary paragraph is plain text; the aria-live announcement is
+  // rendered separately as a screen-reader-only region that mirrors the settled
+  // summary. Because summaryText is derived from the debounced search value, the
+  // live region only updates once the user stops typing, avoiding per-keystroke
+  // chatter for assistive-technology users.
   const summaryText = `Showing ${pageStart + 1}–${Math.min(pageStart + pageSize, filteredRows.length)} of ${filteredRows.length} riders${filteredRows.length !== total ? ` (filtered from ${total})` : ""}`;
 
   return (
@@ -364,7 +343,6 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
           Search, filter, and export the full rider roster.
         </p>
 
-        {/* Toolbar: status tabs + search + export */}
         <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
           <div
             role="tablist"
@@ -479,8 +457,8 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
                 <caption className="sr-only">
                   All riders — sortable, filterable
                 </caption>
-                {/* Sticky header (F2): position:sticky on <thead>. Bg + border
-                    prevent content bleed under the header on scroll. */}
+                {/* Explicit background and inset border on the sticky header keep
+                    scrolling row content from bleeding through underneath it. */}
                 <thead className="sticky top-0 z-10 bg-muted text-left text-xs font-medium text-muted-foreground uppercase tracking-wider shadow-[inset_0_-1px_0_hsl(var(--border))]">
                   <tr>
                     <SortableTh sortKey="name" ariaSort={ariaSortFor("name")} onSort={toggleSort} minWidth="min-w-[160px]">
@@ -538,7 +516,6 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
                         {formatJoined(r.joinedAt)}
                       </td>
                       <td className="px-4 py-3 text-center text-xs text-muted-foreground">
-                        {/* Row is the trigger now — Sheet holds details. */}
                         —
                       </td>
                     </tr>
@@ -551,10 +528,7 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
 
         {!loading && !error && !empty && (
           <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            {/* Visible summary: plain text, no aria-live (E3 fix). */}
             <p className="text-xs text-muted-foreground">{summaryText}</p>
-            {/* Sr-only live region: only updates when the DEBOUNCED filter
-                set settles, so screen readers don't announce every keystroke. */}
             <div className="sr-only" aria-live="polite">
               {summaryText}
             </div>

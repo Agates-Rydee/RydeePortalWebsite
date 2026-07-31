@@ -1,14 +1,12 @@
-// Extracted 2026-07-30 (D8 Phase 2): pre-refactor Admin/Operator/Rider
-// dashboards each open with a byte-for-byte duplicated <header>. This
-// organism folds them into one component driven by props.
+// Shared header used by the Admin, Operator, and Rider dashboards.
 import { Logo } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface Props {
-  /** Optional role badge — omit for RiderDashboard which had no badge. */
+  /** Optional role badge; omit to render the header without one. */
   roleLabel?: string;
-  /** Displayed on ≥sm; hidden on mobile. */
+  /** Displayed on small breakpoints and up; hidden on mobile. */
   userName?: string | null;
   onLogout: () => void;
 }

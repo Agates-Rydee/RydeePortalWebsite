@@ -1,5 +1,3 @@
-// Route-element adapters for the rider-management pages. Split out of
-// src/router.tsx in Iteration 2 for react-refresh/only-export-components.
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/useAuth";
 import { roleHome } from "@/types/profile";
@@ -17,7 +15,7 @@ export function AllRidersRoute() {
 export function ActiveRidersRoute() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  // Preserve old "back to your own dashboard" behavior.
+  // Route the user back to their own role home when the back action fires.
   const onBack = () => navigate(roleHome(profile?.role));
   return <ActiveRiders onBack={onBack} />;
 }

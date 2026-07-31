@@ -1,6 +1,3 @@
-// D9 session persistence — unit tests for the sole read/write path per H7.
-// Envelope shape: { v: 1, profile, savedAt }. Any drift here breaks the
-// F1 loop-break across refreshes (see docs/qa/release-readiness.md §D9).
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SESSION_MAX_AGE_MS,

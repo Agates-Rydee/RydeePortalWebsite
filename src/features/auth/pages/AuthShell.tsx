@@ -1,5 +1,3 @@
-// Visual chrome shared by /login, /register, and /admin/register.
-// D8 restyle Phase 1: unchanged layout, tokens now via Tailwind classes.
 import type { ReactNode } from "react";
 import { Bg } from "@/components/shared";
 

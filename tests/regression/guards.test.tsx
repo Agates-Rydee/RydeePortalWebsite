@@ -1,8 +1,3 @@
-// Guard regression suite — synthetic route tree wired with the REAL
-// AuthProvider, ProtectedRoute, PublicOnly, IndexRedirect, and roleHome.
-// We stub the three dashboard route elements so this suite doesn't pull
-// in leaflet / google-maps / recharts. Guard logic is the F1/F3 surface;
-// dashboards are covered by contract + login-flow suites.
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import {
@@ -16,8 +11,6 @@ import { IndexRedirect } from "@/router-layout";
 import { saveSession } from "@/features/auth/session";
 import type { Profile } from "@/types/profile";
 
-// Minimal placeholders. Each renders a unique data-testid so we can
-// assert "did we end up here?" without hitting any real page code.
 const Stub = (id: string) => () => <div data-testid={id}>{id}</div>;
 const LoginStub = Stub("login-page");
 const RegisterStub = Stub("register-page");
@@ -33,7 +26,6 @@ function makeRouter(initial: string[]) {
       {
         element: (
           <AuthProvider>
-            {/* Outlet-style layout; RouterProvider renders children into the layout. */}
             <TestOutlet />
           </AuthProvider>
         ),
@@ -73,7 +65,6 @@ function makeRouter(initial: string[]) {
   );
 }
 
-// Router expects Outlet — inline import kept local to avoid polluting top.
 import { Outlet } from "react-router";
 function TestOutlet() {
   return <Outlet />;
@@ -87,9 +78,6 @@ function seedSession(profile: Profile) {
   saveSession(profile);
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Logged-OUT deep links → /login
-// ─────────────────────────────────────────────────────────────────────
 describe("guards (logged out) — deep-link protection", () => {
   it.each(["/admin", "/rider", "/operator", "/admin/active-riders", "/admin/pending-riders"])(
     "deep-link to %s while unauthed → /login",
@@ -100,9 +88,6 @@ describe("guards (logged out) — deep-link protection", () => {
   );
 });
 
-// ─────────────────────────────────────────────────────────────────────
-// Role isolation
-// ─────────────────────────────────────────────────────────────────────
 describe("guards (logged in) — role isolation", () => {
   it("Rider cannot reach /admin (bounced to /rider)", async () => {
     seedSession({ role: "Rider" });
@@ -126,7 +111,6 @@ describe("guards (logged in) — role isolation", () => {
   it("Rider cannot reach /admin/active-riders (Rider not in allow)", async () => {
     seedSession({ role: "Rider" });
     renderAt("/admin/active-riders");
-    // Bounced to roleHome('Rider') = /rider
     expect(await screen.findByTestId("rider-page")).toBeInTheDocument();
   });
 
@@ -137,9 +121,6 @@ describe("guards (logged in) — role isolation", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────
-// PublicOnly — bounce authed users
-// ─────────────────────────────────────────────────────────────────────
 describe("PublicOnly — logged-in user hitting /login is bounced to role home", () => {
   it("Admin at /login → /admin", async () => {
     seedSession({ role: "Admin" });
@@ -154,12 +135,12 @@ describe("PublicOnly — logged-in user hitting /login is bounced to role home",
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────
-// F1 — infinite-loop regression across unknown roles.
-// The guarantee: after N renders, we land on the login page AND the
-// session is cleared. React Testing Library implicitly asserts
-// termination (no "Maximum update depth exceeded" thrown).
-// ─────────────────────────────────────────────────────────────────────
+// Regression: an authenticated session carrying an unknown role must not
+// send guards into a redirect loop. Each case below has to land on the login
+// page (React Testing Library implicitly asserts termination — if the render
+// loop never settled, it would throw "Maximum update depth exceeded") and
+// the persisted session must be cleared by the useEffect logout inside
+// PublicOnly.
 describe("F1 — unknown-role authed users terminate on /login and log out", () => {
   it.each([
     ["Customer", { role: "Customer" }],
@@ -167,12 +148,10 @@ describe("F1 — unknown-role authed users terminate on /login and log out", () 
     ["garbage", { role: "not-a-real-role" }],
   ])("%s: renders login, storage cleared, no infinite loop", async (_label, profile) => {
     seedSession(profile as Profile);
-    renderAt("/admin"); // any protected route — will bounce to /login → PublicOnly
+    renderAt("/admin");
 
-    // Assertion 1: LoginPage rendered (loop terminated, no blank screen).
     expect(await screen.findByTestId("login-page")).toBeInTheDocument();
 
-    // Assertion 2: PublicOnly's useEffect(logout) cleared the envelope.
     await waitFor(() => {
       expect(window.localStorage.getItem("rydee.session")).toBeNull();
     });

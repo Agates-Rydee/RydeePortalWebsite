@@ -1,33 +1,24 @@
-// D8 Phase 2: shared stat card used by Admin + Operator dashboards.
-// Iter 4 §5: when `onClick` is provided AND `value` is non-null, the entire
-// card is rendered as a semantic <button> for a full-size click target with
-// hover elevation, active-scale, focus-visible ring, and a dynamic aria-label.
-// The inner value renders as a plain <p> in that case — no nested interactives.
-// When `value` is null (loading) OR `onClick` is absent, the card is a static
-// <div>, matching the pre-Iter-4 read-only appearance.
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 
 interface StatCardProps {
   label: string;
-  /** null/undefined shows "—" sentinel while loading (parity with pre-D8). */
+  // A null or undefined value renders the em-dash sentinel used as the
+  // loading placeholder.
   value: number | string | null | undefined;
-  /** Tailwind color classname for the value (e.g. "text-primary", "text-warning"). */
   valueClassName?: string;
-  /** Optional tap-through — makes the entire card an interactive <button>. */
   onClick?: () => void;
   hint?: string;
   icon: ReactNode;
   iconBgClassName?: string;
 }
 
-// Base visual chrome shared by static + interactive variants.
 const CARD_BASE =
   "rounded-2xl p-6 flex-row items-center justify-between gap-4 card-elevated border-border";
 
-// Interactive-only additions: motion, focus ring, hover elevation, press scale.
-// motion-reduce:* guards defer to the prefers-reduced-motion override already
-// in theme.css, but we set them explicitly for defensiveness on this element.
+// The motion-reduce utility classes duplicate the prefers-reduced-motion
+// override in theme.css so the animation is still guaranteed to be disabled
+// even if this element is rendered outside the base layer for any reason.
 const CARD_INTERACTIVE =
   "text-left w-full transition-all duration-200 " +
   "hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] " +
@@ -64,10 +55,9 @@ export function StatCard({
   );
 
   if (interactive) {
-    // Rendered as a <Card asChild-equivalent> via the underlying div-vs-button
-    // switch: we render a real <button> and re-apply the Card visual classes
-    // (bg-card / text-card-foreground / gap-6 / rounded-xl / border) so the
-    // semantic root becomes the interactive element without wrapping/nesting.
+    // Render a native <button> and re-apply the Card visual classes so the
+    // interactive element is itself the semantic root, without a wrapping
+    // <div> that would nest interactive controls or add an extra tab stop.
     const ariaLabel = `View ${display} ${label.toLowerCase()}`;
     return (
       <button

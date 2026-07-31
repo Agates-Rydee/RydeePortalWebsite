@@ -1,10 +1,3 @@
-// D8 restyle Phase 1: hand-rolled buttons/inputs → shadcn primitives.
-// Fetch call unchanged. Role dropdown DELIBERATELY kept as native <select>
-// (deviation from spec §2.1): regression test tests/regression/roles.test.tsx
-// casts the label target to HTMLSelectElement and uses within().getAllByRole(
-// "option"). Migrating to Radix Select breaks that assertion; spec's
-// DO-NOT-CHANGE rule (§6.4) preserves test-visible contracts, so we keep the
-// native <select> here. Other Radix Select swaps happen in Phase 3.
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
@@ -19,13 +12,13 @@ import { API_REGISTER_URL } from "@/lib/config";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
 
-// Iter 4 §2: min age 18 per product decision 2.
 const DOB_MAX_YEAR = new Date().getFullYear() - 18;
 const DOB_MIN_YEAR = 1940;
 
-// Parse DD/MM/YYYY -> Date for defensive submit-time validation. The picker
-// itself never produces an invalid or out-of-range string, but the validator
-// runs regardless (belt-and-suspenders + covers the empty state).
+// Parse a DD/MM/YYYY string into a Date and reject inputs whose numeric
+// components do not survive round-tripping through Date (which silently rolls
+// impossible dates like 31/02/2000 forward). Used both by the picker binding
+// and as a defensive check on submit for the empty-string case.
 function parseDobDisplay(v: string): Date | undefined {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
   if (!m) return undefined;
@@ -38,9 +31,7 @@ function parseDobDisplay(v: string): Date | undefined {
 }
 
 interface RegisterPageProps {
-  /** When true, renders the admin variant with a role dropdown. */
   showRole?: boolean;
-  /** Back-button destination override (used by /admin/register). */
   backTo?: string;
 }
 
@@ -64,7 +55,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const [pwMismatch, setPwMismatch] = useState(false);
   const [error, setError] = useState("");
 
-  // Iter 4 §1: per-field error map. Keys mirror form field ids.
   type FieldKey = "name" | "email" | "phone" | "dob" | "address" | "password" | "role";
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
 
@@ -73,13 +63,9 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     (v: string) =>
       setForm((f) => ({ ...f, [field]: v }));
 
-  // ─── Validation helpers (Iter 4 §1.3 + decisions 1/2) ─────────────────
-  //
-  // DOB is displayed as DD/MM/YYYY (user-facing) but submitted as ISO
-  // YYYY-MM-DD per product decision 1. Age minimum 18 per decision 2.
-  //
-  // Return empty string when valid; else the user-facing error copy.
-
+  // Each validator returns an empty string when the value is acceptable, or
+  // the user-facing error copy otherwise. Date of birth is displayed as
+  // DD/MM/YYYY but transmitted as ISO YYYY-MM-DD; the minimum age is 18.
   const validators: Record<FieldKey, (v: string) => string> = {
     name: (v) => (v.trim().length >= 2 ? "" : "Enter your full name."),
     email: (v) => (/.+@.+\..+/.test(v) ? "" : "Enter a valid email address."),
@@ -90,7 +76,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     role: (v) => (v ? "" : "Select a role."),
   };
 
-  // Validate DD/MM/YYYY, real calendar date, age 18\u2013100 inclusive.
   function isValidDob(v: string): boolean {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
     if (!m) return false;
@@ -100,7 +85,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return false;
     const d = new Date(yyyy, mm - 1, dd);
     if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return false;
-    // Age 18\u2013100 inclusive.
     const now = new Date();
     let age = now.getFullYear() - yyyy;
     const hadBirthday =
@@ -109,10 +93,11 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     return age >= 18 && age <= 100;
   }
 
-  // DD/MM/YYYY \u2192 ISO YYYY-MM-DD for the fetch payload (decision 1).
   function dobToIso(v: string): string {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v);
-    if (!m) return v; // never happens post-validation; defensive
+    // Defensive fallback: validation runs before this is called, so the regex
+    // should always match; returning the raw value keeps the request well-formed.
+    if (!m) return v;
     return m[3] + "-" + m[2] + "-" + m[1];
   }
 
@@ -124,8 +109,8 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   function handleBlur(key: FieldKey) {
     return () => {
       const value = key === "role" ? form.role : (form[key as keyof typeof form] as string);
-      // On blur, only validate if the field has been touched (has a value)
-      // to avoid firing on initial focus\u2192blur.
+      // Skip validation for empty untouched fields so an initial focus-then-blur
+      // (for example tabbing through the form) does not surface an error yet.
       if (value === "") {
         setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
         return;
@@ -143,16 +128,17 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     e.preventDefault();
     setError("");
 
-    // Confirm-password mismatch keeps its existing dedicated state
-    // (\u2018reg-confirm-error\u2019 <p> + role="alert") to preserve the
-    // pre-Iter-4 focus flow already relied on downstream.
+    // The confirm-password mismatch keeps its own dedicated state and
+    // reg-confirm-error alert element so that the focus flow other components
+    // rely on remains unchanged.
     if (form.password !== form.confirmPassword) {
       setPwMismatch(true);
       return;
     }
     setPwMismatch(false);
 
-    // Iter 4 §1.5: run all field rules synchronously; focus the first invalid.
+    // Run every field validator synchronously and focus the first invalid
+    // field so keyboard users land on the error without extra tabbing.
     const keys: FieldKey[] = ["name", "email", "phone", "dob", "address", "password"];
     if (showRole) keys.push("role");
     const next: Partial<Record<FieldKey, string>> = {};
@@ -175,9 +161,9 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
 
     setLoading(true);
     try {
-      // ─── H1 fetch: field NAMES + shape byte-identical. Only the dob VALUE
-      //     format is canonicalized (DD/MM/YYYY \u2192 ISO YYYY-MM-DD) per
-      //     product decision 1 (see docs/adr/0003-mock-api-msw.md dob row).
+      // Only the date-of-birth value is transformed (DD/MM/YYYY to ISO
+      // YYYY-MM-DD); the field names and body shape must match the backend
+      // contract exactly.
       const response = await fetch(API_REGISTER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -196,7 +182,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
         const errorText = await response.text();
         throw new Error(errorText || response.statusText || "Registration failed");
       }
-      // ─── end fetch ─────────────────────────────────────────
       navigate("/login", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to register. Please try again.");
@@ -274,21 +259,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               errorMessage={fieldErrors.phone}
               autoComplete="tel"
             />
-            {/* Iter 4.1 hotfix: shadcn-canonical DOB DatePickerField.
-                Owner feedback: the previous typeable-input + ghost-icon trigger
-                failed discoverability. Now the trigger IS the field — a full-
-                width outline <Button> with a CalendarIcon showing DD/MM/YYYY or
-                the muted "DD/MM/YYYY" placeholder. Typed entry is REMOVED
-                (owner-approved trade). Age constraints enforced by the picker
-                bounds (fromYear/toYear = 1940..currentYear-18) so the picker
-                cannot produce an out-of-range value; the validator still runs
-                on submit as a defensive check + to cover the empty state.
-                Iter 4.4 (owner decision 2026-07-30): datepicker lazy split
-                dropped in favor of the canonical static shadcn pattern —
-                Popover + Calendar are imported eagerly with the rest of the
-                DatePickerField (single ~224 kB main bundle, zero loading
-                states). Route-level splitting will be reconsidered when the
-                app genuinely grows. */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reg-dob" className="text-foreground-label">
                 Date of birth
@@ -320,8 +290,8 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               autoComplete="street-address"
             />
 
-            {/* Role — native <select> to preserve tests/regression/roles.test.tsx
-                (HTMLSelectElement cast + within().getAllByRole("option")). */}
+            {/* Native <select> is intentional: the roles regression test asserts
+                against HTMLSelectElement semantics, which a Radix Select would break. */}
             {showRole && (
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="reg-role" className="text-foreground-label">Role</Label>
@@ -355,7 +325,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               </div>
             )}
 
-            {/* Password */}
             <FieldInput
               id="reg-password"
               label="Password"
@@ -380,7 +349,6 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               </Button>
             </FieldInput>
 
-            {/* Confirm password */}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reg-confirm" className="text-foreground-label">Confirm password</Label>
               <div className="relative">

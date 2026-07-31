@@ -12,3 +12,5 @@ dist/
 /playwright-report/
 /playwright/.cache/
 /blob-report/
+
+docs/

@@ -1,18 +1,18 @@
 # PROJECT.md — RydeePortalWebsite
 
-> **Last updated:** 2026-07-30 · Snapshot, not a log — rewrite stale sections.
+> **Last updated:** 2026-07-31 · Snapshot, not a log — rewrite stale sections.
 
 ---
 
 ## Overview
 
-RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing platform (DBX8 / MEU-FQA). It serves three active roles (Rider, Admin, Operator) with role-scoped dashboards and rider management screens. Stack: **React 18 + Vite 6 + TypeScript + Tailwind CSS 4 + shadcn/ui**, routing via **react-router 7** (library/browser mode), mock API via **MSW 2.x** (flag-gated), package manager **npm**. The backend is WIP elsewhere at `localhost:3000`; the API contract is frozen at `POST /user/login` (`{ phone, password }`) and `POST /register/user` (`{ name, email, phoneNumber, dob, address, password, role }`), `credentials: "include"`.
+RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing platform (DBX8 / MEU-FQA). It serves three active roles (Rider, Admin, Operator) with role-scoped dashboards and rider management screens. Stack: **React 18.3.1 + Vite 6 + TypeScript + Tailwind CSS 4 + shadcn/ui**, routing via **react-router 7** (library/browser mode), mock API via **MSW 2.x** (flag-gated), package manager **npm**. The backend is WIP elsewhere at `localhost:3000`; the API contract is frozen at `POST /user/login` (`{ phone, password }`) and `POST /register/user` (`{ name, email, phone, dob, address, password, role }`), `credentials: "include"` (field renamed `phoneNumber` → `phone` 2026-07-30; see ADR-0003 H1 amendment).
 
 ---
 
-## Current State (as of 2026-07-30)
+## Current State (as of 2026-07-31)
 
-Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfix (canonical datepicker pattern) + Iter **4.2 P1 hotfix** (shadcn primitive version-skew fix + E2E smoke) + Iter **4.3 perf fix** (DatePickerPopover prefetch) + Iter **4.4 simplification** (lazy split removed, static bundling) is **COMPLETE** (2026-07-30). Per-field on-blur + on-submit validation live on Login and Register (age 18–100, dob DD/MM/YYYY display → ISO submit); shared shadcn-canonical DatePickerField (button-trigger, lazy DatePickerPopover chunk) on RegisterPage and PendingRiders; clickable StatCard as semantic `<button>`; cursor-pointer restored; PendingRiders select chrome fixed. All five quality gates green: lint 0 errors, typecheck 0 errors, typecheck:strict 0 errors, build clean, **55 regression tests passing** (revised from 58 — 6 unreachable-by-design typed-entry tests removed after typed DOB entry dropped; 3 button-pattern tests added; see Iter 4.1 subsection). Bundle baseline: main **223.43 kB gzip** (±2% band 219.0–227.9 kB); single chunk — async DatePickerPopover chunk no longer exists (removed Iter 4.4).
+Iteration 5 — Backend Wire-Compat + All Riders Admin Table + Backlog Batch is **IN PROGRESS** (working tree uncommitted; awaiting owner manual commit). Iter 4 foundations intact. 96/96 vitest + 1/1 Playwright green; bundle 223.12 kB gzip guard band 221.5–224.5 kB; Node engines pinned `>=24 <25`.
 
 | Area | Status |
 |------|--------|
@@ -31,6 +31,7 @@ Iteration 4 — Form Validation, Datepicker, Cursor & UX Polish + Iter 4.1 hotfi
 | **Iteration 2 — Hardening** | ✅ **COMPLETE 2026-07-30** |
 | **Iteration 3 — D8 shadcn Restyle** | ✅ **COMPLETE 2026-07-30** — commits `57545a6` / `38c773b` / `1a6962f` / `f3e195d`; QA SHIP; UX 5/5 deviation approvals |
 | **Iteration 4 — Form Validation + Datepicker** | ✅ **COMPLETE 2026-07-30** — commits `f9fcfc0` / `9948996` / `4252e13` / `7693215` / `731dff6` / `1dc7781` / `532391d`; QA SHIP; 3× INFO findings only |
+| **Iteration 5 — Backend Wire-Compat + All Riders** | 🟡 **IN PROGRESS 2026-07-31** — working tree uncommitted; see Iteration 5 section below |
 
 **D8 restyle summary:**
 - shadcn primitives adopted across all pages (auth, dashboards, riders) — Radix `<Checkbox>`, `<AlertDialog>`, `<Button>`, `<Card>`, `<Input>`, `<Label>`, `<Badge>`, `<Select>`, `<Table>` in use
@@ -240,6 +241,37 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 
 ---
 
+## Iteration 5 — Backend Wire-Compat, All Riders Table & Backlog Batch 🟡 IN PROGRESS (2026-07-31)
+
+Working tree uncommitted; owner commits manually. All 5+1 gates green on working tree snapshot.
+
+### Batch A — Backend Wire-Compat (commit `b2cd8ce` + working tree)
+- **H1 contract amendment**: `POST /register/user` field renamed `phoneNumber` → `phone` (backend confirmed 2026-07-30); `RegisterPage`, `PendingRiders`, MSW handler, ADR-0003 contract table all updated in same-commit sweep.
+- **Wire aliases**: `area`/`rideArea` and `activation_status`/`activated` (boolean) both accepted at the boundary; normalisation in `toAllRidersRow()` and `toPendingRider()`.
+
+### Batch B — All Riders Admin Table (ADR-0004, working tree)
+- **Route**: `/admin/all-riders`, `ProtectedRoute allow={["Admin","Operator"]}` — same guard group as active/pending riders (ADR-0002 QA-F3 Option A). Static import (D22 threshold not reached).
+- **Engine**: hand-rolled sort/filter/paginate over client array (ADR-0004 Decision 1) — TanStack Table deferred; ~150 LOC `useMemo` chains; zero new deps.
+- **Data contract**: new proposed endpoint `POST /GetAll/Riders` (`API_GET_ALL_RIDERS_URL`); MSW handler + ADR-0003 row added same-commit (H6); server-ready for backend. Response `{ riders: [...] }`, 7 columns (ID, Name, Phone, CNIC, Status, Area, Joined).
+- **Features**: status tabs (All/Active/Pending/Blocked/Offboarded), 300ms-debounced search, 3-state single-column sort, pagination 10/25/50/100 (default 10), **URL-persisted filters** (`?status=&q=&sort=&dir=&page=`), sticky header, row → `RiderDetailSheet` (shadcn `Sheet` primitive).
+- **CSV export** RFC-4180 (~30-LOC `src/features/riders/csv.ts`); exports filtered view; filename `rydee-riders-{tab}-{YYYY-MM-DD}.csv`. XLSX deferred (D23 — needs ~90 kB dep or band bump decision).
+- **D6 closed** (see Iter 2); **D16 closed** (regression test `register-flow.test.tsx` added).
+
+### Batch C — Backlog Batch (working tree)
+- **D6/D16 closed** — final verification + register-flow regression test.
+- **D10/D7 investigated** — D10: only 10/47 shadcn primitives used; zero packages removed (H4-blocked, needs owner decision; see Open Items). D7: both Google Maps and Leaflet confirmed live in app code; owner decision pending.
+- **Bundle guard band reset** (D24): Radix Dialog first entered bundle via `Sheet`; new band **221.5–224.5 kB** (`zlib.gzipSync` default-6, Node `>=24 <25`). D23 reference to 219–227.9 kB superseded.
+- **Node engines pinned** `>=24 <25` in `package.json` for deterministic gzip measurements.
+- **D25 tracked**: Radix Sheet emits `Function components cannot be given refs` warning in test stderr (H4-locked, non-functional; see D25).
+
+### Gate results (working tree snapshot)
+lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **223.12 kB gzip SINGLE chunk** (band 221.5–224.5 ✓) · test **96/96** vitest · e2e **1/1** Playwright ✅
+
+### ⚠️ Correction on QA cert 2026-07-30
+The 2026-07-30 QA cert reported "vitest 61/61" — this was a miscount. Verified true count at that snapshot was **55**. No tests were lost; the miscount was a reporting error. Current count is 96/96 (55 baseline + 41 new Iter 5 tests: all-riders suite, bundle-size guard, CSV unit, mapper unit, register-flow regression).
+
+---
+
 ## Key Decisions
 
 | Decision | Detail | ADR / Doc |
@@ -269,6 +301,9 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | `ui/button.tsx` + `ui/calendar.tsx` rewritten (Iter 4.2 P1) — version-skew class of bug; H4-compliant full-file swap | `button.tsx` restored to `React.forwardRef` for React 18.3.1/Radix `asChild` compatibility; `calendar.tsx` classNames mapped to react-day-picker v8 CaptionDropdowns; fixed P1 + free-win F-4.2-01 | `ab2a32c` / `65e966b` |
 | E2E smoke policy (Iter 4.2, owner-delegated, QA rec F-4.2-04, adopted 2026-07-30) | `npm run test:e2e` (Playwright Chromium, opt-in) is the pre-release gate for `ui/{button,popover,calendar,alert-dialog}`, `DatePickerField/Popover`, or any lazy Radix surface; NOT a default CI gate until ≥ 3 specs and < 60s (see Conventions/Gates note) | `54d1121` / [iter4-review.md](qa/iter4-review.md) §F-4.2-04 |
 | Datepicker eager-bundled — lazy split removed (owner, 2026-07-30); revisit splitting at route level as app grows | At ~224 kB the micro-split premium (Suspense spinner + loader machinery) exceeded its value; `DatePickerPopover` + loader folded back into `DatePickerField` static imports; −146 net lines; single JS chunk; see D22 | `0f79f7e` / [iter4-review.md](qa/iter4-review.md) §Iter 4.4 |
+| H1 contract amendment — `phoneNumber` → `phone` (2026-07-30) | Backend confirmed field rename; `RegisterPage`, `PendingRiders`, MSW handler, ADR-0003 contract table all updated same-commit (`b2cd8ce`); wire aliases `area`/`rideArea` + `activation_status`/`activated` honoured at boundary | ADR-0003 H1 amendment |
+| All Riders admin table — hand-rolled engine (ADR-0004) | `/admin/all-riders`, Admin+Operator, `POST /GetAll/Riders` server-ready mock, RFC-4180 CSV, 7 cols, URL-persisted filters, sticky header, RiderDetailSheet | [ADR-0004](adr/0004-riders-data-table.md) |
+| Bundle guard band reset to 221.5–224.5 kB (D24) | Radix Dialog entered bundle via Sheet primitive; `zlib.gzipSync` default-6 / Node `>=24 <25` is CI determinism anchor; old 219–227.9 band void | D24 |
 
 ---
 
@@ -350,8 +385,17 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **223.43 kB** (updated Iter 4.4; single chunk); ±2% band = 219.0–227.9 kB; async DatePickerPopover chunk no longer exists | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **223.12 kB** (Iter 5; single chunk); guard band = **221.5–224.5 kB** (D24; Node `>=24 <25`); async DatePickerPopover chunk no longer exists | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
+| D22 | Route-level code-splitting — revisit at ~300 kB gzip or heavy feature addition; seams documented | Frontend Dev + Architect | Backlog |
+| D23 | XLSX export for All Riders table — needs `xlsx` (~90 kB) or D22-style chunk; defer until usage data | Frontend Dev + Architect | Backlog |
+| D24 | Bundle-size band maintenance — new guard 221.5–224.5 kB; update whenever band deliberately shifts | Frontend Dev | Ongoing |
+| D25 | Radix Sheet `Function components cannot be given refs` warning in test stderr — H4-locked; revisit if warning spreads | Frontend Dev | Low |
+| **⚠️ OWNER DECISION** | D7 — Map lib consolidation: both `@react-google-maps/api` (RiderDashboard + RiderLocationView) and `react-leaflet` (ActiveRiders) live in app; team lean = Leaflet for frugality (~50 kB gzip saving); requires owner go-ahead | Architect + PM | **Pending** |
+| **⚠️ OWNER DECISION** | D10 — shadcn primitive prune: only 10 of 47 `components/ui/` files used by app code; pruning 36 unused would unlock ~15 Radix packages (~80–120 kB gzip); H4-gated — owner sign-off required | Frontend Dev + PM | **Pending** |
+| **Backend-blocked** | Rider mutation endpoints (approve/save/block), real `POST /GetAll/Riders`, D9-remainder (`/me` rehydrate), D15, D17 | Backend + Frontend Dev | Blocked |
+| **Product Q** | D11 — Customer route/home destination; D14 — Admin creatable role via `/admin/register` | PM + Product | Backlog |
+| **Uncommitted working tree** | Iteration 5 code/tests/docs in working tree; awaiting owner manual commits | Owner (dandkhan) | **In progress** |
 
 ---
 
@@ -360,7 +404,7 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | Convention | Detail |
 |-----------|--------|
 | Commit style | `chore/refactor/feat/fix/docs(scope): description`; every commit ends with all gates green |
-| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (55 regression tests) — all required before merging. `test:e2e` (Playwright Chromium smoke, opt-in) — run before release whenever `src/components/ui/{button,popover,calendar,alert-dialog}`, `DatePickerField`/`DatePickerPopover`, or any lazy Radix surface changes; NOT part of the default 5 gates (QA rec F-4.2-04: revisit joining CI once ≥ 3 specs, < 60s) |
+| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (96 regression tests) — all required before merging. `test:e2e` (Playwright Chromium smoke, opt-in) — run before release whenever `src/components/ui/{button,popover,calendar,alert-dialog}`, `DatePickerField`/`DatePickerPopover`, or any lazy Radix surface changes; NOT part of the default 5 gates (QA rec F-4.2-04: revisit joining CI once ≥ 3 specs, < 60s) |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — Node 20, `npm ci` cache, push/PR |
 | ADRs | `docs/adr/NNNN-slug.md` — Proposed → Accepted/Rejected/Superseded; update in same commit as any shape change |
 | AGENTS.md hard rules | **H1–H8 bind all contributors and AI coding tools.** H1 API contract frozen, H2 never widen ROLES, H3 never delete Customer seed, H4 don't edit `components/ui/`, H5 never commit `.env`, H6 handlers import URLs from `lib/config.ts`, H7 auth storage only via `session.ts`, H8 guard changes require tracing PublicOnly + ProtectedRoute |
@@ -380,6 +424,7 @@ Full QA addendum in `docs/qa/iter4-review.md` §Iteration 4.2 addendum.
 | ADR-0001: Feature-Based Structure | `docs/adr/0001-target-folder-structure.md` |
 | ADR-0002: Routing & Auth (incl. session persistence) | `docs/adr/0002-routing-and-auth.md` |
 | ADR-0003: Mock API (MSW) | `docs/adr/0003-mock-api-msw.md` |
+| ADR-0004: All Riders Admin Data Table | `docs/adr/0004-riders-data-table.md` |
 | Migration Plan (C0–C7 + deferred register D1–D21) | `docs/design/migration-plan.md` |
 | TypeScript Strict Mode Baseline | `docs/design/strict-errors.md` |
 | UX Restyle Audit | `docs/ux/restyle-audit.md` |

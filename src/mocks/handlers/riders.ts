@@ -1,20 +1,17 @@
-// MSW handlers for the riders/registration surface. Introduced when
-// merging origin/main commits 181b4a9 + 3f197d2 + 2c63f6c into the
-// restructured app (Checkpoint 8 merge). Handler URL comes from
-// src/lib/config.ts per AGENTS.md H6.
+// MSW handlers for the riders/registration surface. Two endpoints:
+//   1. POST /GetAll/UnregisteredRiders — pending/unregistered subset (D18).
+//   2. POST /GetAll/Riders — unified all-riders roster (ADR-0004).
 //
-// Endpoint: POST /GetAll/UnregisteredRiders
-// Purpose : return every rider record the backend knows about so the
-//           dashboards can compute total/active/pending counts and
-//           PendingRiders can render the review form.
-// Contract: response shape { riders: Rider[] } where each rider has an
-//           `activation_status` string field the dashboard filters on
-//           (case-insensitively) for "pending". Additional fields
-//           (id, dob, cnic, documents, pin) are returned to feed the
-//           PendingRiders review UX (D18). The backend WIP has not
-//           frozen these extra fields yet — see ADR-0003.
+// URLs come from src/lib/config.ts (H6). Contract lives in ADR-0003's table —
+// keep both in sync (H6). AllRiders seeds intentionally exercise BOTH wire
+// alias paths so `toAllRidersRow` is honestly tested:
+//   - some rows use `area`, some `rideArea`
+//   - some rows use `activation_status`, others use boolean `activated`
 import { http, HttpResponse } from "msw";
-import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
+import {
+  API_GET_ALL_RIDERS_URL,
+  API_GET_UNREGISTERED_RIDERS_URL,
+} from "@/lib/config";
 
 interface MockUnregisteredRider {
   id: number;
@@ -28,7 +25,7 @@ interface MockUnregisteredRider {
   pin?: string;
 }
 
-const seedRiders: MockUnregisteredRider[] = [
+const unregisteredSeeds: MockUnregisteredRider[] = [
   { id: 1, name: "Muhammad Imran", phone: "0312-4561234", activation_status: "pending", area: "", dob: "1998-06-14", cnic: "42101-7654321-3", documents: ["CNIC Copy", "Profile Photo"], pin: "" },
   { id: 2, name: "Naveed Akhtar",  phone: "0321-9876543", activation_status: "pending", area: "", dob: "1995-11-02", cnic: "42201-1234567-1", documents: ["CNIC Copy"], pin: "" },
   { id: 3, name: "Shoaib Malik",   phone: "0333-1122334", activation_status: "pending", area: "", dob: "2000-03-25", cnic: "42301-9988776-5", documents: ["CNIC Copy", "Profile Photo", "Bike Registration"], pin: "" },
@@ -37,15 +34,42 @@ const seedRiders: MockUnregisteredRider[] = [
   { id: 6, name: "Kashif Noor",    phone: "0311-2233445", activation_status: "pending", area: "", dob: "2001-09-07", cnic: "42501-1122334-9", documents: ["Profile Photo"], pin: "" },
   { id: 7, name: "Sajid Iqbal",    phone: "0322-8877665", activation_status: "pending", area: "", dob: "1996-12-20", cnic: "42601-5566778-4", documents: ["CNIC Copy", "Profile Photo", "Driving License"], pin: "" },
   { id: 8, name: "Adnan Rasheed",  phone: "0343-3344556", activation_status: "pending", area: "", dob: "1999-05-11", cnic: "42101-2233445-6", documents: [], pin: "" },
-  // Some already-active so total > pending and the "active riders"
-  // stat is non-zero in dev. AdminDashboard filters these out.
   { id: 101, name: "Usman Tariq",    phone: "0300-1111111", activation_status: "active", area: "Saddar" },
   { id: 102, name: "Bilal Hussain",  phone: "0300-2222222", activation_status: "active", area: "Clifton" },
   { id: 103, name: "Zain ul Abidin", phone: "0300-3333333", activation_status: "active", area: "Gulshan-e-Iqbal" },
 ];
 
+// ADR-0004 seeds — 18 riders across all 4 statuses. Wire alias coverage:
+//   - Alia (id 202) uses `rideArea` (not `area`) → mapper must resolve it.
+//   - Faisal (id 204) sends `activated:true` WITHOUT activation_status → mapper
+//     must classify as active.
+//   - Others use the canonical `area` + `activation_status` fields.
+const allRidersSeeds: Array<Record<string, unknown>> = [
+  { id: 201, name: "Muhammad Imran", phone: "0312-4561234", cnic: "42101-7654321-3", activation_status: "pending",    area: "DHA",             joinedAt: "2026-07-20" },
+  { id: 202, name: "Alia Rehman",    phone: "0321-1234500", cnic: "42101-1111111-1", activation_status: "active",     rideArea: "Clifton",     joinedAt: "2026-07-15" }, // rideArea alias
+  { id: 203, name: "Naveed Akhtar",  phone: "0321-9876543", cnic: "42201-1234567-1", activation_status: "pending",    area: "Gulshan-e-Iqbal", joinedAt: "2026-07-18" },
+  { id: 204, name: "Faisal Khan",    phone: "0300-9990001", cnic: "42301-2222222-2", activated: true,                 area: "Saddar",          joinedAt: "2026-07-10" }, // activated boolean, no activation_status
+  { id: 205, name: "Shoaib Malik",   phone: "0333-1122334", cnic: "42301-9988776-5", activation_status: "pending",    area: "Nazimabad",       joinedAt: "2026-07-22" },
+  { id: 206, name: "Rizwan Ghafoor", phone: "0345-5544332", cnic: "42101-4433221-7", activation_status: "blocked",    area: "Malir",           joinedAt: "2026-06-30" },
+  { id: 207, name: "Danish Mehmood", phone: "0300-7654321", cnic: "42401-6677889-2", activation_status: "active",     area: "North Karachi",   joinedAt: "2026-07-05" },
+  { id: 208, name: "Kashif Noor",    phone: "0311-2233445", cnic: "42501-1122334-9", activation_status: "offboarded", area: "Korangi",         joinedAt: "2026-05-12" },
+  { id: 209, name: "Sajid Iqbal",    phone: "0322-8877665", cnic: "42601-5566778-4", activation_status: "active",     area: "Landhi",          joinedAt: "2026-07-01" },
+  { id: 210, name: "Adnan Rasheed",  phone: "0343-3344556", cnic: "42101-2233445-6", activation_status: "pending",    area: "Orangi",          joinedAt: "2026-07-25" },
+  { id: 211, name: "Usman Tariq",    phone: "0300-1111111", cnic: "42101-3344556-8", activation_status: "active",     area: "Saddar",          joinedAt: "2026-06-15" },
+  { id: 212, name: "Bilal Hussain",  phone: "0300-2222222", cnic: "42101-4455667-9", activation_status: "blocked",    area: "Clifton",         joinedAt: "2026-06-20" },
+  { id: 213, name: "Zain ul Abidin", phone: "0300-3333333", cnic: "42101-5566778-1", activation_status: "active",     area: "Gulshan-e-Iqbal", joinedAt: "2026-07-08" },
+  { id: 214, name: "Hamza Sheikh",   phone: "0333-4455667", cnic: "42101-6677889-3", activation_status: "offboarded", area: "DHA",             joinedAt: "2026-05-01" },
+  { id: 215, name: "Junaid Ali",     phone: "0345-7788990", cnic: "42101-7788990-4", activation_status: "active",     area: "Nazimabad",       joinedAt: "2026-07-12" },
+  { id: 216, name: "Tariq Mahmood",  phone: "0311-8899001", cnic: "42101-8899001-5", activation_status: "pending",    area: "PECHS",           joinedAt: "2026-07-28" },
+  { id: 217, name: "Yasir Iqbal",    phone: "0322-9900112", cnic: "42101-9900112-6", activation_status: "active",     area: "Gulistan-e-Johar",joinedAt: "2026-06-25" },
+  { id: 218, name: "Salman Farooq",  phone: "0343-0011223", cnic: "42101-0011223-7", activation_status: "blocked",    area: "Malir",           joinedAt: "2026-06-05" },
+];
+
 export const ridersHandlers = [
   http.post(API_GET_UNREGISTERED_RIDERS_URL, async () => {
-    return HttpResponse.json({ riders: seedRiders });
+    return HttpResponse.json({ riders: unregisteredSeeds });
+  }),
+  http.post(API_GET_ALL_RIDERS_URL, async () => {
+    return HttpResponse.json({ riders: allRidersSeeds });
   }),
 ];

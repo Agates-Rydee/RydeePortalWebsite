@@ -126,6 +126,8 @@ export default function AdminDashboard({ onNavigate, onLogout, profile }: Props)
           <StatCard
             label="Total Riders"
             value={totalRiders}
+            onClick={() => onNavigate("all-riders")}
+            hint="View all riders →"
             icon={
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"

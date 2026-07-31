@@ -18,6 +18,7 @@ import {
 } from "@/features/dashboards/routes";
 import {
   ActiveRidersRoute,
+  AllRidersRoute,
   PendingRidersRoute,
 } from "@/features/riders/routes";
 
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "admin/active-riders",             element: <ActiveRidersRoute /> },
           { path: "admin/pending-riders",            element: <PendingRidersRoute /> },
+          { path: "admin/all-riders",                element: <AllRidersRoute /> },
           { path: "admin/riders/:riderId/location",  element: <RiderLocationView /> },
         ],
       },

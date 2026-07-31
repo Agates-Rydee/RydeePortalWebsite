@@ -5,7 +5,7 @@ Aki, etc.) working on this repo. Human contributors: same rules apply.
 
 ## Project snapshot
 
-- **Stack**: React 19 + TypeScript + Vite; react-router v7 (library mode); Tailwind CSS; MSW 2.x (dev only).
+- **Stack**: React 18.3.1 + TypeScript + Vite; react-router v7 (library mode); Tailwind CSS; MSW 2.x (dev only).
 - **Three roles**: Rider, Admin, Operator. (`Customer` exists as a role literal but has no dashboard — see hard rule H3.)
 - **Layout** (feature-based, per ADR-0001):
 

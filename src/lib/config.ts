@@ -12,3 +12,11 @@ export const API_REGISTER_URL =
 export const API_GET_UNREGISTERED_RIDERS_URL =
   import.meta.env.VITE_API_GET_All_UNREGISTERED_URL ??
   "http://localhost:3000/GetAll/UnregisteredRiders";
+
+// ADR-0004: unified all-riders endpoint (proposed to backend).
+// Additive — does NOT replace /GetAll/UnregisteredRiders (which is contractually
+// the pending/unregistered subset). MSW handler is the living contract until
+// the real backend ships. Env var name follows the sibling convention.
+export const API_GET_ALL_RIDERS_URL =
+  import.meta.env.VITE_API_GET_ALL_RIDERS_URL ??
+  "http://localhost:3000/GetAll/Riders";

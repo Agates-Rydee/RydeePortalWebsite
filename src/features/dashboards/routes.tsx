@@ -20,6 +20,7 @@ export function AdminDashboardRoute() {
       case "admin-register":  return navigate("/admin/register");
       case "active-riders":   return navigate("/admin/active-riders");
       case "pending-riders":  return navigate("/admin/pending-riders");
+      case "all-riders":      return navigate("/admin/all-riders");
       default:                return;
     }
   };

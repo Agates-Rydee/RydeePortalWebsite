@@ -89,8 +89,10 @@ deferred (D9-remainder + D17 in
 
 ## Mocked endpoint contract
 
-URLs come from [`src/lib/config.ts`](../lib/config.ts) — mock and app
-share the exact same constants, so endpoint drift is impossible.
+URLs come from the per-feature modules under [`src/api/`](../api/) —
+`src/api/auth.ts` for the auth endpoints and `src/api/riders.ts` for the
+rider endpoints. The mock handlers import the same URL constants the
+pages use, so endpoint drift is impossible.
 
 | Method + URL | Request body | Success (200) | Failure |
 |---|---|---|---|
@@ -105,8 +107,9 @@ session cookies MSW must simulate.
 
 1. Create `src/mocks/handlers/<domain>.ts` — one file per backend domain
    (`auth`, `riders`, …). Export a `<domain>Handlers` array.
-2. Build URLs from `src/lib/config.ts` constants. Add the constant there
-   if it doesn't exist; do **not** hard-code URLs in handler files.
+2. Build URLs from `src/api/<feature>.ts` constants. Add the endpoint
+   path + composed URL constant there if it doesn't exist; do **not**
+   hard-code URLs in handler files.
 3. Register the array in [`handlers/index.ts`](./handlers/index.ts):
    ```ts
    import { ridersHandlers } from "./riders";
@@ -139,9 +142,9 @@ session cookies MSW must simulate.
 
 **I want to hit the real backend**
 
-Set `VITE_ENABLE_MSW=false` (or delete the line) in `.env`. Fetches now
-pass through to whatever `VITE_API_LOGIN_URL` / `VITE_API_REGISTER_URL`
-point at — no code change.
+Set `VITE_ENABLE_MSW=false` in `.env`. Fetches now pass through to
+`VITE_API_BASE_URL` (the endpoint paths are hard-coded in
+`src/api/<feature>.ts` alongside the fetch call sites) — no code change.
 
 **A non-auth request errors "Uncaught in fetch"**
 

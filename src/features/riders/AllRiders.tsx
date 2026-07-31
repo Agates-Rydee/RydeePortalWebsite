@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { useSearchParams } from "react-router";
-import { API_GET_ALL_RIDERS_URL } from "@/lib/config";
+import { getAllRiders } from "@/api/riders";
 import type { AllRidersRow, RiderStatus } from "@/types/rider";
 import { mapAllRidersResponse } from "@/features/riders/mapper";
 import {
@@ -213,16 +213,10 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
     setError(null);
     (async () => {
       try {
-        const res = await fetch(API_GET_ALL_RIDERS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(t || res.statusText || "NO RESPONSE");
-        }
-        const data = (await res.json()) as WireResponse;
+        // The API wrapper throws an ApiError on non-ok responses whose
+        // message is the server response text verbatim, matching the exact
+        // error copy the retry banner rendered before.
+        const data = (await getAllRiders()) as WireResponse;
         if (!data || !Array.isArray(data.riders)) {
           throw new Error("Invalid response shape");
         }

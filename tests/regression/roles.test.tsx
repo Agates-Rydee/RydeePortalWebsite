@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { ROLES, roleHome } from "@/types/profile";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
-import { API_LOGIN_URL } from "@/lib/config";
+import { API_LOGIN_URL } from "@/api/auth";
 
 describe("F2 — ROLES contract (never widen)", () => {
   it("ROLES is exactly ['Operator','Customer','Rider']", () => {

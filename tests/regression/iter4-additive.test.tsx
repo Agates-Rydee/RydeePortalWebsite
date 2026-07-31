@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
 import { StatCard } from "@/features/dashboards/components/StatCard";
-import { API_REGISTER_URL } from "@/lib/config";
+import { API_REGISTER_URL } from "@/api/auth";
 import { server } from "../setup";
 
 function renderRegister() {

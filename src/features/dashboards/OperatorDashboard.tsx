@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DashboardHeader } from "@/features/dashboards/components/DashboardHeader";
 import { StatCard } from "@/features/dashboards/components/StatCard";
-import { API_GET_UNREGISTERED_RIDERS_URL } from "@/lib/config";
+import { getUnregisteredRiders } from "@/api/riders";
 import type { Profile } from "@/types/profile";
 
 interface Props {
@@ -24,18 +24,9 @@ export default function OperatorDashboard({ onNavigate, onLogout, profile }: Pro
 
     const loadPending = async (): Promise<void> => {
       try {
-        const response = await fetch(API_GET_UNREGISTERED_RIDERS_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || response.statusText || "NO RESPONSE");
-        }
-
-        const data = (await response.json()) as UnregisteredRidersResponse;
+        // The API wrapper throws an ApiError on non-ok responses; falling
+        // through to the catch preserves the previous console.error path.
+        const data = (await getUnregisteredRiders()) as UnregisteredRidersResponse;
 
         if (!data || !Array.isArray(data.riders)) {
           throw new Error("Invalid response shape");

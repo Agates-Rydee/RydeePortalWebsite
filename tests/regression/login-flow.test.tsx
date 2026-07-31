@@ -11,7 +11,7 @@ import {
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { ProtectedRoute, PublicOnly } from "@/features/auth/ProtectedRoute";
 import LoginPage from "@/features/auth/pages/LoginPage";
-import { API_LOGIN_URL } from "@/lib/config";
+import { API_LOGIN_URL } from "@/api/auth";
 import { SESSION_STORAGE_KEY } from "@/features/auth/session";
 import { server } from "../setup";
 

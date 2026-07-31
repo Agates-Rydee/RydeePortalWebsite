@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { API_LOGIN_URL, API_REGISTER_URL } from "@/lib/config";
+import { API_LOGIN_URL, API_REGISTER_URL } from "@/api/auth";
 
 const seed = [
   {

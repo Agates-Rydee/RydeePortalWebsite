@@ -23,5 +23,13 @@ export default defineConfig({
     css: false,
     clearMocks: true,
     restoreMocks: true,
+    // Populate the environment the runtime validator sees. This mirrors a
+    // fully configured .env so config.ts and the handler imports resolve
+    // without weakening the production validation. Individual tests can
+    // still override via vi.stubEnv.
+    env: {
+      VITE_API_BASE_URL: 'http://localhost:3000',
+      VITE_ENABLE_MSW: 'true',
+    },
   },
 })

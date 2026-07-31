@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { API_LOGIN_URL } from "@/lib/config";
+import { API_LOGIN_URL } from "@/api/auth";
 
 describe("test foundation (D12)", () => {
   it("boots jsdom (window + localStorage available)", () => {

@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import {
   API_GET_ALL_RIDERS_URL,
   API_GET_UNREGISTERED_RIDERS_URL,
-} from "@/lib/config";
+} from "@/api/riders";
 
 interface MockUnregisteredRider {
   id: number;

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePickerField } from "@/components/DatePickerField";
 import { formatDobDisplay } from "@/components/date-helpers";
-import { API_REGISTER_URL } from "@/lib/config";
+import { registerUser } from "@/api/auth";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
 
@@ -163,25 +163,17 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     try {
       // Only the date-of-birth value is transformed (DD/MM/YYYY to ISO
       // YYYY-MM-DD); the field names and body shape must match the backend
-      // contract exactly.
-      const response = await fetch(API_REGISTER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          dob: dobToIso(form.dob),
-          address: form.address,
-          password: form.password,
-          role: form.role,
-        }),
-        credentials: "include",
+      // contract exactly. The API wrapper throws an ApiError on non-ok
+      // responses whose message is the server response text verbatim.
+      await registerUser({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        dob: dobToIso(form.dob),
+        address: form.address,
+        password: form.password,
+        role: form.role,
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || response.statusText || "Registration failed");
-      }
       navigate("/login", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to register. Please try again.");

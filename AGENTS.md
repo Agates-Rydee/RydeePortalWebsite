@@ -18,7 +18,11 @@ src/
 │   │   └── pages/              # LoginPage, RegisterPage, AuthShell
 │   ├── dashboards/             # RiderDashboard, AdminDashboard, OperatorDashboard
 │   └── riders/                 # ActiveRiders, PendingRiders, RiderLocationView
-├── lib/config.ts               # API_LOGIN_URL, API_REGISTER_URL — single source of endpoint truth
+├── api/                        # API service wrapper + one file per backend domain
+│   ├── client.ts               # get / post / put / delete, ApiError, base-URL join
+│   ├── auth.ts                 # login, registerUser + API_LOGIN_URL, API_REGISTER_URL
+│   └── riders.ts               # getUnregisteredRiders, getAllRiders + URL constants
+├── lib/                        # helper libraries (env validator, env rules)
 ├── mocks/                      # MSW handlers — dev-only, tree-shaken from prod
 │   └── handlers/<domain>.ts
 ├── types/                      # Profile, ROLES, roleHome
@@ -51,15 +55,17 @@ Break any of these and QA blocks the PR.
 - **H3. Never delete the Customer seed user** (`src/mocks/handlers/auth.ts`, phone `0300444444`). It is the QA-F1 regression tripwire: it exercises `PublicOnly`'s unknown-role logout path (`roleHome("Customer") === "/login"` → `logout()` in `useEffect`).
 - **H4. Do not edit `src/components/ui/**`** — generated shadcn primitives, lint-ignored, replace via CLI or full-file rewrite in a scoped commit.
 - **H5. Never commit `.env`.** `.gitignore` covers it; if you touch it, verify with `git status`.
-- **H6. MSW handlers must import endpoint URLs from `src/lib/config.ts`.** Response/request shapes must match ADR-0003's contract table (the living contract). Update the ADR in the same commit as any shape change.
+- **H6. Endpoint paths and composed URL constants live in `src/api/<feature>.ts` alongside the fetch call sites; MSW handlers must import those URL constants from the same feature module (never re-declare or hard-code them).** Features must never call `fetch` directly — all backend traffic goes through the `src/api/client.ts` wrapper. Response/request shapes must match ADR-0003's contract table (the living contract). Update the ADR in the same commit as any shape change.
 - **H7. Auth/session changes go through `src/features/auth/session.ts` helpers** (`loadSession`, `saveSession`, `clearSession`). Envelope is versioned (`{ v: 1, profile, savedAt }`); adding token fields = bump to v2 + additive shape change. Never read/write `localStorage` for auth from anywhere else.
 - **H8. `roleHome()` / guard changes require tracing `PublicOnly` + `ProtectedRoute` for unknown roles.** No redirect loops. Reference the F1 trace in `docs/qa/c5-review.md` before shipping.
+- **H9. No unnecessary comments.** Code carries comments ONLY where non-obvious logic needs explaining, written in plain English without abbreviations. No banner headers, no history/migration notes, no comments restating the code, no section dividers, no parameter-repeating JSDoc. Comments required by tooling (`eslint-disable`, `@ts-*`) are exempt. QA blocks any diff that adds them.
+- **H10. Keep the code as simple as possible.** Do not over-engineer: no abstractions, indirection, generics, or configurability beyond what the current requirement needs, and no unnecessary code another developer would struggle to follow. Prefer the boring, obvious implementation. Export only what consumers actually use. QA blocks diffs that add speculative complexity.
 
 ## Architecture conventions
 
 - **New feature code** → `src/features/<domain>/` with local `pages/`, `components/`, and colocated types.
 - **Shared types** → `src/types/` (never re-declare `Profile` inline; see D6).
-- **Endpoint constants** → `src/lib/config.ts` (never hard-code URLs).
+- **Endpoint constants** → `src/api/<feature>.ts` alongside the API helper (never hard-code URLs, never re-add `src/lib/config.ts`).
 - **New mock handlers** → `src/mocks/handlers/<domain>.ts`, exported as `<domain>Handlers`, registered in `handlers/index.ts`. Sync ADR-0003.
 - **`@/` alias** = `src/` (see `tsconfig.json`, `vite.config.ts`).
 - **Significant decisions** → new ADR under `docs/adr/NNNN-slug.md` (next free number). Update ADR status when merging.

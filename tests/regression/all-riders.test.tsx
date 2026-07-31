@@ -6,7 +6,7 @@ import { Navigate, RouterProvider, createMemoryRouter, Outlet } from "react-rout
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { ProtectedRoute } from "@/features/auth/ProtectedRoute";
 import { saveSession } from "@/features/auth/session";
-import { API_GET_ALL_RIDERS_URL } from "@/lib/config";
+import { API_GET_ALL_RIDERS_URL } from "@/api/riders";
 import { AllRidersRoute } from "@/features/riders/routes";
 import { server } from "../setup";
 

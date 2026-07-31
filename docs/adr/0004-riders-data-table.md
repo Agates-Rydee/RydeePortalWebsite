@@ -31,7 +31,7 @@ Options: (a) reuse `POST /GetAll/UnregisteredRiders` vs (b) propose `POST /GetAl
 **Chosen: (b).** The existing endpoint contractually implies the unregistered/pending subset and
 cannot express `blocked`/`offboarded`; overloading it risks breaking PendingRiders (H1/D18).
 - Mock in MSW **now** (`src/mocks/handlers/riders.ts`, seeds incl. 2–3 blocked + offboarded); propose to the backend collaborator as the server-ready contract. Additive → H1-safe.
-- URL from `src/lib/config.ts` as `API_GET_ALL_RIDERS_URL` (env `VITE_API_GET_ALL_RIDERS_URL`, default `http://localhost:3000/GetAll/Riders`); request: empty body + `credentials: "include"` (matches sibling endpoint).
+- URL from `src/lib/config.ts` as `API_GET_ALL_RIDERS_URL` (endpoint path `/GetAll/Riders` joined onto `VITE_API_BASE_URL`); request: empty body + `credentials: "include"` (matches sibling endpoint).
 - Response shape (wire):
 
 ```json

@@ -22,12 +22,17 @@ export default defineConfig({
   ],
   webServer: {
     // Boot dev with MSW so the frozen contract (H1) is honored and no
-    // network egress happens during the smoke.
+    // network egress happens during the smoke. Every required environment
+    // variable is set explicitly here so the runtime validator succeeds
+    // even when the local .env is absent or minimal.
     command: "npm run dev -- --host 127.0.0.1 --port 5173",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
-    env: { VITE_ENABLE_MSW: "true" },
+    env: {
+      VITE_ENABLE_MSW: "true",
+      VITE_API_BASE_URL: "http://localhost:3000",
+    },
     stdout: "ignore",
     stderr: "pipe",
   },

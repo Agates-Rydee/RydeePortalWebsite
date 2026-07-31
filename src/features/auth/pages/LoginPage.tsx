@@ -4,7 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { API_LOGIN_URL } from "@/lib/config";
+import { login as apiLogin } from "@/api/auth";
 import { roleHome, type Profile } from "@/types/profile";
 import { useAuth } from "@/features/auth/useAuth";
 import { AuthShell } from "./AuthShell";
@@ -52,19 +52,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(API_LOGIN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || response.statusText || "Login failed");
-      }
-
-      const data = await response.json();
+      // The API wrapper throws an ApiError on non-ok responses whose message
+      // is the server response text verbatim, matching the pre-wrapper fallback
+      // ladder so the visible error copy remains identical.
+      const data = (await apiLogin(phone, password)) as {
+        role?: string;
+        user?: { role?: string };
+        profile?: Profile;
+      };
       const topLevelRole: string = data.role ?? data.user?.role ?? "";
       const profile = data.profile as Profile | undefined;
 

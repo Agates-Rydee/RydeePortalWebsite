@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
 import type { ActiveRider, RiderState } from "@/types/rider";
-import { BackButton, Logo } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 
 // The Leaflet Popup only accepts inline styles, so these AA-safe hex values are copied from the theme tokens.
@@ -36,7 +35,7 @@ function randomState(current: RiderState): RiderState {
   return STATES[Math.floor(Math.random() * STATES.length)];
 }
 
-export default function ActiveRiders({ onBack }: { onBack: () => void }) {
+export default function ActiveRiders() {
   const [riders, setRiders] = useState<ActiveRider[]>(INITIAL_ACTIVE_RIDERS);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -61,26 +60,8 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background font-sans">
-      {/* Using `isolate` here keeps the header and stat bar above the map without leaking a global z-index stack. */}
-      <header className="w-full flex items-center justify-between px-6 py-4 isolate z-10 bg-card border-b border-border">
-        <div className="flex items-center gap-4">
-          <BackButton onClick={onBack} label="Dashboard" />
-          <Logo size="sm" />
-        </div>
-        <Badge
-          className="bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25 gap-2 px-3 py-1.5 text-xs font-semibold rounded-full"
-          aria-live="polite"
-        >
-          <span className="relative flex h-2 w-2" aria-hidden="true">
-            <span className="motion-reduce:hidden animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[color:var(--success)]" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[color:var(--success)]" />
-          </span>
-          Live — updates every 3s
-        </Badge>
-      </header>
-
-      <div className="flex gap-3 px-6 py-4 flex-wrap isolate z-[9] bg-background">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <div className="flex flex-wrap items-center gap-3">
         {(["dispatching", "arriving", "idle"] as RiderState[]).map(s => (
           <Badge key={s} className={`${STATE_BADGE_CLASS[s]} gap-2 px-4 py-2 text-sm font-medium rounded-full`}>
             <span className="w-2.5 h-2.5 rounded-full" aria-hidden="true" style={{ background: STATE_HEX[s] }} />
@@ -90,13 +71,23 @@ export default function ActiveRiders({ onBack }: { onBack: () => void }) {
         <Badge className="bg-card border-border text-muted-foreground gap-2 px-4 py-2 text-sm font-medium rounded-full">
           Total: <strong className="text-foreground">{riders.length}</strong>
         </Badge>
+        <Badge
+          className="ml-auto bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25 gap-2 px-3 py-1.5 text-xs font-semibold rounded-full"
+          aria-live="polite"
+        >
+          <span className="relative flex h-2 w-2" aria-hidden="true">
+            <span className="motion-reduce:hidden animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-[color:var(--success)]" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[color:var(--success)]" />
+          </span>
+          Live — updates every 3s
+        </Badge>
       </div>
 
-      <div className="flex-1 relative" style={{ minHeight: 0 }}>
+      <div className="flex-1 relative rounded-xl overflow-hidden border border-border" style={{ minHeight: 0 }}>
         <MapContainer
           center={[24.8607, 67.0011]}
           zoom={12}
-          style={{ height: "100%", width: "100%", minHeight: "calc(100vh - 140px)" }}
+          style={{ height: "100%", width: "100%", minHeight: "calc(100vh - 200px)" }}
           zoomControl={true}
         >
           <TileLayer

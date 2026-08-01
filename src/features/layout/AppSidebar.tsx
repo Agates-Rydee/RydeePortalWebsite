@@ -60,7 +60,7 @@ export function AppSidebar() {
   const initials = initialsOf(name);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="p-3">
         <Link
           to={home}

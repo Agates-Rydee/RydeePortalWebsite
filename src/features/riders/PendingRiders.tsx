@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { getUnregisteredRiders } from "@/api/riders";
 import { KARACHI_AREAS, VERIFICATION_DOCS } from "@/features/riders/constants";
 import type { PendingRider } from "@/types/rider";
-import { BackButton, Logo } from "@/components/shared";
 import { DatePickerField } from "@/components/DatePickerField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -82,7 +81,7 @@ function isPending(raw: Record<string, unknown>): boolean {
   return true;
 }
 
-export default function PendingRiders({ onBack }: { onBack: () => void }) {
+export default function PendingRiders() {
   const [riders, setRiders] = useState<PendingRider[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<PendingRider | null>(null);
@@ -171,29 +170,8 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
   const activeRiders = riders.filter((r) => !blocked.includes(r.id));
 
   return (
-    <div
-      className="min-h-screen flex flex-col bg-background"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-    >
-      <header className="w-full flex items-center justify-between px-6 py-4 bg-card border-b border-border">
-        <div className="flex items-center gap-4">
-          <BackButton onClick={onBack} label="Dashboard" />
-          <Logo size="sm" />
-        </div>
-        <Badge
-          variant="outline"
-          className="rounded-full px-3 py-1.5 text-xs font-semibold bg-warning-muted text-warning border-warning/25"
-        >
-          {activeRiders.length} pending
-        </Badge>
-      </header>
-
-      <main className="flex-1 px-6 py-8 max-w-2xl mx-auto w-full">
-        <h1 className="text-2xl font-bold mb-1 text-foreground">Pending Riders</h1>
-        <p className="text-sm mb-6 text-muted-foreground">
-          Select a rider to review and complete their registration.
-        </p>
-
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <div className="w-full max-w-2xl">
         {loading && (
           <div
             role="status"
@@ -445,7 +423,7 @@ export default function PendingRiders({ onBack }: { onBack: () => void }) {
         )}
         </>
         )}
-      </main>
+      </div>
 
       {notice && (
         <div

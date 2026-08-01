@@ -16,27 +16,31 @@ export default function RiderLocationView() {
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
   });
 
-  // When the route is reached directly (deep link or refresh) navigation state is empty; render a friendly placeholder instead of crashing on undefined coordinates.
   if (state.lat === undefined || state.lon === undefined) {
     return (
-      <div className="w-full h-full p-4">
-        <h2 className="text-xl font-bold mb-4">Rider {riderId ?? ""} — location unavailable</h2>
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <p className="text-sm text-muted-foreground">
-          Open this view from the Active Riders list to see live coordinates.
+          Rider {riderId ?? ""} — location unavailable. Open this view from the Active Riders list to see live coordinates.
         </p>
       </div>
     );
   }
 
-  if (!isLoaded) return <div role="status" aria-live="polite" className="p-4 text-sm text-muted-foreground">Loading map…</div>;
+  if (!isLoaded) {
+    return (
+      <div role="status" aria-live="polite" className="p-4 md:p-6 text-sm text-muted-foreground">
+        Loading map…
+      </div>
+    );
+  }
 
   const { lat, lon, name } = state as RiderLocationState;
 
   return (
-    <div className="w-full h-full p-4">
-      <h2 className="text-xl font-bold mb-4">{name}'s Location</h2>
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <p className="text-sm text-muted-foreground">{name}</p>
 
-      <div className="w-full h-[500px] rounded-xl overflow-hidden">
+      <div className="w-full h-[500px] rounded-xl overflow-hidden border border-border">
         <GoogleMap
           center={{ lat, lng: lon }}
           zoom={16}

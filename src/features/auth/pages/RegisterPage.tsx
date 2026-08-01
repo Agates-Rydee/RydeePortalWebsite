@@ -182,43 +182,9 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     }
   };
 
-  return (
-    <AuthShell>
-      <Logo subtitle="Create your Rydee account" />
-      <Card className="w-full rounded-2xl card-elevated border-border">
-        <CardContent className="p-8">
-          <div className="flex items-center gap-3 mb-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={goBack}
-              aria-label="Back"
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M19 12H5M12 5l-7 7 7 7" />
-              </svg>
-            </Button>
-            <h2 className="text-xl font-semibold text-card-foreground">
-              {showRole ? "Register New User" : "Register"}
-            </h2>
-          </div>
-          <p className="text-sm mb-7 ml-8 text-muted-foreground">
-            Fill in the details below to get started.
-          </p>
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+  const formBody = (
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <FieldInput
               id="reg-name"
               label="Name"
@@ -399,8 +365,52 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                 "Create account"
               )}
             </Button>
-          </form>
+      </form>
+    </>
+  );
 
+  if (showRole) {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div className="w-full max-w-2xl">{formBody}</div>
+      </div>
+    );
+  }
+
+  return (
+    <AuthShell>
+      <Logo subtitle="Create your Rydee account" />
+      <Card className="w-full rounded-2xl card-elevated border-border">
+        <CardContent className="p-8">
+          <div className="flex items-center gap-3 mb-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={goBack}
+              aria-label="Back"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M19 12H5M12 5l-7 7 7 7" />
+              </svg>
+            </Button>
+            <h2 className="text-xl font-semibold text-card-foreground">Register</h2>
+          </div>
+          <p className="text-sm mb-7 ml-8 text-muted-foreground">
+            Fill in the details below to get started.
+          </p>
+          {formBody}
           <div className="mt-5 text-center">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}

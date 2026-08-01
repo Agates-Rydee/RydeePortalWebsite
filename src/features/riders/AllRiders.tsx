@@ -16,7 +16,6 @@ import {
   ridersToCsv,
 } from "@/features/riders/csv";
 import { RiderDetailSheet } from "@/features/riders/RiderDetailSheet";
-import { BackButton, Logo } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -137,7 +136,7 @@ function readPage(sp: URLSearchParams): number {
   return Number.isInteger(n) && n > 0 ? n : 1;
 }
 
-export default function AllRiders({ onBack }: { onBack: () => void }) {
+export default function AllRiders() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Snapshot the URL parameters at mount and treat local state as the source of
@@ -314,30 +313,8 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
   const summaryText = `Showing ${pageStart + 1}–${Math.min(pageStart + pageSize, filteredRows.length)} of ${filteredRows.length} riders${filteredRows.length !== total ? ` (filtered from ${total})` : ""}`;
 
   return (
-    <div
-      className="min-h-screen flex flex-col bg-background"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-    >
-      <header className="w-full flex items-center justify-between px-6 py-4 bg-card border-b border-border">
-        <div className="flex items-center gap-4">
-          <BackButton onClick={onBack} label="Dashboard" />
-          <Logo size="sm" />
-        </div>
-        <Badge
-          variant="outline"
-          className="rounded-full px-3 py-1.5 text-xs font-semibold"
-        >
-          {total} total
-        </Badge>
-      </header>
-
-      <main className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
-        <h1 className="text-2xl font-bold mb-1 text-foreground">All Riders</h1>
-        <p className="text-sm mb-6 text-muted-foreground">
-          Search, filter, and export the full rider roster.
-        </p>
-
-        <div className="flex flex-col gap-3 mb-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div
             role="tablist"
             aria-label="Filter by status"
@@ -572,8 +549,6 @@ export default function AllRiders({ onBack }: { onBack: () => void }) {
             </div>
           </div>
         )}
-      </main>
-
       <RiderDetailSheet
         row={activeRow}
         open={sheetOpen}

@@ -184,7 +184,8 @@ describe("AllRiders — pagination resets on filter/tab/search change", () => {
     expect(screen.getByText(/page 2 of 2/i)).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: /^active/i }));
     expect(screen.queryByText(/page 2 of 2/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /next page/i })).not.toBeInTheDocument();
+    const nextBtn = screen.getByRole("button", { name: /next page/i });
+    expect(nextBtn).toBeDisabled();
   });
 });
 

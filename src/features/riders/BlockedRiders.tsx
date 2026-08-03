@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Search } from "lucide-react";
 import { getAllRiders } from "@/api/riders";
 import { mapAllRidersResponse } from "@/features/riders/mapper";
@@ -38,7 +38,21 @@ interface WireResponse {
   riders?: Array<Record<string, unknown>>;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZES = [10, 25, 50, 100] as const;
+type PageSize = (typeof PAGE_SIZES)[number];
+const DEFAULT_PAGE_SIZE: PageSize = 10;
+
+type SortKey = "name" | "phone" | "cnic" | "status";
+type SortDir = "asc" | "desc";
+interface SortState { key: SortKey; dir: SortDir }
+const DEFAULT_SORT: SortState = { key: "name", dir: "asc" };
+
+function compare(a: PendingRider, b: PendingRider, key: SortKey, dir: SortDir): number {
+  const av = key === "status" ? "blocked" : (a[key] ?? "");
+  const bv = key === "status" ? "blocked" : (b[key] ?? "");
+  const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: "base" });
+  return dir === "asc" ? cmp : -cmp;
+}
 
 function toProfileForm(row: AllRidersRow): PendingRider {
   return {
@@ -97,17 +111,32 @@ export default function BlockedRiders() {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
   const [areaFilter, setAreaFilter] = useState("all");
+  const [sort, setSort] = useState<SortState>(DEFAULT_SORT);
   const debouncedSearch = useDebounced(searchInput, 300);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, areaFilter]);
+  }, [debouncedSearch, areaFilter, pageSize, sort]);
+
+  const toggleSort = useCallback((key: SortKey) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, dir: "asc" };
+      if (prev.dir === "asc") return { key, dir: "desc" };
+      return DEFAULT_SORT;
+    });
+  }, []);
+
+  const ariaSortFor = (key: SortKey): "ascending" | "descending" | "none" => {
+    if (sort.key !== key) return "none";
+    return sort.dir === "asc" ? "ascending" : "descending";
+  };
 
   const filteredRiders = useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
-    return riders.filter((r) => {
+    const out = riders.filter((r) => {
       if (areaFilter !== "all" && r.area !== areaFilter) return false;
       if (q === "") return true;
       return (
@@ -117,7 +146,8 @@ export default function BlockedRiders() {
         r.area.toLowerCase().includes(q)
       );
     });
-  }, [riders, debouncedSearch, areaFilter]);
+    return [...out].sort((a, b) => compare(a, b, sort.key, sort.dir));
+  }, [riders, debouncedSearch, areaFilter, sort]);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,10 +211,10 @@ export default function BlockedRiders() {
     setNotice("Changes saved");
   };
 
-  const pageCount = Math.max(1, Math.ceil(filteredRiders.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filteredRiders.length / pageSize));
   const currentPage = Math.min(page, pageCount);
-  const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const pageRows = filteredRiders.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageStart = (currentPage - 1) * pageSize;
+  const pageRows = filteredRiders.slice(pageStart, pageStart + pageSize);
   const noMatches = riders.length > 0 && filteredRiders.length === 0;
 
   return (
@@ -263,10 +293,10 @@ export default function BlockedRiders() {
                     <caption className="sr-only">Blocked riders</caption>
                     <thead className="bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                       <tr>
-                        <th scope="col" className="pl-6 pr-4 py-3 w-[32%]">Name</th>
-                        <th scope="col" className="px-4 py-3 w-[22%]">Phone</th>
-                        <th scope="col" className="px-4 py-3 w-[26%]">CNIC</th>
-                        <th scope="col" className="pl-4 pr-6 py-3 w-[20%] text-right">Status</th>
+                        <SortableTh sortKey="name" ariaSort={ariaSortFor("name")} onSort={toggleSort} className="pl-6 pr-4 py-3 w-[32%]">Name</SortableTh>
+                        <SortableTh sortKey="phone" ariaSort={ariaSortFor("phone")} onSort={toggleSort} className="px-4 py-3 w-[22%]">Phone</SortableTh>
+                        <SortableTh sortKey="cnic" ariaSort={ariaSortFor("cnic")} onSort={toggleSort} className="px-4 py-3 w-[26%]">CNIC</SortableTh>
+                        <SortableTh sortKey="status" ariaSort={ariaSortFor("status")} onSort={toggleSort} className="pl-4 pr-6 py-3 w-[20%]" align="right">Status</SortableTh>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -308,35 +338,50 @@ export default function BlockedRiders() {
                 </div>
               )}
 
-              {!noMatches && pageCount > 1 && (
-                <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border bg-muted/30 text-xs">
+              {!noMatches && (
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-border bg-muted/30 px-4 py-3 text-xs">
                   <p className="text-muted-foreground">
-                    Showing {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, filteredRiders.length)} of {filteredRiders.length}
+                    Showing {pageStart + 1}–{Math.min(pageStart + pageSize, filteredRiders.length)} of {filteredRiders.length} riders
                   </p>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      aria-label="Previous page"
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="blocked-page-size" className="text-xs text-muted-foreground">
+                      Rows per page:
+                    </Label>
+                    <select
+                      id="blocked-page-size"
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
                     >
-                      ‹
-                    </Button>
-                    <span className="text-muted-foreground px-2">
-                      Page {currentPage} of {pageCount}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                      disabled={currentPage >= pageCount}
-                      aria-label="Next page"
-                    >
-                      ›
-                    </Button>
+                      {PAGE_SIZES.map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        aria-label="Previous page"
+                      >
+                        ‹
+                      </Button>
+                      <span className="text-muted-foreground px-2">
+                        Page {currentPage} of {pageCount}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                        disabled={currentPage >= pageCount}
+                        aria-label="Next page"
+                      >
+                        ›
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -383,5 +428,35 @@ export default function BlockedRiders() {
         </div>
       )}
     </div>
+  );
+}
+
+interface SortableThProps {
+  sortKey: SortKey;
+  ariaSort: "ascending" | "descending" | "none";
+  onSort: (key: SortKey) => void;
+  className: string;
+  align?: "left" | "right";
+  children: React.ReactNode;
+}
+
+function SortableTh({ sortKey, ariaSort, onSort, className, align = "left", children }: SortableThProps) {
+  const indicator = ariaSort === "ascending" ? "↑" : ariaSort === "descending" ? "↓" : "↕";
+  return (
+    <th scope="col" aria-sort={ariaSort} className={className}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={
+          "inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded " +
+          (align === "right" ? "ml-auto" : "")
+        }
+      >
+        {children}
+        <span aria-hidden="true" className={ariaSort === "none" ? "opacity-40" : "text-foreground"}>
+          {indicator}
+        </span>
+      </button>
+    </th>
   );
 }

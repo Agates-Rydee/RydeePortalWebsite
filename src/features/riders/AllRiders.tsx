@@ -328,43 +328,42 @@ export default function AllRiders() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div
-            role="tablist"
-            aria-label="Filter by status"
-            className="flex flex-wrap gap-1 bg-muted rounded-lg p-1"
-          >
-            {STATUS_TABS.map((t) => {
-              const selected = statusTab === t;
-              return (
-                <button
-                  key={t}
-                  role="tab"
-                  type="button"
-                  aria-selected={selected}
-                  onClick={() => setStatusTab(t)}
-                  className={
-                    "px-3 py-1.5 rounded-md text-sm font-medium transition-colors " +
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 " +
-                    (selected
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground")
-                  }
-                >
-                  {TAB_LABEL[t]}
-                  <span
-                    className="ml-2 inline-flex items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-muted-foreground"
-                    data-testid={`fqa-count-${t}`}
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div
+              role="tablist"
+              aria-label="Filter by status"
+              className="flex flex-wrap gap-1 bg-muted rounded-lg p-1"
+            >
+              {STATUS_TABS.map((t) => {
+                const selected = statusTab === t;
+                return (
+                  <button
+                    key={t}
+                    role="tab"
+                    type="button"
+                    aria-selected={selected}
+                    onClick={() => setStatusTab(t)}
+                    className={
+                      "px-3 py-1.5 rounded-md text-sm font-medium transition-colors " +
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 " +
+                      (selected
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground")
+                    }
                   >
-                    {counts[t]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-full md:w-72">
+                    {TAB_LABEL[t]}
+                    <span
+                      className="ml-2 inline-flex items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-muted-foreground"
+                      data-testid={`fqa-count-${t}`}
+                    >
+                      {counts[t]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="relative w-full sm:w-64">
               <Label htmlFor="fqa-search" className="sr-only">
                 Search riders
               </Label>
@@ -382,7 +381,7 @@ export default function AllRiders() {
               <SelectTrigger
                 id="fqa-area"
                 aria-label="Filter by area"
-                className="h-9 w-full md:w-52 rounded-lg border border-input bg-card px-3 text-sm"
+                className="h-9 w-full sm:w-48 rounded-lg border border-input bg-card px-3 text-sm"
               >
                 <SelectValue placeholder="All areas" />
               </SelectTrigger>
@@ -391,17 +390,18 @@ export default function AllRiders() {
                 {AREA_ITEMS}
               </SelectContent>
             </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              disabled={filteredRows.length === 0}
-              aria-label={`Export CSV (${filteredRows.length} rows)`}
-            >
-              Export CSV
-            </Button>
           </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={filteredRows.length === 0}
+            aria-label={`Export CSV (${filteredRows.length} rows)`}
+          >
+            Export CSV
+          </Button>
         </div>
 
         <Card className="rounded-2xl border-border overflow-hidden p-0">
@@ -550,33 +550,31 @@ export default function AllRiders() {
                   ))}
                 </select>
 
-                {pageCount > 1 && (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      aria-label="Previous page"
-                    >
-                      ‹
-                    </Button>
-                    <span className="text-xs text-muted-foreground px-2">
-                      Page {currentPage} of {pageCount}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                      disabled={currentPage >= pageCount}
-                      aria-label="Next page"
-                    >
-                      ›
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    aria-label="Previous page"
+                  >
+                    ‹
+                  </Button>
+                  <span className="text-xs text-muted-foreground px-2">
+                    Page {currentPage} of {pageCount}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                    disabled={currentPage >= pageCount}
+                    aria-label="Next page"
+                  >
+                    ›
+                  </Button>
+                </div>
               </div>
             </div>
           )}

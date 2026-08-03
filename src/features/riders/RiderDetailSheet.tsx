@@ -62,7 +62,7 @@ export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetPr
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md overflow-y-auto"
+        className="w-full sm:max-w-md overflow-y-auto data-[state=open]:duration-0 data-[state=closed]:duration-0"
         data-testid="fqa-rider-detail-sheet"
       >
         <SheetHeader>

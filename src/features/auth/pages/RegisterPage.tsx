@@ -372,7 +372,9 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   if (showRole) {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div className="w-full max-w-2xl">{formBody}</div>
+        <Card className="w-full max-w-2xl rounded-2xl border-border">
+          <CardContent className="p-6 md:p-8">{formBody}</CardContent>
+        </Card>
       </div>
     );
   }

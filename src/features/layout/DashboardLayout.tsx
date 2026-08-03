@@ -31,7 +31,7 @@ export function DashboardLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 px-4">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-1 h-5" />
           <h1 className="text-sm font-medium text-foreground">{title}</h1>

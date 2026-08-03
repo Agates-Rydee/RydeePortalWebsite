@@ -1,16 +1,25 @@
 import { useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Search } from "lucide-react";
-import { getUnregisteredRiders } from "@/api/riders";
-import type { PendingRider } from "@/types/rider";
+import { getAllRiders } from "@/api/riders";
+import { mapAllRidersResponse } from "@/features/riders/mapper";
+import type { AllRidersRow, PendingRider } from "@/types/rider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  RiderProfileCard,
-  BlockRiderAction,
-} from "@/features/riders/RiderProfileCard";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { RiderProfileCard } from "@/features/riders/RiderProfileCard";
 import {
   Select,
   SelectContent,
@@ -25,43 +34,62 @@ const AREA_ITEMS = KARACHI_AREAS.map((a) => (
   <SelectItem key={a} value={a}>{a}</SelectItem>
 ));
 
-interface UnregisteredRidersResponse {
+interface WireResponse {
   riders?: Array<Record<string, unknown>>;
 }
 
 const PAGE_SIZE = 10;
 
-function toPendingRider(raw: Record<string, unknown>, idx: number): PendingRider {
-  const id = typeof raw.id === "number" ? raw.id : idx + 1;
-  const documents = Array.isArray(raw.documents)
-    ? (raw.documents as unknown[]).filter((d): d is string => typeof d === "string")
-    : [];
+function toProfileForm(row: AllRidersRow): PendingRider {
   return {
-    id,
-    name: typeof raw.name === "string" ? raw.name : "",
-    phone: typeof raw.phone === "string" ? raw.phone : "",
-    dob: typeof raw.dob === "string" ? raw.dob : "",
-    cnic: typeof raw.cnic === "string" ? raw.cnic : "",
-    area:
-      typeof raw.area === "string"
-        ? raw.area
-        : typeof raw.rideArea === "string"
-          ? raw.rideArea
-          : "",
-    documents,
-    pin: typeof raw.pin === "string" ? raw.pin : "",
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    dob: row.dob ?? "",
+    cnic: row.cnic,
+    area: row.area,
+    documents: row.documents ?? [],
+    pin: row.pin ?? "",
   };
 }
 
-function isPending(raw: Record<string, unknown>): boolean {
-  const rawStatus = raw.activation_status ?? raw.activationStatus;
-  const status = String(rawStatus ?? "").toLowerCase().trim();
-  if (status !== "") return status === "pending";
-  if (raw.activated === true) return false;
-  return true;
+interface UnblockActionProps {
+  riderName: string;
+  onConfirm: () => void;
 }
 
-export default function PendingRiders() {
+function UnblockAction({ riderName, onConfirm }: UnblockActionProps) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="rounded-xl px-5 py-3 h-auto text-sm font-semibold bg-success-muted text-success border-success/25 hover:bg-success-muted/80 hover:text-success"
+        >
+          Unblock rider
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unblock rider {riderName}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This rider will be able to operate again.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Unblock rider
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export default function BlockedRiders() {
   const [riders, setRiders] = useState<PendingRider[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<PendingRider | null>(null);
@@ -93,15 +121,17 @@ export default function PendingRiders() {
 
   useEffect(() => {
     let cancelled = false;
-    const load = async (): Promise<void> => {
+    (async () => {
       try {
-        const data = (await getUnregisteredRiders()) as UnregisteredRidersResponse;
+        const data = (await getAllRiders()) as WireResponse;
         if (!data || !Array.isArray(data.riders)) {
           throw new Error("Invalid response shape");
         }
-        const pending = data.riders.filter(isPending).map((r, i) => toPendingRider(r, i));
+        const blocked = mapAllRidersResponse(data.riders)
+          .filter((r) => r.status === "blocked")
+          .map(toProfileForm);
         if (cancelled) return;
-        setRiders(pending);
+        setRiders(blocked);
         setLoadError(null);
       } catch (err) {
         if (cancelled) return;
@@ -109,8 +139,7 @@ export default function PendingRiders() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
-    void load();
+    })();
     return () => {
       cancelled = true;
     };
@@ -138,12 +167,12 @@ export default function PendingRiders() {
     }
   };
 
-  const confirmBlock = () => {
+  const confirmUnblock = () => {
     if (!form) return;
     setRiders((r) => r.filter((x) => x.id !== form.id));
     setSelectedId(null);
     setForm(null);
-    setNotice("Rider blocked");
+    setNotice("Rider unblocked");
   };
 
   const handleSave = () => {
@@ -166,7 +195,7 @@ export default function PendingRiders() {
           aria-live="polite"
           className="rounded-2xl border border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground"
         >
-          Loading pending riders…
+          Loading blocked riders…
         </div>
       )}
 
@@ -181,9 +210,9 @@ export default function PendingRiders() {
 
       {!loading && !loadError && riders.length === 0 && (
         <Card className="rounded-2xl p-10 flex-col items-center justify-center text-center border-border shadow-none">
-          <p className="text-sm font-medium text-foreground">No pending riders</p>
+          <p className="text-sm font-medium text-foreground">No blocked riders</p>
           <p className="text-xs mt-1 text-muted-foreground">
-            All rider applications have been reviewed.
+            All riders currently have access.
           </p>
         </Card>
       )}
@@ -193,12 +222,12 @@ export default function PendingRiders() {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative w-full max-w-sm">
-                <Label htmlFor="pending-search" className="sr-only">
-                  Search pending riders
+                <Label htmlFor="blocked-search" className="sr-only">
+                  Search blocked riders
                 </Label>
                 <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" aria-hidden="true" />
                 <Input
-                  id="pending-search"
+                  id="blocked-search"
                   type="search"
                   placeholder="Search by name, phone, CNIC, or area…"
                   value={searchInput}
@@ -208,7 +237,7 @@ export default function PendingRiders() {
               </div>
               <Select value={areaFilter} onValueChange={setAreaFilter}>
                 <SelectTrigger
-                  id="pending-area"
+                  id="blocked-area"
                   aria-label="Filter by area"
                   className="h-9 w-full max-w-[16rem] rounded-lg border border-input bg-card px-3 text-sm"
                 >
@@ -225,13 +254,13 @@ export default function PendingRiders() {
                 <div className="px-6 py-12 text-center">
                   <p className="text-sm font-medium text-foreground">No matches</p>
                   <p className="text-xs mt-1 text-muted-foreground">
-                    No pending riders match “{debouncedSearch}”.
+                    No blocked riders match “{debouncedSearch}”.
                   </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm table-fixed">
-                    <caption className="sr-only">Pending riders</caption>
+                    <caption className="sr-only">Blocked riders</caption>
                     <thead className="bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                       <tr>
                         <th scope="col" className="pl-6 pr-4 py-3 w-[32%]">Name</th>
@@ -249,7 +278,7 @@ export default function PendingRiders() {
                             tabIndex={0}
                             role="button"
                             aria-pressed={selected}
-                            aria-label={`Review application for ${r.name || "rider"}`}
+                            aria-label={`Review blocked rider ${r.name || "rider"}`}
                             onClick={() => selectRider(r.id)}
                             onKeyDown={(e) => handleRowKeyDown(e, r.id)}
                             className={
@@ -265,10 +294,10 @@ export default function PendingRiders() {
                             <td className="pl-4 pr-6 py-3 text-right">
                               <Badge
                                 variant="outline"
-                                className="gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full bg-warning-muted text-warning border-warning/25"
+                                className="gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full bg-destructive/10 text-destructive border-destructive/25"
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
-                                Pending
+                                Blocked
                               </Badge>
                             </td>
                           </tr>
@@ -320,24 +349,23 @@ export default function PendingRiders() {
                 form={form}
                 onChange={setForm}
                 onSave={handleSave}
-                actions={<BlockRiderAction riderName={form.name} onConfirm={confirmBlock} />}
+                actions={<UnblockAction riderName={form.name} onConfirm={confirmUnblock} />}
               />
             ) : (
               <Card className="rounded-2xl p-10 flex-col items-center justify-center text-center border-border shadow-none">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-warning-muted">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-destructive/10">
                   <svg
                     width="26" height="26" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                    className="text-warning" aria-hidden="true"
+                    className="text-destructive" aria-hidden="true"
                   >
                     <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-foreground">No rider selected</p>
                 <p className="text-xs mt-1 text-muted-foreground">
-                  Choose a rider from the table to review their application.
+                  Choose a rider from the table to view their profile.
                 </p>
               </Card>
             )}

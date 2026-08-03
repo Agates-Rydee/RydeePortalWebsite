@@ -12,7 +12,7 @@ import { registerUser } from "@/api/auth";
 import { ROLES } from "@/types/profile";
 import { AuthShell } from "./AuthShell";
 
-const DOB_MAX_YEAR = new Date().getFullYear() - 18;
+const DOB_MAX_YEAR = new Date().getFullYear();
 const DOB_MIN_YEAR = 1940;
 
 // Parse a DD/MM/YYYY string into a Date and reject inputs whose numeric
@@ -65,7 +65,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
 
   // Each validator returns an empty string when the value is acceptable, or
   // the user-facing error copy otherwise. Date of birth is displayed as
-  // DD/MM/YYYY but transmitted as ISO YYYY-MM-DD; the minimum age is 18.
+  // DD/MM/YYYY but transmitted as ISO YYYY-MM-DD.
   const validators: Record<FieldKey, (v: string) => string> = {
     name: (v) => (v.trim().length >= 2 ? "" : "Enter your full name."),
     email: (v) => (/.+@.+\..+/.test(v) ? "" : "Enter a valid email address."),
@@ -90,7 +90,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
     const hadBirthday =
       now.getMonth() > mm - 1 || (now.getMonth() === mm - 1 && now.getDate() >= dd);
     if (!hadBirthday) age -= 1;
-    return age >= 18 && age <= 100;
+    return age >= 0 && age <= 100;
   }
 
   function dobToIso(v: string): string {

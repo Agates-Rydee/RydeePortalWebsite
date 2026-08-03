@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import { getAllRiders } from "@/api/riders";
 import { mapAllRidersResponse } from "@/features/riders/mapper";
-import { useAuth } from "@/features/auth/useAuth";
-import { roleHome } from "@/types/profile";
 import type { AllRidersRow } from "@/types/rider";
 
 interface WireResponse {
@@ -74,8 +72,6 @@ function StatCard({ label, value, valueClassName, hint, ariaLabel, onClick, icon
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const isAdmin = roleHome(profile?.role) === "/admin";
 
   const [rows, setRows] = useState<AllRidersRow[] | null>(null);
 
@@ -98,36 +94,12 @@ export default function Dashboard() {
   const total = rows?.length ?? null;
   const active = rows ? rows.filter((r) => r.status === "active").length : null;
   const pending = rows ? rows.filter((r) => r.status === "pending").length : null;
+  const blocked = rows ? rows.filter((r) => r.status === "blocked").length : null;
   const activeRows = (rows ?? []).filter((r) => r.status === "active").slice(0, 10);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-      <div className={`grid gap-4 grid-cols-1 sm:grid-cols-2 ${isAdmin ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => navigate("/admin/register")}
-            aria-label="Register new user"
-            className="bg-card text-card-foreground flex flex-col gap-0 rounded-xl border py-4 text-left w-full transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <CardHeader>
-              <CardDescription className="text-xs">User management</CardDescription>
-              <CardTitle className="text-2xl font-semibold text-primary">Register new user</CardTitle>
-              <CardAction className="text-muted-foreground">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="22" y1="11" x2="16" y2="11" />
-                </svg>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className="pt-3 text-xs text-muted-foreground">
-              Add a new Operator, Customer, or Rider →
-            </CardFooter>
-          </button>
-        )}
-
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Total Riders"
           value={total}
@@ -173,6 +145,21 @@ export default function Dashboard() {
             </svg>
           }
         />
+
+        <StatCard
+          label="Blocked Riders"
+          value={blocked}
+          valueClassName="text-destructive"
+          hint="Tap to review blocked →"
+          ariaLabel={`View ${blocked ?? "—"} blocked riders`}
+          onClick={() => navigate("/admin/blocked-riders")}
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+          }
+        />
       </div>
 
       <div className="flex items-center justify-between px-1">
@@ -200,7 +187,7 @@ export default function Dashboard() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="bg-switch-background text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left font-medium">Name</th>
                   <th scope="col" className="px-4 py-3 text-left font-medium">Phone</th>

@@ -1,5 +1,6 @@
 import ActiveRiders from "@/features/riders/ActiveRiders";
 import AllRiders from "@/features/riders/AllRiders";
+import BlockedRiders from "@/features/riders/BlockedRiders";
 import PendingRiders from "@/features/riders/PendingRiders";
 
 export function AllRidersRoute() {
@@ -12,4 +13,8 @@ export function ActiveRidersRoute() {
 
 export function PendingRidersRoute() {
   return <PendingRiders />;
+}
+
+export function BlockedRidersRoute() {
+  return <BlockedRiders />;
 }

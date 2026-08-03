@@ -21,6 +21,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { KARACHI_AREAS } from "@/features/riders/constants";
+import { useDebounced } from "@/features/riders/useDebounced";
 
 type StatusTab = "all" | RiderStatus;
 
@@ -82,17 +92,6 @@ function formatJoined(iso: string): string {
   return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function useDebounced<T>(value: T, ms: number): T {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    // Restart the timer whenever the input value changes; the returned value only
-    // updates after the caller stops changing it for the full delay window.
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
-
 function compare(
   a: AllRidersRow,
   b: AllRidersRow,
@@ -136,6 +135,15 @@ function readPage(sp: URLSearchParams): number {
   return Number.isInteger(n) && n > 0 ? n : 1;
 }
 
+function readArea(sp: URLSearchParams): string {
+  const v = sp.get("area");
+  return v && v !== "" ? v : "all";
+}
+
+const AREA_ITEMS = KARACHI_AREAS.map((a) => (
+  <SelectItem key={a} value={a}>{a}</SelectItem>
+));
+
 export default function AllRiders() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -153,6 +161,7 @@ export default function AllRiders() {
   );
   const [searchInput, setSearchInput] = useState(() => initialParams.get("q") ?? "");
   const debouncedSearch = useDebounced(searchInput, 300);
+  const [areaFilter, setAreaFilter] = useState<string>(() => readArea(initialParams));
   const [sort, setSort] = useState<SortState>(() => readSort(initialParams));
   const [page, setPage] = useState(() => readPage(initialParams));
   const [pageSize, setPageSize] = useState<PageSize>(() => readPageSize(initialParams));
@@ -184,13 +193,14 @@ export default function AllRiders() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusTab, debouncedSearch, pageSize]);
+  }, [statusTab, debouncedSearch, pageSize, areaFilter]);
 
   useEffect(() => {
     const next = new URLSearchParams();
     if (statusTab !== "all") next.set("status", statusTab);
     const q = debouncedSearch.trim();
     if (q !== "") next.set("q", q);
+    if (areaFilter !== "all") next.set("area", areaFilter);
     if (sort.key !== DEFAULT_SORT.key || sort.dir !== DEFAULT_SORT.dir) {
       next.set("sort", sort.key);
       next.set("dir", sort.dir);
@@ -204,7 +214,7 @@ export default function AllRiders() {
     }
     // searchParams is intentionally omitted: this effect derives it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusTab, debouncedSearch, sort.key, sort.dir, page, pageSize, setSearchParams]);
+  }, [statusTab, debouncedSearch, areaFilter, sort.key, sort.dir, page, pageSize, setSearchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -251,6 +261,9 @@ export default function AllRiders() {
     if (!rows) return [];
     const q = debouncedSearch.trim().toLowerCase();
     let out = statusTab === "all" ? rows : rows.filter((r) => r.status === statusTab);
+    if (areaFilter !== "all") {
+      out = out.filter((r) => r.area === areaFilter);
+    }
     if (q !== "") {
       out = out.filter(
         (r) =>
@@ -261,7 +274,7 @@ export default function AllRiders() {
     }
     // Sort a copy so the memoised upstream array is never mutated in place.
     return [...out].sort((a, b) => compare(a, b, sort.key, sort.dir));
-  }, [rows, statusTab, debouncedSearch, sort]);
+  }, [rows, statusTab, debouncedSearch, areaFilter, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -285,6 +298,7 @@ export default function AllRiders() {
   const handleClearFilters = () => {
     setStatusTab("all");
     setSearchInput("");
+    setAreaFilter("all");
   };
 
   const handleExport = () => {
@@ -349,18 +363,34 @@ export default function AllRiders() {
             })}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Label htmlFor="fqa-search" className="sr-only">
-              Search riders
-            </Label>
-            <Input
-              id="fqa-search"
-              type="search"
-              placeholder="Search by name, phone, or CNIC…"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="h-9 w-full md:w-72 rounded-xl px-3 text-sm"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full md:w-72">
+              <Label htmlFor="fqa-search" className="sr-only">
+                Search riders
+              </Label>
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" aria-hidden="true" />
+              <Input
+                id="fqa-search"
+                type="search"
+                placeholder="Search by name, phone, or CNIC…"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="h-9 w-full rounded-lg pl-9 pr-3 text-sm bg-card"
+              />
+            </div>
+            <Select value={areaFilter} onValueChange={setAreaFilter}>
+              <SelectTrigger
+                id="fqa-area"
+                aria-label="Filter by area"
+                className="h-9 w-full md:w-52 rounded-lg border border-input bg-card px-3 text-sm"
+              >
+                <SelectValue placeholder="All areas" />
+              </SelectTrigger>
+              <SelectContent className="duration-0">
+                <SelectItem value="all">All areas</SelectItem>
+                {AREA_ITEMS}
+              </SelectContent>
+            </Select>
             <Button
               type="button"
               variant="outline"
@@ -430,7 +460,7 @@ export default function AllRiders() {
                 </caption>
                 {/* Explicit background and inset border on the sticky header keep
                     scrolling row content from bleeding through underneath it. */}
-                <thead className="sticky top-0 z-10 bg-muted text-left text-xs font-medium text-muted-foreground uppercase tracking-wider shadow-[inset_0_-1px_0_hsl(var(--border))]">
+                <thead className="sticky top-0 z-10 bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider shadow-[inset_0_-1px_0_hsl(var(--border))]">
                   <tr>
                     <SortableTh sortKey="name" ariaSort={ariaSortFor("name")} onSort={toggleSort} minWidth="min-w-[160px]">
                       Name
@@ -450,7 +480,7 @@ export default function AllRiders() {
                     <SortableTh sortKey="joinedAt" ariaSort={ariaSortFor("joinedAt")} onSort={toggleSort} minWidth="min-w-[100px]">
                       Joined
                     </SortableTh>
-                    <th scope="col" className="px-4 py-3 w-[80px] text-center">
+                    <th scope="col" className="pl-4 pr-6 py-3 w-[80px] text-center">
                       Actions
                     </th>
                   </tr>
@@ -463,9 +493,9 @@ export default function AllRiders() {
                       aria-label={`Open details for ${r.name || "rider"}`}
                       onClick={(e) => openRow(r, e.currentTarget)}
                       onKeyDown={(e) => handleRowKeyDown(e, r)}
-                      className="hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                      className="h-12 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                     >
-                      <th scope="row" className="px-4 py-3 font-medium text-foreground text-left">
+                      <th scope="row" className="pl-6 pr-4 py-3 font-medium text-foreground text-left">
                         {r.name || "—"}
                       </th>
                       <td className="px-4 py-3 font-mono text-xs">{r.phone || "—"}</td>
@@ -486,7 +516,7 @@ export default function AllRiders() {
                       <td className="px-4 py-3 whitespace-nowrap">
                         {formatJoined(r.joinedAt)}
                       </td>
-                      <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                      <td className="pl-4 pr-6 py-3 text-center text-xs text-muted-foreground">
                         —
                       </td>
                     </tr>
@@ -495,60 +525,62 @@ export default function AllRiders() {
               </table>
             </div>
           )}
-        </Card>
 
-        {!loading && !error && !empty && (
-          <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <p className="text-xs text-muted-foreground">{summaryText}</p>
-            <div className="sr-only" aria-live="polite">
-              {summaryText}
-            </div>
+          {!loading && !error && !empty && (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-border bg-muted/30 px-4 py-3">
+              <p className="text-xs text-muted-foreground">{summaryText}</p>
+              <div className="sr-only" aria-live="polite">
+                {summaryText}
+              </div>
 
-            <div className="flex items-center gap-3">
-              <Label htmlFor="fqa-page-size" className="text-xs text-muted-foreground">
-                Rows per page:
-              </Label>
-              <select
-                id="fqa-page-size"
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
-                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-              >
-                {PAGE_SIZES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                  aria-label="Previous page"
+              <div className="flex items-center gap-3">
+                <Label htmlFor="fqa-page-size" className="text-xs text-muted-foreground">
+                  Rows per page:
+                </Label>
+                <select
+                  id="fqa-page-size"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
+                  className="h-8 rounded-md border border-input bg-background px-2 text-xs"
                 >
-                  ‹
-                </Button>
-                <span className="text-xs text-muted-foreground px-2">
-                  Page {currentPage} of {pageCount}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                  disabled={currentPage >= pageCount}
-                  aria-label="Next page"
-                >
-                  ›
-                </Button>
+                  {PAGE_SIZES.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+
+                {pageCount > 1 && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                      aria-label="Previous page"
+                    >
+                      ‹
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2">
+                      Page {currentPage} of {pageCount}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                      disabled={currentPage >= pageCount}
+                      aria-label="Next page"
+                    >
+                      ›
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </Card>
       <RiderDetailSheet
         row={activeRow}
         open={sheetOpen}
@@ -579,12 +611,12 @@ function SortableTh({
     <th
       scope="col"
       aria-sort={ariaSort}
-      className={`px-4 py-3 ${minWidth}`}
+      className={`${sortKey === "name" ? "pl-6 pr-4" : "px-4"} py-3 ${minWidth}`}
     >
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+        className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
       >
         {children}
         <span

@@ -1,6 +1,6 @@
 export const EXPECTED_FORMATS: Record<string, string> = {
   VITE_API_BASE_URL:
-    "http:// or https:// URL, for example http://localhost:3000",
+    "empty (same-origin — required for the dev proxy mode) OR an http:// or https:// URL",
   VITE_ENABLE_MSW: "the literal string true or false",
 };
 
@@ -18,13 +18,13 @@ export type ValidationResult =
   | { ok: true; values: ValidatedEnvironment }
   | { ok: false; problems: EnvironmentProblem[] };
 
-// A URL is accepted only when it parses AND uses http or https, so values like "true" or "localhost:3000" (no scheme) are caught up front.
-function classifyUrl(
+function classifyBaseUrl(
   name: string,
   raw: string | undefined,
 ): EnvironmentProblem | null {
   if (raw === undefined) return { name, kind: "missing" };
-  if (raw.trim() === "") return { name, kind: "empty" };
+  // Empty is a valid signal for same-origin/relative requests — the dev proxy mode and the api client's joinUrl both handle a bare path.
+  if (raw.trim() === "") return null;
   try {
     const parsed = new URL(raw);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
@@ -58,14 +58,12 @@ function classifyBoolean(
   return null;
 }
 
-// Accepting a plain record (rather than reading import.meta.env directly) keeps this module usable from Node, where import.meta.env does not exist. Callers pass whichever source matches their runtime.
 export function validateEnvironment(
   source: Record<string, string | undefined>,
 ): ValidationResult {
-  // Every field is classified before returning so a single failed run reports ALL problems at once instead of stopping at the first.
   const problems: EnvironmentProblem[] = [];
 
-  const urlProblem = classifyUrl("VITE_API_BASE_URL", source.VITE_API_BASE_URL);
+  const urlProblem = classifyBaseUrl("VITE_API_BASE_URL", source.VITE_API_BASE_URL);
   if (urlProblem) problems.push(urlProblem);
 
   const booleanProblem = classifyBoolean(

@@ -28,18 +28,14 @@ describe("validateEnvironment", () => {
     }
   });
 
-  it("flags an empty string value as empty (distinct from missing)", () => {
+  it("accepts an empty VITE_API_BASE_URL as valid (same-origin / dev-proxy mode)", () => {
     const result = validateEnvironment({
       ...validSource,
       VITE_API_BASE_URL: "",
     });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.problems).toHaveLength(1);
-      expect(result.problems[0]).toEqual({
-        name: "VITE_API_BASE_URL",
-        kind: "empty",
-      });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.VITE_API_BASE_URL).toBe("");
     }
   });
 

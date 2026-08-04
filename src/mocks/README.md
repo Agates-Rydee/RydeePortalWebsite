@@ -34,8 +34,8 @@ You need **no backend running**. Watch the browser console for
 
 ## Seed users
 
-The login form takes **phone + password** (10-digit phone, per the
-client-side `/^\d{10}$/` check in `LoginPage.tsx`).
+The login form takes **phone + password** (9\u201311 digit phone, per the
+client-side `/^\d{9,11}$/` check in `LoginPage.tsx`).
 
 | Role | Phone | Password | What you'll see |
 |---|---|---|---|
@@ -125,7 +125,7 @@ session cookies MSW must simulate.
 
 **Login returns 401 with credentials I know are correct**
 
-- Phone must be **exactly 10 digits**. `LoginPage` blocks submit
+- Phone must be **9\u201311 digits**. `LoginPage` blocks submit
   otherwise; if a client bypasses that check, handlers still 401 on
   mismatch. Check the seed table above.
 - Password is case-sensitive.
@@ -145,6 +145,13 @@ session cookies MSW must simulate.
 Set `VITE_ENABLE_MSW=false` in `.env`. Fetches now pass through to
 `VITE_API_BASE_URL` (the endpoint paths are hard-coded in
 `src/api/<feature>.ts` alongside the fetch call sites) — no code change.
+
+If the real backend has broken CORS, set `VITE_API_BASE_URL=` (empty) and
+`VITE_DEV_PROXY_TARGET=<upstream-url>` instead. The Vite dev server then
+proxies `/user`, `/register` and `/GetAll` to that target with
+`changeOrigin` + cookie-domain rewrite to `localhost`, keeping the browser
+same-origin. Only active in `npm run dev`; production builds are unaffected.
+See `.env.example` mode (b).
 
 **A non-auth request errors "Uncaught in fetch"**
 

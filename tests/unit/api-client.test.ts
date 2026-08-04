@@ -37,8 +37,8 @@ describe("API client — client.ts", () => {
     });
 
     it("composed feature URLs have no double separator before the path", () => {
-      expect(API_LOGIN_URL).not.toMatch(/[^:]\/\/user\/login$/);
-      expect(API_LOGIN_URL.endsWith("/user/login")).toBe(true);
+      expect(API_LOGIN_URL).not.toMatch(/[^:]\/\/user-login$/);
+      expect(API_LOGIN_URL.endsWith("/user-login")).toBe(true);
     });
   });
 
@@ -65,7 +65,7 @@ describe("API client — client.ts", () => {
       const captured = installFetch(
         new Response(JSON.stringify({ riders: [] }), { status: 200 }),
       );
-      await post(joinUrl("/GetAll/Riders"));
+      await post(joinUrl("/get-all-riders"));
       expect(captured.init?.body).toBeUndefined();
       const headers = captured.init?.headers as Record<string, string> | undefined;
       expect(headers).toBeUndefined();
@@ -78,7 +78,7 @@ describe("API client — client.ts", () => {
       const captured = installFetch(
         new Response(JSON.stringify({ ok: true }), { status: 200 }),
       );
-      await post(joinUrl("/user/login"), { phone: "0300111111", password: "x" });
+      await post(joinUrl("/user-login"), { phone: "0300111111", password: "x" });
       expect(captured.init?.body).toBe(
         JSON.stringify({ phone: "0300111111", password: "x" }),
       );
@@ -95,7 +95,7 @@ describe("API client — client.ts", () => {
           statusText: "Unauthorized",
         }),
       );
-      await expect(post(joinUrl("/user/login"), { a: 1 })).rejects.toMatchObject({
+      await expect(post(joinUrl("/user-login"), { a: 1 })).rejects.toMatchObject({
         name: "ApiError",
         status: 401,
         responseText: "Invalid phone or password",

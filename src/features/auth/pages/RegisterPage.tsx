@@ -69,7 +69,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const validators: Record<FieldKey, (v: string) => string> = {
     name: (v) => (v.trim().length >= 2 ? "" : "Enter your full name."),
     email: (v) => (/.+@.+\..+/.test(v) ? "" : "Enter a valid email address."),
-    phone: (v) => (/^\d{10,11}$/.test(v) ? "" : "Enter a valid phone number (10\u201311 digits)."),
+    phone: (v) => (/^\d{9,11}$/.test(v) ? "" : "Enter a valid phone number (9\u201311 digits)."),
     dob: (v) => (isValidDob(v) ? "" : "Enter a valid date of birth (DD/MM/YYYY)."),
     address: (v) => (v.trim().length >= 5 ? "" : "Enter your home address."),
     password: (v) => (v.length >= 8 ? "" : "Password must be at least 8 characters."),

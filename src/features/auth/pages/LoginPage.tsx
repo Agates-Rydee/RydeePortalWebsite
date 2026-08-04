@@ -22,7 +22,7 @@ export default function LoginPage() {
   const [phoneError, setPhoneError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const isValidPhone = (value: string) => /^\d{10}$/.test(value);
+  const isValidPhone = (value: string) => /^\d{9,11}$/.test(value);
 
   const PHONE_ERR = "Please enter a valid phone number.";
   const PASSWORD_ERR = "Please enter your password.";

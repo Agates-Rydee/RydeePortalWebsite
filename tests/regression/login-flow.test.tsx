@@ -90,7 +90,7 @@ describe("login failure paths", () => {
     expect(screen.queryByTestId("rider-home")).toBeNull();
   });
 
-  it("client-side phone validation blocks non-10-digit input (no fetch fires)", async () => {
+  it("client-side phone validation blocks input outside 9\u201311 digits (no fetch fires)", async () => {
     // Fail loudly if the handler is ever hit — client-side validation must
     // block submission before any network call is attempted.
     let hit = false;

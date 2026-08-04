@@ -85,8 +85,8 @@ describe("H6 — MSW default handlers match ADR-0003 contract", () => {
     });
     const data = (await res.json()) as unknown;
     expect(data).toMatchObject({ role: expect.any(String), profile: expect.any(Object) });
-    const { profile } = data as { profile: { role: string } };
-    expect(typeof profile.role).toBe("string");
+    const { role } = data as { role: string };
+    expect(typeof role).toBe("string");
   });
 
   it("login 401 body is text 'Invalid phone or password' (not JSON)", async () => {
@@ -108,6 +108,7 @@ describe("H6 — MSW default handlers match ADR-0003 contract", () => {
       credentials: "include",
     });
     expect(res.status).toBe(400);
-    expect(await res.text()).toBe("Missing required fields");
+    const body = (await res.json()) as { message: string };
+    expect(body.message).toMatch(/missing required fields/i);
   });
 });

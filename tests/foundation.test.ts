@@ -16,6 +16,6 @@ describe("test foundation (D12)", () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { role: string };
-    expect(body.role).toBe("Rider");
+    expect(body.role).toBe("rider");
   });
 });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
@@ -36,6 +37,7 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({ showRole = false, backTo }: RegisterPageProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const goBack = () => navigate(backTo ?? "/login");
 
@@ -58,22 +60,19 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   type FieldKey = "name" | "email" | "phone" | "dob" | "address" | "password" | "role";
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
 
-  const set =
-    (field: keyof typeof form) =>
-    (v: string) =>
-      setForm((f) => ({ ...f, [field]: v }));
+  const set = (field: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [field]: v }));
 
   // Each validator returns an empty string when the value is acceptable, or
   // the user-facing error copy otherwise. Date of birth is displayed as
   // DD/MM/YYYY but transmitted as ISO YYYY-MM-DD.
   const validators: Record<FieldKey, (v: string) => string> = {
-    name: (v) => (v.trim().length >= 2 ? "" : "Enter your full name."),
-    email: (v) => (/.+@.+\..+/.test(v) ? "" : "Enter a valid email address."),
-    phone: (v) => (/^\d{9,11}$/.test(v) ? "" : "Enter a valid phone number (9\u201311 digits)."),
-    dob: (v) => (isValidDob(v) ? "" : "Enter a valid date of birth (DD/MM/YYYY)."),
-    address: (v) => (v.trim().length >= 5 ? "" : "Enter your home address."),
-    password: (v) => (v.length >= 8 ? "" : "Password must be at least 8 characters."),
-    role: (v) => (v ? "" : "Select a role."),
+    name: (v) => (v.trim().length >= 2 ? "" : t("auth.register.errors.name")),
+    email: (v) => (v.trim() === "" || /.+@.+\..+/.test(v) ? "" : t("auth.register.errors.email")),
+    phone: (v) => (/^\d{9,11}$/.test(v) ? "" : t("auth.register.errors.phone")),
+    dob: (v) => (isValidDob(v) ? "" : t("auth.register.errors.dob")),
+    address: (v) => (v.trim().length >= 5 ? "" : t("auth.register.errors.address")),
+    password: (v) => (v.length >= 8 ? "" : t("auth.register.errors.password")),
+    role: (v) => (v ? "" : t("auth.register.errors.role")),
   };
 
   function isValidDob(v: string): boolean {
@@ -165,9 +164,10 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
       // YYYY-MM-DD); the field names and body shape must match the backend
       // contract exactly. The API wrapper throws an ApiError on non-ok
       // responses whose message is the server response text verbatim.
+      const emailTrimmed = form.email.trim();
       await registerUser({
         name: form.name,
-        email: form.email,
+        ...(emailTrimmed ? { email: emailTrimmed } : {}),
         phone: form.phone,
         dob: dobToIso(form.dob),
         address: form.address,
@@ -176,7 +176,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
       });
       navigate("/login", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to register. Please try again.");
+      setError(err instanceof Error ? err.message : t("auth.register.errors.fallback"));
     } finally {
       setLoading(false);
     }
@@ -185,186 +185,219 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
   const formBody = (
     <>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <FieldInput
-              id="reg-name"
-              label="Name"
-              placeholder="Your full name"
-              value={form.name}
-              onChange={(v) => { set("name")(v); clearFieldError("name"); }}
-              onBlur={handleBlur("name")}
-              errorMessage={fieldErrors.name}
-              autoComplete="name"
-            />
-            <FieldInput
-              id="reg-email"
-              label="Email address"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(v) => { set("email")(v); clearFieldError("email"); }}
-              onBlur={handleBlur("email")}
-              errorMessage={fieldErrors.email}
-              autoComplete="email"
-            />
-            <FieldInput
-              id="reg-phone"
-              label="Phone number"
-              type="tel"
-              placeholder="03xx-xxxxxxx"
-              value={form.phone}
-              onChange={(v) => { set("phone")(v); clearFieldError("phone"); }}
-              onBlur={handleBlur("phone")}
-              errorMessage={fieldErrors.phone}
-              autoComplete="tel"
-            />
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reg-dob" className="text-foreground-label">
-                Date of birth
-              </Label>
-              <DatePickerField
-                id="reg-dob"
-                value={parseDobDisplay(form.dob)}
-                onChange={(d) => {
-                  set("dob")(d ? formatDobDisplay(d) : "");
-                  clearFieldError("dob");
-                }}
-                onClose={handleBlur("dob")}
-                fromYear={DOB_MIN_YEAR}
-                toYear={DOB_MAX_YEAR}
-                placeholder="DD/MM/YYYY"
-                errorId="reg-dob-error"
-                errorMessage={fieldErrors.dob}
-              />
-            </div>
-            <FieldInput
-              id="reg-address"
-              label="Home address"
-              type="text"
-              placeholder="House#100, Sultan Road, Multan"
-              value={form.address}
-              onChange={(v) => { set("address")(v); clearFieldError("address"); }}
-              onBlur={handleBlur("address")}
-              errorMessage={fieldErrors.address}
-              autoComplete="street-address"
-            />
+        <FieldInput
+          id="reg-name"
+          label={t("auth.register.name.label")}
+          placeholder={t("auth.register.name.placeholder")}
+          value={form.name}
+          onChange={(v) => {
+            set("name")(v);
+            clearFieldError("name");
+          }}
+          onBlur={handleBlur("name")}
+          errorMessage={fieldErrors.name}
+          autoComplete="name"
+        />
+        <FieldInput
+          id="reg-email"
+          label={t("auth.register.email.label")}
+          type="email"
+          placeholder="you@example.com"
+          value={form.email}
+          onChange={(v) => {
+            set("email")(v);
+            clearFieldError("email");
+          }}
+          onBlur={handleBlur("email")}
+          errorMessage={fieldErrors.email}
+          autoComplete="email"
+          required={false}
+        />
+        <FieldInput
+          id="reg-phone"
+          label={t("auth.register.phone.label")}
+          type="tel"
+          placeholder="03xx-xxxxxxx"
+          value={form.phone}
+          onChange={(v) => {
+            set("phone")(v);
+            clearFieldError("phone");
+          }}
+          onBlur={handleBlur("phone")}
+          errorMessage={fieldErrors.phone}
+          autoComplete="tel"
+        />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reg-dob" className="text-foreground-label">
+            {t("auth.register.dob.label")}
+          </Label>
+          <DatePickerField
+            id="reg-dob"
+            value={parseDobDisplay(form.dob)}
+            onChange={(d) => {
+              set("dob")(d ? formatDobDisplay(d) : "");
+              clearFieldError("dob");
+            }}
+            onClose={handleBlur("dob")}
+            fromYear={DOB_MIN_YEAR}
+            toYear={DOB_MAX_YEAR}
+            placeholder="DD/MM/YYYY"
+            errorId="reg-dob-error"
+            errorMessage={fieldErrors.dob}
+          />
+        </div>
+        <FieldInput
+          id="reg-address"
+          label={t("auth.register.address.label")}
+          type="text"
+          placeholder="House#100, Sultan Road, Multan"
+          value={form.address}
+          onChange={(v) => {
+            set("address")(v);
+            clearFieldError("address");
+          }}
+          onBlur={handleBlur("address")}
+          errorMessage={fieldErrors.address}
+          autoComplete="street-address"
+        />
 
-            {/* Native <select> is intentional: the roles regression test asserts
+        {/* Native <select> is intentional: the roles regression test asserts
                 against HTMLSelectElement semantics, which a Radix Select would break. */}
-            {showRole && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="reg-role" className="text-foreground-label">Role</Label>
-                <select
-                  id="reg-role"
-                  value={form.role}
-                  onChange={(e) => { set("role")(e.target.value); clearFieldError("role"); }}
-                  onBlur={handleBlur("role")}
-                  required
-                  aria-invalid={fieldErrors.role ? true : undefined}
-                  aria-describedby={fieldErrors.role ? "reg-role-error" : undefined}
-                  className="w-full rounded-xl px-4 py-3 pr-10 text-sm bg-input-background border border-input text-card-foreground appearance-none outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a6b5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 14px center",
-                  }}
-                >
-                  <option value="" disabled>Select a role…</option>
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.role && (
-                  <p id="reg-role-error" role="alert" className="text-xs mt-0.5 text-destructive">
-                    {fieldErrors.role}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <FieldInput
-              id="reg-password"
-              label="Password"
-              type={showPw ? "text" : "password"}
-              placeholder="Create a password"
-              value={form.password}
-              onChange={(v) => { set("password")(v); clearFieldError("password"); }}
-              onBlur={handleBlur("password")}
-              errorMessage={fieldErrors.password}
-              autoComplete="new-password"
+        {showRole && (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="reg-role" className="text-foreground-label">
+              {t("auth.register.roleLabel")}
+            </Label>
+            <select
+              id="reg-role"
+              value={form.role}
+              onChange={(e) => {
+                set("role")(e.target.value);
+                clearFieldError("role");
+              }}
+              onBlur={handleBlur("role")}
+              required
+              aria-invalid={fieldErrors.role ? true : undefined}
+              aria-describedby={fieldErrors.role ? "reg-role-error" : undefined}
+              className="w-full rounded-xl px-4 py-3 pr-10 text-sm bg-input-background border border-input text-card-foreground appearance-none outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a6b5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 14px center",
+              }}
             >
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowPw((v) => !v)}
-                aria-label={showPw ? "Hide password" : "Show password"}
-                aria-pressed={showPw}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
-              >
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-              </Button>
-            </FieldInput>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reg-confirm" className="text-foreground-label">Confirm password</Label>
-              <div className="relative">
-                <Input
-                  id="reg-confirm"
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Repeat your password"
-                  value={form.confirmPassword}
-                  autoComplete="new-password"
-                  required
-                  aria-invalid={pwMismatch || undefined}
-                  aria-describedby={pwMismatch ? "reg-confirm-error" : undefined}
-                  onChange={(e) => {
-                    set("confirmPassword")(e.target.value);
-                    setPwMismatch(false);
-                  }}
-                  className="h-auto rounded-xl px-4 py-3 pr-12 text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  aria-label={showConfirm ? "Hide password" : "Show password"}
-                  aria-pressed={showConfirm}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
-                >
-                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-                </Button>
-              </div>
-              {pwMismatch && (
-                <p id="reg-confirm-error" role="alert" className="text-xs mt-0.5 text-destructive">
-                  Passwords do not match.
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
+              <option value="" disabled>
+                {t("auth.register.rolePlaceholder")}
+              </option>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.role && (
+              <p id="reg-role-error" role="alert" className="text-xs mt-0.5 text-destructive">
+                {fieldErrors.role}
               </p>
             )}
+          </div>
+        )}
 
+        <FieldInput
+          id="reg-password"
+          label={t("auth.register.password.label")}
+          type={showPw ? "text" : "password"}
+          placeholder={t("auth.register.password.placeholder")}
+          value={form.password}
+          onChange={(v) => {
+            set("password")(v);
+            clearFieldError("password");
+          }}
+          onBlur={handleBlur("password")}
+          errorMessage={fieldErrors.password}
+          autoComplete="new-password"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowPw((v) => !v)}
+            aria-label={
+              showPw
+                ? t("auth.register.passwordToggle.hide")
+                : t("auth.register.passwordToggle.show")
+            }
+            aria-pressed={showPw}
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+          >
+            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+          </Button>
+        </FieldInput>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reg-confirm" className="text-foreground-label">
+            {t("auth.register.confirmPassword.label")}
+          </Label>
+          <div className="relative">
+            <Input
+              id="reg-confirm"
+              type={showConfirm ? "text" : "password"}
+              placeholder={t("auth.register.confirmPassword.placeholder")}
+              value={form.confirmPassword}
+              autoComplete="new-password"
+              required
+              aria-invalid={pwMismatch || undefined}
+              aria-describedby={pwMismatch ? "reg-confirm-error" : undefined}
+              onChange={(e) => {
+                set("confirmPassword")(e.target.value);
+                setPwMismatch(false);
+              }}
+              className="h-auto rounded-xl px-4 py-3 pr-12 text-sm"
+            />
             <Button
-              type="submit"
-              disabled={loading}
-              aria-busy={loading}
-              size="lg"
-              className="w-full rounded-xl py-3.5 h-auto text-sm font-semibold shadow-[0_4px_20px_rgba(13,143,110,0.30)] hover:bg-primary-hover active:bg-primary-active hover:shadow-[0_4px_28px_rgba(13,143,110,0.45)] mt-2"
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowConfirm((v) => !v)}
+              aria-label={
+                showConfirm
+                  ? t("auth.register.passwordToggle.hide")
+                  : t("auth.register.passwordToggle.show")
+              }
+              aria-pressed={showConfirm}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Spinner /> Creating account…
-                </span>
-              ) : (
-                "Create account"
-              )}
+              {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
+          </div>
+          {pwMismatch && (
+            <p id="reg-confirm-error" role="alert" className="text-xs mt-0.5 text-destructive">
+              {t("auth.register.errors.passwordMismatch")}
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          disabled={loading}
+          aria-busy={loading}
+          size="lg"
+          className="w-full rounded-xl py-3.5 h-auto text-sm font-semibold shadow-[0_4px_20px_rgba(13,143,110,0.30)] hover:bg-primary-hover active:bg-primary-active hover:shadow-[0_4px_28px_rgba(13,143,110,0.45)] mt-2"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Spinner /> {t("auth.register.submitLoading")}
+            </span>
+          ) : (
+            t("auth.register.submit")
+          )}
+        </Button>
       </form>
     </>
   );
@@ -381,7 +414,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
 
   return (
     <AuthShell>
-      <Logo subtitle="Create your Rydee account" />
+      <Logo subtitle={t("auth.register.logoSubtitle")} />
       <Card className="w-full rounded-2xl card-elevated border-border">
         <CardContent className="p-8">
           <div className="flex items-center gap-3 mb-1">
@@ -390,7 +423,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               variant="ghost"
               size="icon"
               onClick={goBack}
-              aria-label="Back"
+              aria-label={t("auth.register.back")}
               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-muted"
             >
               <svg
@@ -407,22 +440,22 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                 <path d="M19 12H5M12 5l-7 7 7 7" />
               </svg>
             </Button>
-            <h2 className="text-xl font-semibold text-card-foreground">Register</h2>
+            <h2 className="text-xl font-semibold text-card-foreground">
+              {t("auth.register.headline")}
+            </h2>
           </div>
-          <p className="text-sm mb-7 ml-8 text-muted-foreground">
-            Fill in the details below to get started.
-          </p>
+          <p className="text-sm mb-7 ml-8 text-muted-foreground">{t("auth.register.subhead")}</p>
           {formBody}
           <div className="mt-5 text-center">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("auth.register.alreadyHaveAccount")}
               <Button
                 type="button"
                 variant="link"
                 onClick={() => navigate("/login")}
                 className="text-primary-text hover:text-primary-hover font-semibold h-auto p-0"
               >
-                Sign in
+                {t("auth.register.signInLink")}
               </Button>
             </p>
           </div>

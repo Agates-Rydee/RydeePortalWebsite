@@ -11,27 +11,124 @@ import { AllRidersRoute } from "@/features/riders/routes";
 import { server } from "../setup";
 
 const seedRiders: Array<Record<string, unknown>> = [
-  { id: 1, name: "Alice Ahmed",   phone: "0300-1000001", cnic: "42101-1000001-1", activation_status: "active",     area: "DHA",     joinedAt: "2026-07-25" },
-  { id: 2, name: "Bob Bhatti",    phone: "0300-1000002", cnic: "42101-1000002-2", activation_status: "pending",    rideArea: "Clifton", joinedAt: "2026-07-24" },
-  { id: 3, name: "Carol Chen",    phone: "0300-1000003", cnic: "42101-1000003-3", activated: true,                 area: "Saddar",  joinedAt: "2026-07-23" },
-  { id: 4, name: "Danish Dar",    phone: "0300-1000004", cnic: "42101-1000004-4", activation_status: "blocked",    area: "Malir",   joinedAt: "2026-07-22" },
-  { id: 5, name: "Erum Eshan",    phone: "0300-1000005", cnic: "42101-1000005-5", activation_status: "offboarded", area: "Korangi", joinedAt: "2026-07-21" },
-  { id: 6, name: "Farhan Faisal", phone: "0300-1000006", cnic: "42101-1000006-6", activation_status: "active",     area: "Nazimabad", joinedAt: "2026-07-20" },
-  { id: 7, name: "Gohar Gill",    phone: "0300-1000007", cnic: "42101-1000007-7", activation_status: "active",     area: "PECHS",   joinedAt: "2026-07-19" },
-  { id: 8, name: "Hina Hussain",  phone: "0300-1000008", cnic: "42101-1000008-8", activation_status: "pending",    area: "Orangi",  joinedAt: "2026-07-18" },
-  { id: 9, name: "Imran Iqbal",   phone: "0300-1000009", cnic: "42101-1000009-9", activation_status: "active",     area: "Landhi",  joinedAt: "2026-07-17" },
-  { id: 10, name: "Junaid Jamal", phone: "0300-1000010", cnic: "42101-1000010-0", activation_status: "active",     area: "DHA",     joinedAt: "2026-07-16" },
-  { id: 11, name: "Khalil Khan",  phone: "0300-1000011", cnic: "42101-1000011-1", activation_status: "active",     area: "Clifton", joinedAt: "2026-07-15" },
-  { id: 12, name: "Laila Latif",  phone: "0300-1000012", cnic: "42101-1000012-2", activation_status: "active",     area: "Saddar",  joinedAt: "2026-07-14" },
+  {
+    id: 1,
+    name: "Alice Ahmed",
+    phone: "0300-1000001",
+    cnic: "42101-1000001-1",
+    activation_status: "active",
+    area: "DHA",
+    joinedAt: "2026-07-25",
+  },
+  {
+    id: 2,
+    name: "Bob Bhatti",
+    phone: "0300-1000002",
+    cnic: "42101-1000002-2",
+    activation_status: "pending",
+    rideArea: "Clifton",
+    joinedAt: "2026-07-24",
+  },
+  {
+    id: 3,
+    name: "Carol Chen",
+    phone: "0300-1000003",
+    cnic: "42101-1000003-3",
+    activated: true,
+    area: "Saddar",
+    joinedAt: "2026-07-23",
+  },
+  {
+    id: 4,
+    name: "Danish Dar",
+    phone: "0300-1000004",
+    cnic: "42101-1000004-4",
+    activation_status: "blocked",
+    area: "Malir",
+    joinedAt: "2026-07-22",
+  },
+  {
+    id: 5,
+    name: "Erum Eshan",
+    phone: "0300-1000005",
+    cnic: "42101-1000005-5",
+    activation_status: "offboarded",
+    area: "Korangi",
+    joinedAt: "2026-07-21",
+  },
+  {
+    id: 6,
+    name: "Farhan Faisal",
+    phone: "0300-1000006",
+    cnic: "42101-1000006-6",
+    activation_status: "active",
+    area: "Nazimabad",
+    joinedAt: "2026-07-20",
+  },
+  {
+    id: 7,
+    name: "Gohar Gill",
+    phone: "0300-1000007",
+    cnic: "42101-1000007-7",
+    activation_status: "active",
+    area: "PECHS",
+    joinedAt: "2026-07-19",
+  },
+  {
+    id: 8,
+    name: "Hina Hussain",
+    phone: "0300-1000008",
+    cnic: "42101-1000008-8",
+    activation_status: "pending",
+    area: "Orangi",
+    joinedAt: "2026-07-18",
+  },
+  {
+    id: 9,
+    name: "Imran Iqbal",
+    phone: "0300-1000009",
+    cnic: "42101-1000009-9",
+    activation_status: "active",
+    area: "Landhi",
+    joinedAt: "2026-07-17",
+  },
+  {
+    id: 10,
+    name: "Junaid Jamal",
+    phone: "0300-1000010",
+    cnic: "42101-1000010-0",
+    activation_status: "active",
+    area: "DHA",
+    joinedAt: "2026-07-16",
+  },
+  {
+    id: 11,
+    name: "Khalil Khan",
+    phone: "0300-1000011",
+    cnic: "42101-1000011-1",
+    activation_status: "active",
+    area: "Clifton",
+    joinedAt: "2026-07-15",
+  },
+  {
+    id: 12,
+    name: "Laila Latif",
+    phone: "0300-1000012",
+    cnic: "42101-1000012-2",
+    activation_status: "active",
+    area: "Saddar",
+    joinedAt: "2026-07-14",
+  },
 ];
 
 function mockRiders(rows: unknown[] = seedRiders) {
-  server.use(
-    http.post(API_GET_ALL_RIDERS_URL, () => HttpResponse.json({ riders: rows })),
-  );
+  server.use(http.post(API_GET_ALL_RIDERS_URL, () => HttpResponse.json({ riders: rows })));
 }
 
-function renderRoute({ role = "Admin", path = "/admin/all-riders" }: { role?: string; path?: string } = {}) {
+function renderRoute({
+  role = "Admin",
+  path = "/admin/all-riders",
+}: { role?: string; path?: string } = {}) {
   saveSession({ role });
   const router = createMemoryRouter(
     [
@@ -44,9 +141,7 @@ function renderRoute({ role = "Admin", path = "/admin/all-riders" }: { role?: st
         children: [
           {
             element: <ProtectedRoute allow={["Admin", "Operator"]} />,
-            children: [
-              { path: "admin/all-riders", element: <AllRidersRoute /> },
-            ],
+            children: [{ path: "admin/all-riders", element: <AllRidersRoute /> }],
           },
           { path: "login", element: <div data-testid="login-page">login</div> },
           { path: "rider", element: <div data-testid="rider-page">rider</div> },
@@ -76,13 +171,9 @@ describe("AllRiders — data load + rendering", () => {
     renderRoute();
     const search = await screen.findByLabelText(/search riders/i);
     await user.type(search, "zzz-nonexistent");
-    await waitFor(() =>
-      expect(screen.getByText(/no riders found/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/no riders found/i)).toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /clear filters/i }));
-    await waitFor(() =>
-      expect(screen.getByText("Alice Ahmed")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("Alice Ahmed")).toBeInTheDocument());
   });
 
   it("error state renders role=alert with server text verbatim", async () => {
@@ -225,9 +316,7 @@ describe("AllRiders — Export button (E2)", () => {
     renderRoute();
     const search = await screen.findByLabelText(/search riders/i);
     await user.type(search, "zzz-nonexistent");
-    await waitFor(() =>
-      expect(screen.getByText(/no riders found/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/no riders found/i)).toBeInTheDocument());
     const btn = screen.getByRole("button", { name: /export csv \(0 rows\)/i });
     expect(btn).toBeDisabled();
   });
@@ -289,9 +378,7 @@ describe("AllRiders — URL-persisted filters (F1)", () => {
           children: [
             {
               element: <ProtectedRoute allow={["Admin", "Operator"]} />,
-              children: [
-                { path: "admin/all-riders", element: <AllRidersRoute /> },
-              ],
+              children: [{ path: "admin/all-riders", element: <AllRidersRoute /> }],
             },
           ],
         },

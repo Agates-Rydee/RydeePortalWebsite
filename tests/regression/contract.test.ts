@@ -69,14 +69,20 @@ describe("H1 — POST /register/user body shape", () => {
     };
     const seen = await captureRegisterBody(body);
     expect(seen).toEqual(body);
-    expect(Object.keys(seen as object).sort()).toEqual(
-      ["address", "dob", "email", "name", "password", "phone", "role"],
-    );
+    expect(Object.keys(seen as object).sort()).toEqual([
+      "address",
+      "dob",
+      "email",
+      "name",
+      "password",
+      "phone",
+      "role",
+    ]);
   });
 });
 
 describe("H6 — MSW default handlers match ADR-0003 contract", () => {
-  it("login success shape: { role, profile } with profile.role string", async () => {
+  it("login success shape: { userId, profile } with profile.role string", async () => {
     const res = await fetch(API_LOGIN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,9 +90,12 @@ describe("H6 — MSW default handlers match ADR-0003 contract", () => {
       credentials: "include",
     });
     const data = (await res.json()) as unknown;
-    expect(data).toMatchObject({ role: expect.any(String), profile: expect.any(Object) });
-    const { role } = data as { role: string };
-    expect(typeof role).toBe("string");
+    expect(data).toMatchObject({
+      userId: expect.any(String),
+      profile: expect.objectContaining({ role: expect.any(String) }),
+    });
+    const { profile } = data as { profile: { role: string } };
+    expect(typeof profile.role).toBe("string");
   });
 
   it("login 401 body is text 'Invalid phone or password' (not JSON)", async () => {

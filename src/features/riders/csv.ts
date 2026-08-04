@@ -8,14 +8,7 @@ const STATUS_LABEL: Record<RiderStatus, string> = {
   offboarded: "Offboarded",
 };
 
-export const CSV_HEADERS = [
-  "Name",
-  "Phone",
-  "CNIC",
-  "Status",
-  "Area",
-  "Joined",
-] as const;
+export const CSV_HEADERS = ["Name", "Phone", "CNIC", "Status", "Area", "Joined"] as const;
 
 export function ridersToCsv(rows: readonly AllRidersRow[]): string {
   const body = rows.map((r) => [

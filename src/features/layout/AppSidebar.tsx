@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/useAuth";
 import { roleHome } from "@/types/profile";
+import { useTranslation } from "react-i18next";
 
 function initialsOf(name: string | undefined | null): string {
   const trimmed = (name ?? "").trim();
@@ -41,22 +42,56 @@ function initialsOf(name: string | undefined | null): string {
 }
 
 export function AppSidebar() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const { profile, logout } = useAuth();
   const { isMobile } = useSidebar();
   const home = roleHome(profile?.role);
   const isAdmin = home === "/admin";
 
-  const items: Array<{ label: string; to: string; icon: typeof LayoutDashboard; active: boolean }> = [
-    { label: "Dashboard",       to: home,                    icon: LayoutDashboard, active: pathname === home },
-    ...(isAdmin
-      ? [{ label: "User management", to: "/admin/register", icon: UserPlus, active: pathname === "/admin/register" }]
-      : []),
-    { label: "Total riders",    to: "/admin/all-riders",     icon: Users,    active: pathname === "/admin/all-riders" },
-    { label: "Active riders",   to: "/admin/active-riders",  icon: Activity, active: pathname === "/admin/active-riders" },
-    { label: "Pending riders",  to: "/admin/pending-riders", icon: Clock,    active: pathname === "/admin/pending-riders" },
-    { label: "Blocked riders",  to: "/admin/blocked-riders", icon: Ban,      active: pathname === "/admin/blocked-riders" },
-  ];
+  const items: Array<{ label: string; to: string; icon: typeof LayoutDashboard; active: boolean }> =
+    [
+      {
+        label: t("layout.nav.dashboard"),
+        to: home,
+        icon: LayoutDashboard,
+        active: pathname === home,
+      },
+      ...(isAdmin
+        ? [
+            {
+              label: t("layout.nav.userManagement"),
+              to: "/admin/register",
+              icon: UserPlus,
+              active: pathname === "/admin/register",
+            },
+          ]
+        : []),
+      {
+        label: t("layout.nav.totalRiders"),
+        to: "/admin/all-riders",
+        icon: Users,
+        active: pathname === "/admin/all-riders",
+      },
+      {
+        label: t("layout.nav.activeRiders"),
+        to: "/admin/active-riders",
+        icon: Activity,
+        active: pathname === "/admin/active-riders",
+      },
+      {
+        label: t("layout.nav.pendingRiders"),
+        to: "/admin/pending-riders",
+        icon: Clock,
+        active: pathname === "/admin/pending-riders",
+      },
+      {
+        label: t("layout.nav.blockedRiders"),
+        to: "/admin/blocked-riders",
+        icon: Ban,
+        active: pathname === "/admin/blocked-riders",
+      },
+    ];
 
   const name = profile?.name ?? "";
   const initials = initialsOf(name);
@@ -67,7 +102,7 @@ export function AppSidebar() {
         <Link
           to={home}
           className="flex items-center justify-center group-data-[collapsible=icon]:justify-start"
-          aria-label="Rydee home"
+          aria-label={t("layout.brand.homeAriaLabel")}
         >
           <span className="group-data-[collapsible=icon]:hidden">
             <Logo size="sm" />
@@ -107,13 +142,13 @@ export function AppSidebar() {
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
-                <DropdownMenuTrigger aria-label={name || "Account menu"}>
+                <DropdownMenuTrigger aria-label={name || t("common.accountMenu")}>
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarFallback className="rounded-lg bg-[color:var(--brand-bright)]/15 text-primary font-semibold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="truncate font-medium">{name || "Account"}</span>
+                  <span className="truncate font-medium">{name || t("common.account")}</span>
                   <ChevronsUpDown className="ml-auto size-4 opacity-60" />
                 </DropdownMenuTrigger>
               </SidebarMenuButton>
@@ -125,7 +160,7 @@ export function AppSidebar() {
               >
                 <DropdownMenuItem onSelect={() => logout()}>
                   <LogOut />
-                  Sign out
+                  {t("common.signOut")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

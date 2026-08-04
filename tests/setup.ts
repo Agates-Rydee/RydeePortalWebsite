@@ -2,6 +2,7 @@
 // uses so a handler-shape drift is caught by both the dev flow and the test
 // suite from a single source of truth.
 import "@testing-library/jest-dom/vitest";
+import "@/i18n";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { setupServer } from "msw/node";
 import { handlers } from "@/mocks/handlers";

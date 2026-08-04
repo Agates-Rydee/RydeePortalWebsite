@@ -43,11 +43,8 @@ describe("H3 — Customer seed (F1 tripwire) present in MSW handlers", () => {
       credentials: "include",
     });
     expect(res.status).toBe(200);
-    const data = (await res.json()) as { role: string };
-    expect(data.role).toBe("customer");
-    // Customer maps to /login in roleHome (case-insensitive), so a rehydrated
-    // Customer session must trigger the PublicOnly logout path rather than
-    // looping back through the guards.
-    expect(roleHome(data.role)).toBe("/login");
+    const data = (await res.json()) as { profile: { role: string } };
+    expect(data.profile.role).toBe("customer");
+    expect(roleHome(data.profile.role)).toBe("/login");
   });
 });

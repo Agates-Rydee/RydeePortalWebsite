@@ -2,12 +2,7 @@ import { describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import {
-  Navigate,
-  Outlet,
-  RouterProvider,
-  createMemoryRouter,
-} from "react-router";
+import { Navigate, Outlet, RouterProvider, createMemoryRouter } from "react-router";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { ProtectedRoute, PublicOnly } from "@/features/auth/ProtectedRoute";
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -15,10 +10,22 @@ import { API_LOGIN_URL } from "@/api/auth";
 import { SESSION_STORAGE_KEY } from "@/features/auth/session";
 import { server } from "../setup";
 
-function RiderHome() { return <div data-testid="rider-home">rider-home</div>; }
-function AdminHome() { return <div data-testid="admin-home">admin-home</div>; }
-function OperatorHome() { return <div data-testid="operator-home">operator-home</div>; }
-function Layout() { return <AuthProvider><Outlet /></AuthProvider>; }
+function RiderHome() {
+  return <div data-testid="rider-home">rider-home</div>;
+}
+function AdminHome() {
+  return <div data-testid="admin-home">admin-home</div>;
+}
+function OperatorHome() {
+  return <div data-testid="operator-home">operator-home</div>;
+}
+function Layout() {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
+}
 
 function buildRouter(initial = "/login") {
   return createMemoryRouter(
@@ -122,9 +129,9 @@ describe("D15 — response role normalization", () => {
     render(<RouterProvider router={buildRouter("/login")} />);
     await fillAndSubmit("0300000000", "any");
     expect(await screen.findByTestId("admin-home")).toBeInTheDocument();
-    const env = JSON.parse(
-      window.localStorage.getItem(SESSION_STORAGE_KEY)!,
-    ) as { profile: { role: string } };
+    const env = JSON.parse(window.localStorage.getItem(SESSION_STORAGE_KEY)!) as {
+      profile: { role: string };
+    };
     expect(env.profile.role).toBe("Admin");
   });
 

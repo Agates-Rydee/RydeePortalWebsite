@@ -1,0 +1,333 @@
+{
+  "common": {
+    "signOut": "سائن آؤٹ",
+    "account": "اکاؤنٹ",
+    "accountMenu": "اکاؤنٹ مینو",
+    "languageSwitcher": {
+      "ariaLabel": "زبان تبدیل کریں"
+    }
+  },
+  "layout": {
+    "brand": {
+      "homeAriaLabel": "Rydee ہوم"
+    },
+    "title": {
+      "dashboard": "ڈیش بورڈ",
+      "registerUser": "یوزر رجسٹر کریں",
+      "allRiders": "تمام رائیڈرز",
+      "activeRiders": "ایکٹو رائیڈرز",
+      "pendingRiders": "پینڈنگ رائیڈرز",
+      "blockedRiders": "بلاک شدہ رائیڈرز",
+      "riderLocation": "رائیڈر لوکیشن"
+    },
+    "nav": {
+      "dashboard": "ڈیش بورڈ",
+      "userManagement": "یوزر مینجمنٹ",
+      "totalRiders": "کل رائیڈرز",
+      "activeRiders": "ایکٹو رائیڈرز",
+      "pendingRiders": "پینڈنگ رائیڈرز",
+      "blockedRiders": "بلاک شدہ رائیڈرز"
+    }
+  },
+  "auth": {
+    "login": {
+      "headline": "سائن ان",
+      "subhead": "خوش آمدید۔ جاری رکھنے کے لیے اپنی معلومات درج کریں۔",
+      "phoneLabel": "فون نمبر",
+      "phonePlaceholder": "123-456-7890",
+      "passwordLabel": "پاس ورڈ",
+      "passwordPlaceholder": "اپنا پاس ورڈ درج کریں",
+      "submit": "سائن ان",
+      "submitLoading": "سائن ان ہو رہا ہے…",
+      "forgotPassword": "پاس ورڈ بھول گئے؟",
+      "noAccount": "اکاؤنٹ نہیں ہے؟ ",
+      "registerLink": "رجسٹر کریں",
+      "errors": {
+        "phoneInvalid": "برائے مہربانی درست فون نمبر درج کریں۔",
+        "passwordRequired": "برائے مہربانی اپنا پاس ورڈ درج کریں۔",
+        "fallback": "سائن ان نہیں ہو سکا",
+        "missingProfile": "لاگ ان رسپانس میں پروفائل موجود نہیں"
+      }
+    },
+    "register": {
+      "headline": "رجسٹر کریں",
+      "subhead": "شروع کرنے کے لیے نیچے دی گئی تفصیلات پُر کریں۔",
+      "logoSubtitle": "اپنا Rydee اکاؤنٹ بنائیں",
+      "loginLogoSubtitle": "Electric rides across Karachi",
+      "name": {
+        "label": "نام",
+        "placeholder": "اپنا پورا نام"
+      },
+      "email": {
+        "label": "ای میل ایڈریس (اختیاری)",
+        "placeholder": "you@example.com"
+      },
+      "phone": {
+        "label": "فون نمبر",
+        "placeholder": "03xx-xxxxxxx"
+      },
+      "dob": {
+        "label": "تاریخِ پیدائش",
+        "placeholder": "DD/MM/YYYY"
+      },
+      "address": {
+        "label": "گھر کا پتہ",
+        "placeholder": "House#100, Sultan Road, Multan"
+      },
+      "password": {
+        "label": "پاس ورڈ",
+        "placeholder": "پاس ورڈ بنائیں"
+      },
+      "confirmPassword": {
+        "label": "پاس ورڈ کی تصدیق",
+        "placeholder": "پاس ورڈ دوبارہ درج کریں"
+      },
+      "roleLabel": "رول",
+      "rolePlaceholder": "رول منتخب کریں…",
+      "submit": "اکاؤنٹ بنائیں",
+      "submitLoading": "اکاؤنٹ بن رہا ہے…",
+      "alreadyHaveAccount": "پہلے سے اکاؤنٹ ہے؟ ",
+      "signInLink": "سائن ان",
+      "errors": {
+        "name": "اپنا پورا نام درج کریں۔",
+        "email": "درست ای میل ایڈریس درج کریں۔",
+        "phone": "درست فون نمبر درج کریں (9–11 ہندسے)۔",
+        "dob": "درست تاریخِ پیدائش درج کریں (DD/MM/YYYY)۔",
+        "address": "اپنے گھر کا پتہ درج کریں۔",
+        "password": "پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔",
+        "role": "رول منتخب کریں۔",
+        "passwordMismatch": "پاس ورڈ آپس میں میل نہیں کھاتے۔",
+        "fallback": "رجسٹر نہیں ہو سکا۔ برائے مہربانی دوبارہ کوشش کریں۔"
+      },
+      "passwordToggle": {
+        "show": "پاس ورڈ دکھائیں",
+        "hide": "پاس ورڈ چھپائیں"
+      },
+      "back": "واپس"
+    },
+    "shell": {
+      "tagline": "Rydee · کراچی، پاکستان  ·  سب کے لیے الیکٹرک موبیلیٹی"
+    }
+  },
+  "dashboards": {
+    "stats": {
+      "totalRiders": {
+        "label": "کل رائیڈرز",
+        "hint": "تمام رائیڈرز دیکھیں ←",
+        "aria": "{{count}} کل رائیڈرز دیکھیں"
+      },
+      "activeRiders": {
+        "label": "ایکٹو رائیڈرز",
+        "hint": "لائیو میپ دیکھنے کے لیے ٹیپ کریں ←",
+        "aria": "{{count}} ایکٹو رائیڈرز دیکھیں"
+      },
+      "pendingRiders": {
+        "label": "پینڈنگ رائیڈرز",
+        "hint": "درخواستیں جائزہ لینے کے لیے ٹیپ کریں ←",
+        "aria": "{{count}} پینڈنگ رائیڈرز دیکھیں"
+      },
+      "blockedRiders": {
+        "label": "بلاک شدہ رائیڈرز",
+        "hint": "بلاک شدہ کا جائزہ لینے کے لیے ٹیپ کریں ←",
+        "aria": "{{count}} بلاک شدہ رائیڈرز دیکھیں"
+      }
+    },
+    "activeRidersSection": {
+      "heading": "ایکٹو رائیڈرز",
+      "subheading": "{{total}} میں سے تازہ ترین {{shown}}",
+      "viewAll": "سب دیکھیں ←",
+      "loading": "ایکٹو رائیڈرز لوڈ ہو رہے ہیں…",
+      "empty": "ابھی کوئی ایکٹو رائیڈر نہیں۔",
+      "columns": {
+        "name": "نام",
+        "phone": "فون",
+        "area": "علاقہ",
+        "joined": "شامل ہوا"
+      },
+      "emptyCell": "—"
+    },
+    "errors": {
+      "loadFailed": "Dashboard: failed to load riders",
+      "invalidResponse": "Invalid response shape"
+    },
+    "rider": {
+      "mapLoading": "میپ لوڈ ہو رہا ہے…",
+      "welcome": "خوش آمدید {{name}} ",
+      "yourDashboard": "آپ کا ڈیش بورڈ",
+      "subhead": "آپ کے اکاؤنٹ کے لیے سب کچھ۔",
+      "profileHeading": "رائیڈر پروفائل",
+      "profileCaption": "رائیڈر پروفائل خلاصہ",
+      "fields": {
+        "name": "نام",
+        "address": "پتہ",
+        "dob": "تاریخِ پیدائش",
+        "area": "علاقہ",
+        "gps": "GPS لوکیشن",
+        "totalRides": "کل رائیڈز",
+        "missedRides": "مسڈ رائیڈز",
+        "distanceTraveled": "طے شدہ فاصلہ",
+        "onlineState": "آن لائن اسٹیٹ",
+        "ratings": "ریٹنگز",
+        "activationStatus": "ایکٹیویشن اسٹیٹس"
+      },
+      "status": {
+        "online": "آن لائن",
+        "offline": "آف لائن",
+        "active": "ایکٹو",
+        "inactive": "غیر فعال"
+      }
+    }
+  },
+  "riders": {
+    "common": {
+      "loading": "رائیڈرز لوڈ ہو رہے ہیں…",
+      "retry": "دوبارہ کوشش کریں",
+      "cancel": "منسوخ کریں",
+      "search": "رائیڈرز تلاش کریں",
+      "searchPlaceholder": "نام، فون، یا شناختی کارڈ نمبر سے تلاش کریں…",
+      "filterByArea": "ایریا کے لحاظ سے فلٹر کریں",
+      "allAreas": "تمام ایریاز",
+      "filterByStatus": "اسٹیٹس کے لحاظ سے فلٹر کریں",
+      "tabs": {
+        "active": "ایکٹیو",
+        "pending": "پینڈنگ",
+        "blocked": "بلاک شدہ",
+        "all": "تمام"
+      },
+      "badges": {
+        "active": "ایکٹیو",
+        "pending": "پینڈنگ",
+        "blocked": "بلاک شدہ",
+        "offboarded": "آف بورڈ شدہ"
+      },
+      "columns": {
+        "name": "نام",
+        "phone": "فون",
+        "cnic": "شناختی کارڈ",
+        "status": "اسٹیٹس",
+        "area": "ایریا",
+        "joined": "شامل ہوئے",
+        "actions": "ایکشنز"
+      },
+      "rowsPerPage": "فی صفحہ رَوز:",
+      "prevPage": "پچھلا صفحہ",
+      "nextPage": "اگلا صفحہ",
+      "page": "صفحہ {{cur}} از {{total}}",
+      "rowOpenDetails": "{{name}} کی تفصیلات کھولیں",
+      "summary": "{{count}} رائیڈرز میں سے {{from}}–{{to}} دکھائے جا رہے ہیں",
+      "summaryFiltered": "{{count}} رائیڈرز میں سے {{from}}–{{to}} دکھائے جا رہے ہیں ({{total}} میں سے فلٹر شدہ)"
+    },
+    "errors": {
+      "loadFailed": "رائیڈرز لوڈ کرنے میں ناکامی",
+      "invalidResponse": "ریسپانس کی شکل غلط ہے"
+    },
+    "all": {
+      "caption": "تمام رائیڈرز — سورٹ اور فلٹر ہو سکتے ہیں",
+      "exportCsv": "CSV ایکسپورٹ کریں",
+      "exportCsvAria": "CSV ایکسپورٹ کریں ({{count}} رَوز)",
+      "emptyTitle": "کوئی رائیڈر نہیں ملا",
+      "emptyHint": "اپنے فلٹرز یا سرچ ٹرم کو ایڈجسٹ کر کے دیکھیں۔",
+      "clearFilters": "فلٹرز صاف کریں"
+    },
+    "detailSheet": {
+      "title": "رائیڈر کی تفصیلات",
+      "description": "رائیڈر کے مکمل ریکارڈ کا صرف پڑھنے والا ویو۔",
+      "documents": "ڈاکومنٹس",
+      "fields": {
+        "fullName": "پورا نام",
+        "phone": "فون",
+        "cnic": "شناختی کارڈ",
+        "area": "ایریا",
+        "joined": "شامل ہوئے",
+        "dob": "تاریخ پیدائش",
+        "pin": "پن"
+      }
+    },
+    "profileCard": {
+      "heading": "رائیڈر پروفائل",
+      "selectArea": "ایریا منتخب کریں…",
+      "received": "موصول شدہ",
+      "generatePin": "پن جنریٹ کریں",
+      "regeneratePin": "پن دوبارہ جنریٹ کریں",
+      "saveChanges": "تبدیلیاں محفوظ کریں",
+      "activateRider": "رائیڈر کو ایکٹیویٹ کریں",
+      "activating": "ایکٹیویٹ ہو رہا ہے…",
+      "pinNotGenerated": "ابھی جنریٹ نہیں ہوا",
+      "ageValue": "{{age}} سال",
+      "blockRider": "رائیڈر کو بلاک کریں",
+      "fields": {
+        "fullName": "پورا نام",
+        "phoneNumber": "فون نمبر",
+        "geographicArea": "دلچسپی کا جغرافیائی ایریا",
+        "dob": "تاریخ پیدائش",
+        "age": "عمر (کیلکولیٹ شدہ)",
+        "cnic": "شناختی کارڈ نمبر",
+        "verificationDocs": "تصدیقی ڈاکومنٹس",
+        "accessPin": "ایکسیس پن"
+      },
+      "docLabels": {
+        "CNIC Copy": "شناختی کارڈ کاپی",
+        "Profile Photo": "پروفائل فوٹو",
+        "Bike Registration": "بائیک رجسٹریشن",
+        "Driving License": "ڈرائیونگ لائسنس",
+        "Utility Bill": "یوٹیلیٹی بل"
+      },
+      "blockDialog": {
+        "title": "کیا {{name}} کو بلاک کریں؟",
+        "description": "یہ رائیڈر رجسٹر نہیں ہو سکے گا۔ یہ ایکشن واپس نہیں لیا جا سکتا۔",
+        "confirm": "رائیڈر کو بلاک کریں"
+      }
+    },
+    "location": {
+      "unavailable": "رائیڈر {{riderId}} — لوکیشن دستیاب نہیں۔ لائیو کوآرڈینیٹس دیکھنے کے لیے ایکٹیو رائیڈرز لسٹ سے یہ ویو کھولیں۔",
+      "mapLoading": "میپ لوڈ ہو رہا ہے…"
+    },
+    "active": {
+      "total": "کل:",
+      "live": "لائیو — ہر 3 سیکنڈ میں اپڈیٹ",
+      "states": {
+        "dispatching": "ڈسپیچنگ",
+        "arriving": "پہنچ رہے ہیں",
+        "idle": "آئیڈل"
+      }
+    },
+    "pending": {
+      "caption": "پینڈنگ رائیڈرز",
+      "loading": "پینڈنگ رائیڈرز لوڈ ہو رہے ہیں…",
+      "emptyTitle": "کوئی پینڈنگ رائیڈر نہیں",
+      "emptyHint": "تمام رائیڈر ایپلیکیشنز کا جائزہ لیا جا چکا ہے۔",
+      "searchSr": "پینڈنگ رائیڈرز تلاش کریں",
+      "searchPlaceholder": "نام، فون، شناختی کارڈ، یا ایریا سے تلاش کریں…",
+      "noMatchesTitle": "کوئی میچ نہیں",
+      "noMatchesHint": "\"{{q}}\" سے کوئی پینڈنگ رائیڈر میچ نہیں ہوا۔",
+      "rowReviewAria": "{{name}} کی ایپلیکیشن کا جائزہ لیں",
+      "noticeBlocked": "رائیڈر بلاک ہو گیا",
+      "noticeSaved": "تبدیلیاں محفوظ ہو گئیں",
+      "noticeActivated": "{{name}} ایکٹیویٹ ہو گیا",
+      "noticeActivateFailed": "رائیڈر کو ایکٹیویٹ کرنے میں ناکامی",
+      "noticeSaveFailed": "تبدیلیاں محفوظ کرنے میں ناکامی",
+      "noSelectedTitle": "کوئی رائیڈر منتخب نہیں",
+      "noSelectedHint": "ایپلیکیشن کا جائزہ لینے کے لیے ٹیبل سے کوئی رائیڈر منتخب کریں۔"
+    },
+    "blocked": {
+      "caption": "بلاک شدہ رائیڈرز",
+      "loading": "بلاک شدہ رائیڈرز لوڈ ہو رہے ہیں…",
+      "emptyTitle": "کوئی بلاک شدہ رائیڈر نہیں",
+      "emptyHint": "اس وقت تمام رائیڈرز کو ایکسیس حاصل ہے۔",
+      "searchSr": "بلاک شدہ رائیڈرز تلاش کریں",
+      "searchPlaceholder": "نام، فون، شناختی کارڈ، یا ایریا سے تلاش کریں…",
+      "noMatchesTitle": "کوئی میچ نہیں",
+      "noMatchesHint": "\"{{q}}\" سے کوئی بلاک شدہ رائیڈر میچ نہیں ہوا۔",
+      "rowReviewAria": "بلاک شدہ رائیڈر {{name}} کا جائزہ لیں",
+      "noticeUnblocked": "رائیڈر ان بلاک ہو گیا",
+      "noSelectedTitle": "کوئی رائیڈر منتخب نہیں",
+      "noSelectedHint": "پروفائل دیکھنے کے لیے ٹیبل سے کوئی رائیڈر منتخب کریں۔",
+      "unblock": "رائیڈر کو ان بلاک کریں",
+      "unblockDialog": {
+        "title": "کیا {{name}} کو ان بلاک کریں؟",
+        "description": "یہ رائیڈر دوبارہ آپریٹ کر سکے گا۔",
+        "confirm": "رائیڈر کو ان بلاک کریں"
+      }
+    }
+  }
+}

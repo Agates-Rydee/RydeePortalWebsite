@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import {
-  Navigate,
-  RouterProvider,
-  createMemoryRouter,
-} from "react-router";
+import { Navigate, RouterProvider, createMemoryRouter } from "react-router";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { ProtectedRoute, PublicOnly } from "@/features/auth/ProtectedRoute";
 import { IndexRedirect } from "@/router-layout";

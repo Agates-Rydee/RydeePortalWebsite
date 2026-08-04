@@ -1,8 +1,4 @@
-import {
-  validateEnvironment,
-  type ValidationResult,
-  type ValidatedEnvironment,
-} from "./env-rules";
+import { validateEnvironment, type ValidationResult, type ValidatedEnvironment } from "./env-rules";
 
 export {
   EXPECTED_FORMATS,
@@ -20,9 +16,7 @@ export const environmentValidation: ValidationResult = validateEnvironment(
 // Throws when called before validation has succeeded, because reaching this path means the boot-time guard in main.tsx was bypassed.
 export function getValidatedEnvironment(): ValidatedEnvironment {
   if (!environmentValidation.ok) {
-    throw new Error(
-      "getValidatedEnvironment() called before validateEnvironment() succeeded",
-    );
+    throw new Error("getValidatedEnvironment() called before validateEnvironment() succeeded");
   }
   return environmentValidation.values;
 }

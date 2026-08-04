@@ -28,11 +28,7 @@ interface RequestOptions {
   body?: unknown;
 }
 
-async function request<T>(
-  method: Method,
-  url: string,
-  options: RequestOptions = {},
-): Promise<T> {
+async function request<T>(method: Method, url: string, options: RequestOptions = {}): Promise<T> {
   const init: RequestInit = {
     method,
     credentials: "include",

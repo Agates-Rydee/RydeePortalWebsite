@@ -1,9 +1,7 @@
 import { test, expect, type ConsoleMessage } from "@playwright/test";
 
 test.describe("DOB datepicker (P1 regression)", () => {
-  test("register page: opens, selects a date, closes with DD/MM/YYYY", async ({
-    page,
-  }) => {
+  test("register page: opens, selects a date, closes with DD/MM/YYYY", async ({ page }) => {
     // Collect only error- and warning-level console messages. The mock service
     // worker's startup line is emitted as `log` and is therefore ignored, which
     // keeps the assertion focused on real failures rather than dev-mode chatter.
@@ -19,9 +17,7 @@ test.describe("DOB datepicker (P1 regression)", () => {
 
     await page.goto("/register");
 
-    await expect(
-      page.getByRole("heading", { name: /^Register$/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Register$/i })).toBeVisible();
 
     const trigger = page.locator("#reg-dob");
     await expect(trigger).toBeVisible();
@@ -36,13 +32,13 @@ test.describe("DOB datepicker (P1 regression)", () => {
     const currentYear = new Date().getFullYear();
     const pickYear = String(currentYear - 25);
     const monthSelect = popover.locator("select.rdp-dropdown_month, select[name='months']").first();
-    const yearSelect  = popover.locator("select.rdp-dropdown_year,  select[name='years']").first();
+    const yearSelect = popover.locator("select.rdp-dropdown_year,  select[name='years']").first();
     await expect(monthSelect).toBeAttached();
     await expect(yearSelect).toBeAttached();
     await monthSelect.selectOption({ label: "June" });
     await yearSelect.selectOption(pickYear);
 
-    const day15 = popover.getByRole('gridcell', { name: '15' }).first();
+    const day15 = popover.getByRole("gridcell", { name: "15" }).first();
     await day15.click();
 
     await expect(popover).toHaveCount(0);

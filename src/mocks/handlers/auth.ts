@@ -13,11 +13,12 @@ interface SeedUser {
   currentLocation: { lat: number; lon: number };
   rating: number;
   totalRides: number;
+  totalDistance: number;
   missedRides: number;
-  distanceTraveled?: number;
+  rideState: string;
+  activationStatus: string;
   area?: string;
-  ratings?: number;
-  lastCustomerId?: string;
+  lastCustomerID?: string;
 }
 
 const seed: SeedUser[] = [
@@ -32,12 +33,13 @@ const seed: SeedUser[] = [
     dob: "1995-03-14",
     totalRides: 128,
     missedRides: 3,
-    distanceTraveled: 1420,
+    totalDistance: 1420,
     online: true,
     currentLocation: { lat: 24.8607, lon: 67.0011 },
     rating: 4.7,
-    ratings: 4.7,
-    lastCustomerId: "cust-8821",
+    rideState: "idle",
+    activationStatus: "active",
+    lastCustomerID: "cust-8821",
   },
   {
     phone: "0300222222",
@@ -49,10 +51,13 @@ const seed: SeedUser[] = [
     dob: "1988-11-02",
     totalRides: 0,
     missedRides: 0,
+    totalDistance: 0,
     online: true,
     currentLocation: { lat: 24.8607, lon: 67.0011 },
     rating: 5,
-    lastCustomerId: "",
+    rideState: "idle",
+    activationStatus: "active",
+    lastCustomerID: "",
   },
   {
     phone: "0300333333",
@@ -64,13 +69,15 @@ const seed: SeedUser[] = [
     dob: "1990-07-22",
     totalRides: 0,
     missedRides: 0,
+    totalDistance: 0,
     online: true,
     currentLocation: { lat: 24.8607, lon: 67.0011 },
     rating: 5,
-    lastCustomerId: "",
+    rideState: "idle",
+    activationStatus: "active",
+    lastCustomerID: "",
   },
   {
-    // H3: DO NOT DELETE — Customer seed is the unknown-role logout regression tripwire.
     phone: "0300444444",
     password: "customer",
     role: "customer",
@@ -80,31 +87,74 @@ const seed: SeedUser[] = [
     dob: "1992-01-01",
     totalRides: 0,
     missedRides: 0,
+    totalDistance: 0,
     online: false,
     currentLocation: { lat: 24.8607, lon: 67.0011 },
     rating: 0,
-    lastCustomerId: "",
+    rideState: "idle",
+    activationStatus: "active",
+    lastCustomerID: "",
   },
 ];
 
-interface LoginBody { phone?: string; password?: string }
+interface LoginBody {
+  phone?: string;
+  password?: string;
+}
 interface RegisterBody {
-  name?: string; email?: string; phone?: string; dob?: string;
-  address?: string; password?: string; role?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  dob?: string;
+  address?: string;
+  password?: string;
+  role?: string;
 }
 
 export const authHandlers = [
   http.post(API_LOGIN_URL, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as LoginBody;
-    const user = seed.find(
-      (u) => u.phone === body.phone && u.password === body.password,
-    );
+    const user = seed.find((u) => u.phone === body.phone && u.password === body.password);
     if (!user) {
       return HttpResponse.text("Invalid phone or password", { status: 401 });
     }
-    const { role, name, dateOfJoining, address, dob, area, online, currentLocation, rating, totalRides, missedRides, distanceTraveled, ratings, lastCustomerId } = user;
-    const profile = { name, dateOfJoining, address, dob, area, online, currentLocation, rating, totalRides, missedRides, distanceTraveled, ratings, lastCustomerId };
-    return HttpResponse.json({ role, profile });
+    const {
+      phone,
+      role,
+      name,
+      dateOfJoining,
+      address,
+      dob,
+      area,
+      online,
+      currentLocation,
+      rating,
+      totalRides,
+      totalDistance,
+      missedRides,
+      rideState,
+      activationStatus,
+      lastCustomerID,
+    } = user;
+    const profile = {
+      role,
+      name,
+      phone,
+      area,
+      address,
+      rideState,
+      dateOfJoining,
+      dob,
+      activationStatus,
+      totalRides,
+      totalDistance,
+      missedRides,
+      online,
+      currentLocation,
+      rating,
+      lastCustomerID,
+    };
+    return HttpResponse.json({ userId: `USER#${phone}`, profile });
   }),
 
   http.post(API_REGISTER_URL, async ({ request }) => {

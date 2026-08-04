@@ -91,7 +91,7 @@ describe("D9 — rejection paths (all must clear storage AND return null)", () =
   });
 
   it("non-object envelope (null/array/primitive) → null + cleared", () => {
-    for (const bad of ["null", "42", "\"str\"", "[]"]) {
+    for (const bad of ["null", "42", '"str"', "[]"]) {
       window.localStorage.setItem(SESSION_STORAGE_KEY, bad);
       expect(loadSession()).toBeNull();
       expect(window.localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();

@@ -11,7 +11,7 @@ interface LoginResponse {
 
 interface RegisterPayload {
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   dob: string;
   address: string;

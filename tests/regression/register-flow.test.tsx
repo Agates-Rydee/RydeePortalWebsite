@@ -4,11 +4,7 @@
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@testing-library/react";
-import {
-  Outlet,
-  RouterProvider,
-  createMemoryRouter,
-} from "react-router";
+import { Outlet, RouterProvider, createMemoryRouter } from "react-router";
 
 vi.mock("@/components/DatePickerField", () => ({
   DatePickerField: ({

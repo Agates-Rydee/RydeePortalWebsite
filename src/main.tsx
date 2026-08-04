@@ -1,12 +1,9 @@
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
-import {
-  environmentValidation,
-  EXPECTED_FORMATS,
-  type EnvironmentProblem,
-} from "./lib/env";
+import { environmentValidation, EXPECTED_FORMATS, type EnvironmentProblem } from "./lib/env";
 // Router is imported STATICALLY so the whole app graph lands in the same main chunk (bundle-size guard enforces a single gzip band on it). Consumers of env values must therefore tolerate an invalid environment at import time — the guard below is what stops them from running.
 import { router } from "./router";
+import "@/i18n";
 import "./styles/index.css";
 
 // Uses only raw DOM primitives — no router, no shadcn, no feature modules — so a broken environment never pulls the mocks tree or an app feature into a state where a stray env consumer would crash on import.
@@ -35,8 +32,7 @@ function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
 
   const title = document.createElement("h1");
   title.textContent = "Environment configuration error";
-  title.style.cssText =
-    "margin: 0 0 12px; font-size: 22px; color: #991b1b;";
+  title.style.cssText = "margin: 0 0 12px; font-size: 22px; color: #991b1b;";
 
   const lead = document.createElement("p");
   lead.textContent =
@@ -45,8 +41,7 @@ function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
 
   const problemsHeading = document.createElement("h2");
   problemsHeading.textContent = "Problems detected";
-  problemsHeading.style.cssText =
-    "margin: 20px 0 8px; font-size: 16px; color: #991b1b;";
+  problemsHeading.style.cssText = "margin: 20px 0 8px; font-size: 16px; color: #991b1b;";
 
   const problemsList = document.createElement("ul");
   problemsList.style.cssText = "margin: 0 0 20px; padding-left: 20px;";
@@ -63,23 +58,18 @@ function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
 
   const stepsHeading = document.createElement("h2");
   stepsHeading.textContent = "How to fix";
-  stepsHeading.style.cssText =
-    "margin: 20px 0 8px; font-size: 16px; color: #991b1b;";
+  stepsHeading.style.cssText = "margin: 20px 0 8px; font-size: 16px; color: #991b1b;";
 
   const stepsList = document.createElement("ol");
   stepsList.style.cssText = "margin: 0; padding-left: 20px;";
 
   const step1 = document.createElement("li");
   step1.innerHTML =
-    "Copy <code style=\"background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace\">.env.example</code> to <code style=\"background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace\">.env</code> in the project root.";
+    'Copy <code style="background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace">.env.example</code> to <code style="background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace">.env</code> in the project root.';
 
   const step2 = document.createElement("li");
   step2.style.cssText = "margin-top: 8px;";
-  step2.appendChild(
-    document.createTextNode(
-      "Set each variable listed above. Expected formats:",
-    ),
-  );
+  step2.appendChild(document.createTextNode("Set each variable listed above. Expected formats:"));
   const formatsList = document.createElement("ul");
   formatsList.style.cssText = "margin: 6px 0 0; padding-left: 20px;";
   for (const problem of problems) {
@@ -90,9 +80,7 @@ function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
       "background: #fee2e2; padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, monospace;";
     formatItem.appendChild(formatCode);
     formatItem.appendChild(
-      document.createTextNode(
-        ` — ${EXPECTED_FORMATS[problem.name] ?? "see .env.example"}`,
-      ),
+      document.createTextNode(` — ${EXPECTED_FORMATS[problem.name] ?? "see .env.example"}`),
     );
     formatsList.appendChild(formatItem);
   }
@@ -101,18 +89,11 @@ function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
   const step3 = document.createElement("li");
   step3.style.cssText = "margin-top: 8px;";
   step3.innerHTML =
-    "Restart the development server with <code style=\"background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace\">npm run dev</code> — environment variables are only read at startup.";
+    'Restart the development server with <code style="background:#fee2e2;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace">npm run dev</code> — environment variables are only read at startup.';
 
   stepsList.append(step1, step2, step3);
 
-  container.append(
-    title,
-    lead,
-    problemsHeading,
-    problemsList,
-    stepsHeading,
-    stepsList,
-  );
+  container.append(title, lead, problemsHeading, problemsList, stepsHeading, stepsList);
 
   root.innerHTML = "";
   root.appendChild(container);
@@ -136,8 +117,6 @@ if (!environmentValidation.ok) {
 } else {
   void (async () => {
     await enableMockingIfConfigured();
-    createRoot(document.getElementById("root")!).render(
-      <RouterProvider router={router} />,
-    );
+    createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
   })();
 }

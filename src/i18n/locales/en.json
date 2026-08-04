@@ -1,0 +1,333 @@
+{
+  "common": {
+    "signOut": "Sign out",
+    "account": "Account",
+    "accountMenu": "Account menu",
+    "languageSwitcher": {
+      "ariaLabel": "Change language"
+    }
+  },
+  "layout": {
+    "brand": {
+      "homeAriaLabel": "Rydee home"
+    },
+    "title": {
+      "dashboard": "Dashboard",
+      "registerUser": "Register user",
+      "allRiders": "All riders",
+      "activeRiders": "Active riders",
+      "pendingRiders": "Pending riders",
+      "blockedRiders": "Blocked riders",
+      "riderLocation": "Rider location"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "userManagement": "User management",
+      "totalRiders": "Total riders",
+      "activeRiders": "Active riders",
+      "pendingRiders": "Pending riders",
+      "blockedRiders": "Blocked riders"
+    }
+  },
+  "auth": {
+    "login": {
+      "headline": "Sign in",
+      "subhead": "Welcome back. Enter your credentials to continue.",
+      "phoneLabel": "Phone Number",
+      "phonePlaceholder": "123-456-7890",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign in",
+      "submitLoading": "Signing in…",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account? ",
+      "registerLink": "Register",
+      "errors": {
+        "phoneInvalid": "Please enter a valid phone number.",
+        "passwordRequired": "Please enter your password.",
+        "fallback": "Unable to sign in",
+        "missingProfile": "Login response missing profile"
+      }
+    },
+    "register": {
+      "headline": "Register",
+      "subhead": "Fill in the details below to get started.",
+      "logoSubtitle": "Create your Rydee account",
+      "loginLogoSubtitle": "Electric rides across Karachi",
+      "name": {
+        "label": "Name",
+        "placeholder": "Your full name"
+      },
+      "email": {
+        "label": "Email address (optional)",
+        "placeholder": "you@example.com"
+      },
+      "phone": {
+        "label": "Phone number",
+        "placeholder": "03xx-xxxxxxx"
+      },
+      "dob": {
+        "label": "Date of birth",
+        "placeholder": "DD/MM/YYYY"
+      },
+      "address": {
+        "label": "Home address",
+        "placeholder": "House#100, Sultan Road, Multan"
+      },
+      "password": {
+        "label": "Password",
+        "placeholder": "Create a password"
+      },
+      "confirmPassword": {
+        "label": "Confirm password",
+        "placeholder": "Repeat your password"
+      },
+      "roleLabel": "Role",
+      "rolePlaceholder": "Select a role…",
+      "submit": "Create account",
+      "submitLoading": "Creating account…",
+      "alreadyHaveAccount": "Already have an account? ",
+      "signInLink": "Sign in",
+      "errors": {
+        "name": "Enter your full name.",
+        "email": "Enter a valid email address.",
+        "phone": "Enter a valid phone number (9–11 digits).",
+        "dob": "Enter a valid date of birth (DD/MM/YYYY).",
+        "address": "Enter your home address.",
+        "password": "Password must be at least 8 characters.",
+        "role": "Select a role.",
+        "passwordMismatch": "Passwords do not match.",
+        "fallback": "Unable to register. Please try again."
+      },
+      "passwordToggle": {
+        "show": "Show password",
+        "hide": "Hide password"
+      },
+      "back": "Back"
+    },
+    "shell": {
+      "tagline": "Rydee · Karachi, Pakistan  ·  Electric mobility for everyone"
+    }
+  },
+  "dashboards": {
+    "stats": {
+      "totalRiders": {
+        "label": "Total Riders",
+        "hint": "View all riders →",
+        "aria": "View {{count}} total riders"
+      },
+      "activeRiders": {
+        "label": "Active Riders",
+        "hint": "Tap to view live map →",
+        "aria": "View {{count}} active riders"
+      },
+      "pendingRiders": {
+        "label": "Pending Riders",
+        "hint": "Tap to review applications →",
+        "aria": "View {{count}} pending riders"
+      },
+      "blockedRiders": {
+        "label": "Blocked Riders",
+        "hint": "Tap to review blocked →",
+        "aria": "View {{count}} blocked riders"
+      }
+    },
+    "activeRidersSection": {
+      "heading": "Active riders",
+      "subheading": "Latest {{shown}} of {{total}}",
+      "viewAll": "View all →",
+      "loading": "Loading active riders…",
+      "empty": "No active riders yet.",
+      "columns": {
+        "name": "Name",
+        "phone": "Phone",
+        "area": "Area",
+        "joined": "Joined"
+      },
+      "emptyCell": "—"
+    },
+    "errors": {
+      "loadFailed": "Dashboard: failed to load riders",
+      "invalidResponse": "Invalid response shape"
+    },
+    "rider": {
+      "mapLoading": "Loading map…",
+      "welcome": "Welcome back {{name}} ",
+      "yourDashboard": "Your Dashboard",
+      "subhead": "Everything you need for your account.",
+      "profileHeading": "Rider Profile",
+      "profileCaption": "Rider profile summary",
+      "fields": {
+        "name": "Name",
+        "address": "Address",
+        "dob": "Date of Birth",
+        "area": "Area",
+        "gps": "GPS Location",
+        "totalRides": "Total Rides",
+        "missedRides": "Missed Rides",
+        "distanceTraveled": "Distance Traveled",
+        "onlineState": "Online State",
+        "ratings": "Ratings",
+        "activationStatus": "Activation Status"
+      },
+      "status": {
+        "online": "Online",
+        "offline": "Offline",
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    }
+  },
+  "riders": {
+    "common": {
+      "loading": "Loading riders…",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "search": "Search riders",
+      "searchPlaceholder": "Search by name, phone, or CNIC…",
+      "filterByArea": "Filter by area",
+      "allAreas": "All areas",
+      "filterByStatus": "Filter by status",
+      "tabs": {
+        "active": "Active",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "all": "All"
+      },
+      "badges": {
+        "active": "Active",
+        "pending": "Pending",
+        "blocked": "Blocked",
+        "offboarded": "Offboarded"
+      },
+      "columns": {
+        "name": "Name",
+        "phone": "Phone",
+        "cnic": "CNIC",
+        "status": "Status",
+        "area": "Area",
+        "joined": "Joined",
+        "actions": "Actions"
+      },
+      "rowsPerPage": "Rows per page:",
+      "prevPage": "Previous page",
+      "nextPage": "Next page",
+      "page": "Page {{cur}} of {{total}}",
+      "rowOpenDetails": "Open details for {{name}}",
+      "summary": "Showing {{from}}–{{to}} of {{count}} riders",
+      "summaryFiltered": "Showing {{from}}–{{to}} of {{count}} riders (filtered from {{total}})"
+    },
+    "errors": {
+      "loadFailed": "Failed to load riders",
+      "invalidResponse": "Invalid response shape"
+    },
+    "all": {
+      "caption": "All riders — sortable, filterable",
+      "exportCsv": "Export CSV",
+      "exportCsvAria": "Export CSV ({{count}} rows)",
+      "emptyTitle": "No riders found",
+      "emptyHint": "Try adjusting your filters or search term.",
+      "clearFilters": "Clear filters"
+    },
+    "detailSheet": {
+      "title": "Rider details",
+      "description": "Read-only view of the rider's full record.",
+      "documents": "Documents",
+      "fields": {
+        "fullName": "Full name",
+        "phone": "Phone",
+        "cnic": "CNIC",
+        "area": "Area",
+        "joined": "Joined",
+        "dob": "Date of birth",
+        "pin": "PIN"
+      }
+    },
+    "profileCard": {
+      "heading": "Rider Profile",
+      "selectArea": "Select area…",
+      "received": "Received",
+      "generatePin": "Generate PIN",
+      "regeneratePin": "Regenerate PIN",
+      "saveChanges": "Save changes",
+      "activateRider": "Activate rider",
+      "activating": "Activating…",
+      "pinNotGenerated": "Not yet generated",
+      "ageValue": "{{age}} years",
+      "blockRider": "Block rider",
+      "fields": {
+        "fullName": "Full name",
+        "phoneNumber": "Phone number",
+        "geographicArea": "Geographic area of interest",
+        "dob": "Date of birth",
+        "age": "Age (calculated)",
+        "cnic": "CNIC number",
+        "verificationDocs": "Verification documents",
+        "accessPin": "Access PIN"
+      },
+      "docLabels": {
+        "CNIC Copy": "CNIC Copy",
+        "Profile Photo": "Profile Photo",
+        "Bike Registration": "Bike Registration",
+        "Driving License": "Driving License",
+        "Utility Bill": "Utility Bill"
+      },
+      "blockDialog": {
+        "title": "Block rider {{name}}?",
+        "description": "This rider will not be able to register. This action cannot be undone.",
+        "confirm": "Block rider"
+      }
+    },
+    "location": {
+      "unavailable": "Rider {{riderId}} — location unavailable. Open this view from the Active Riders list to see live coordinates.",
+      "mapLoading": "Loading map…"
+    },
+    "active": {
+      "total": "Total:",
+      "live": "Live — updates every 3s",
+      "states": {
+        "dispatching": "Dispatching",
+        "arriving": "Arriving",
+        "idle": "Idle"
+      }
+    },
+    "pending": {
+      "caption": "Pending riders",
+      "loading": "Loading pending riders…",
+      "emptyTitle": "No pending riders",
+      "emptyHint": "All rider applications have been reviewed.",
+      "searchSr": "Search pending riders",
+      "searchPlaceholder": "Search by name, phone, CNIC, or area…",
+      "noMatchesTitle": "No matches",
+      "noMatchesHint": "No pending riders match \"{{q}}\".",
+      "rowReviewAria": "Review application for {{name}}",
+      "noticeBlocked": "Rider blocked",
+      "noticeSaved": "Changes saved",
+      "noticeActivated": "{{name}} activated",
+      "noticeActivateFailed": "Failed to activate rider",
+      "noticeSaveFailed": "Failed to save changes",
+      "noSelectedTitle": "No rider selected",
+      "noSelectedHint": "Choose a rider from the table to review their application."
+    },
+    "blocked": {
+      "caption": "Blocked riders",
+      "loading": "Loading blocked riders…",
+      "emptyTitle": "No blocked riders",
+      "emptyHint": "All riders currently have access.",
+      "searchSr": "Search blocked riders",
+      "searchPlaceholder": "Search by name, phone, CNIC, or area…",
+      "noMatchesTitle": "No matches",
+      "noMatchesHint": "No blocked riders match \"{{q}}\".",
+      "rowReviewAria": "Review blocked rider {{name}}",
+      "noticeUnblocked": "Rider unblocked",
+      "noSelectedTitle": "No rider selected",
+      "noSelectedHint": "Choose a rider from the table to view their profile.",
+      "unblock": "Unblock rider",
+      "unblockDialog": {
+        "title": "Unblock rider {{name}}?",
+        "description": "This rider will be able to operate again.",
+        "confirm": "Unblock rider"
+      }
+    }
+  }
+}

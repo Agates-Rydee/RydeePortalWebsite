@@ -37,11 +37,11 @@ You need **no backend running**. Watch the browser console for
 The login form takes **phone + password** (9\u201311 digit phone, per the
 client-side `/^\d{9,11}$/` check in `LoginPage.tsx`).
 
-| Role | Phone | Password | What you'll see |
-|---|---|---|---|
-| Rider | `0300111111` | `rider` | Lands on `/rider` (RiderDashboard) |
-| Admin | `0300222222` | `admin` | Lands on `/admin` (Dashboard) |
-| Operator | `0300333333` | `operator` | Lands on `/operator` (Dashboard) |
+| Role     | Phone        | Password   | What you'll see                      |
+| -------- | ------------ | ---------- | ------------------------------------ |
+| Rider    | `0300111111` | `rider`    | Lands on `/rider` (RiderDashboard)   |
+| Admin    | `0300222222` | `admin`    | Lands on `/admin` (Dashboard)        |
+| Operator | `0300333333` | `operator` | Lands on `/operator` (Dashboard)     |
 | Customer | `0300444444` | `customer` | Bounces back to `/login` (see below) |
 
 ### About the Customer seed
@@ -94,10 +94,10 @@ URLs come from the per-feature modules under [`src/api/`](../api/) —
 rider endpoints. The mock handlers import the same URL constants the
 pages use, so endpoint drift is impossible.
 
-| Method + URL | Request body | Success (200) | Failure |
-|---|---|---|---|
-| `POST` `API_LOGIN_URL` | `{ phone: string, password: string }` | `{ role: string, profile: Profile }` | `401` text `"Invalid phone or password"` |
-| `POST` `API_REGISTER_URL` | `{ name, email, phone, dob, address, password, role }` | `{ ok: true, email, role }` | `400` text `"Missing required fields"` |
+| Method + URL              | Request body                                           | Success (200)                        | Failure                                  |
+| ------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------- |
+| `POST` `API_LOGIN_URL`    | `{ phone: string, password: string }`                  | `{ role: string, profile: Profile }` | `401` text `"Invalid phone or password"` |
+| `POST` `API_REGISTER_URL` | `{ name, email, phone, dob, address, password, role }` | `{ ok: true, email, role }`          | `400` text `"Missing required fields"`   |
 
 All requests include `credentials: "include"` (cookie flow ready for the
 real backend). Handlers currently ignore cookies; add if backend introduces

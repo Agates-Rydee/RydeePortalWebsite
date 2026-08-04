@@ -15,7 +15,7 @@ describe("test foundation (D12)", () => {
       credentials: "include",
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { role: string };
-    expect(body.role).toBe("rider");
+    const body = (await res.json()) as { profile: { role: string } };
+    expect(body.profile.role).toBe("rider");
   });
 });

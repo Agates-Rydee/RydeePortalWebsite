@@ -1,16 +1,13 @@
 // The mapping rules here deliberately mirror the equivalent code in PendingRiders.
 import type { AllRidersRow, RiderStatus } from "@/types/rider";
 
-const KNOWN_STATUSES: readonly RiderStatus[] = [
-  "active",
-  "pending",
-  "blocked",
-  "offboarded",
-];
+const KNOWN_STATUSES: readonly RiderStatus[] = ["active", "pending", "blocked", "offboarded"];
 
 function resolveStatus(raw: Record<string, unknown>): RiderStatus {
   const rawStatus = raw.activation_status ?? raw.activationStatus;
-  const s = String(rawStatus ?? "").toLowerCase().trim();
+  const s = String(rawStatus ?? "")
+    .toLowerCase()
+    .trim();
   if (s !== "") {
     if ((KNOWN_STATUSES as readonly string[]).includes(s)) {
       return s as RiderStatus;
@@ -30,10 +27,7 @@ function str(raw: Record<string, unknown>, key: string): string {
   return typeof v === "string" ? v : "";
 }
 
-export function toAllRidersRow(
-  raw: Record<string, unknown>,
-  idx: number,
-): AllRidersRow {
+export function toAllRidersRow(raw: Record<string, unknown>, idx: number): AllRidersRow {
   const id = typeof raw.id === "number" ? raw.id : idx + 1;
   const area =
     typeof raw.area === "string" && raw.area !== ""

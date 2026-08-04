@@ -2,6 +2,8 @@ import { joinUrl, post } from "./client";
 
 export const API_GET_UNREGISTERED_RIDERS_URL = joinUrl("/get-all-inactive-riders");
 export const API_GET_ALL_RIDERS_URL = joinUrl("/get-all-riders");
+export const API_ACTIVATE_RIDER_URL = joinUrl("/activate-rider");
+export const API_UPDATE_USER_URL = joinUrl("/update-user");
 
 interface RidersResponse {
   riders?: Array<Record<string, unknown>>;
@@ -42,4 +44,28 @@ export async function getUnregisteredRiders(): Promise<RidersResponse> {
 export async function getAllRiders(): Promise<RidersResponse> {
   const raw = await post<{ riders?: unknown }>(API_GET_ALL_RIDERS_URL);
   return normalise(raw);
+}
+
+export interface ActivateRiderResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  updatedFields?: { activation_status?: string };
+}
+
+export function activateRider(phone: string, pin: string): Promise<ActivateRiderResponse> {
+  return post<ActivateRiderResponse>(API_ACTIVATE_RIDER_URL, { phone, pin });
+}
+
+export interface UpdateUserResponse {
+  message: string;
+  updatedFields?: Record<string, unknown>;
+}
+
+export function updateUser(
+  phone: string,
+  role: string,
+  fields: Record<string, unknown>,
+): Promise<UpdateUserResponse> {
+  return post<UpdateUserResponse>(API_UPDATE_USER_URL, { phone, role, ...fields });
 }

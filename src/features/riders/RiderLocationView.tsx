@@ -1,5 +1,6 @@
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { useLocation, useParams } from "react-router";
+import { useTranslation } from "react-i18next";
 
 interface RiderLocationState {
   lat: number;
@@ -8,6 +9,7 @@ interface RiderLocationState {
 }
 
 export default function RiderLocationView() {
+  const { t } = useTranslation();
   const { riderId } = useParams<{ riderId: string }>();
   const location = useLocation();
   const state = (location.state ?? {}) as Partial<RiderLocationState>;
@@ -20,7 +22,7 @@ export default function RiderLocationView() {
     return (
       <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
         <p className="text-sm text-muted-foreground">
-          Rider {riderId ?? ""} — location unavailable. Open this view from the Active Riders list to see live coordinates.
+          {t("riders.location.unavailable", { riderId: riderId ?? "" })}
         </p>
       </div>
     );
@@ -29,7 +31,7 @@ export default function RiderLocationView() {
   if (!isLoaded) {
     return (
       <div role="status" aria-live="polite" className="p-4 md:p-6 text-sm text-muted-foreground">
-        Loading map…
+        {t("riders.location.mapLoading")}
       </div>
     );
   }

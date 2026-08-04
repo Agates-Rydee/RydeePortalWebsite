@@ -11,6 +11,9 @@ export function RiderDashboardRoute() {
   const navigate = useNavigate();
   const { profile, logout } = useAuth();
   const onNavigate: (route: string, params?: unknown) => void = () => {};
-  const onLogout = () => { logout(); navigate("/login", { replace: true }); };
+  const onLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
   return <RiderDashboard onNavigate={onNavigate} onLogout={onLogout} profile={profile ?? null} />;
 }

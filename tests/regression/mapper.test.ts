@@ -25,7 +25,9 @@ describe("toAllRidersRow — alias resolution", () => {
 
 describe("toAllRidersRow — status resolution", () => {
   it("non-empty activation_status wins (case-insensitive)", () => {
-    expect(toAllRidersRow({ activation_status: "BLOCKED", activated: true }, 0).status).toBe("blocked");
+    expect(toAllRidersRow({ activation_status: "BLOCKED", activated: true }, 0).status).toBe(
+      "blocked",
+    );
     expect(toAllRidersRow({ activation_status: "Offboarded" }, 0).status).toBe("offboarded");
   });
 
@@ -53,8 +55,24 @@ describe("toAllRidersRow — status resolution", () => {
 describe("mapAllRidersResponse", () => {
   it("maps an array end-to-end", () => {
     const rows = mapAllRidersResponse([
-      { id: 1, name: "A", phone: "1", cnic: "c1", activation_status: "active", area: "DHA", joinedAt: "2026-07-01" },
-      { id: 2, name: "B", phone: "2", cnic: "c2", activated: true, rideArea: "Clifton", joinedAt: "2026-07-02" },
+      {
+        id: 1,
+        name: "A",
+        phone: "1",
+        cnic: "c1",
+        activation_status: "active",
+        area: "DHA",
+        joinedAt: "2026-07-01",
+      },
+      {
+        id: 2,
+        name: "B",
+        phone: "2",
+        cnic: "c2",
+        activated: true,
+        rideArea: "Clifton",
+        joinedAt: "2026-07-02",
+      },
     ]);
     expect(rows).toHaveLength(2);
     expect(rows[0].status).toBe("active");

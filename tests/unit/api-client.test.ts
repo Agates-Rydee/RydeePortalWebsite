@@ -11,13 +11,11 @@ interface CapturedCall {
 
 function installFetch(response: Response): CapturedCall {
   const captured: CapturedCall = { url: "", init: undefined };
-  vi.spyOn(globalThis, "fetch").mockImplementation(
-    async (...args: FetchArgs) => {
-      captured.url = String(args[0]);
-      captured.init = args[1];
-      return response;
-    },
-  );
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (...args: FetchArgs) => {
+    captured.url = String(args[0]);
+    captured.init = args[1];
+    return response;
+  });
   return captured;
 }
 
@@ -44,17 +42,13 @@ describe("API client — client.ts", () => {
 
   describe("credentials", () => {
     it("always sends credentials: include (POST with body)", async () => {
-      const captured = installFetch(
-        new Response(JSON.stringify({ ok: true }), { status: 200 }),
-      );
+      const captured = installFetch(new Response(JSON.stringify({ ok: true }), { status: 200 }));
       await post<{ ok: boolean }>(joinUrl("/x"), { a: 1 });
       expect(captured.init?.credentials).toBe("include");
     });
 
     it("always sends credentials: include (empty-body POST)", async () => {
-      const captured = installFetch(
-        new Response(JSON.stringify({ ok: true }), { status: 200 }),
-      );
+      const captured = installFetch(new Response(JSON.stringify({ ok: true }), { status: 200 }));
       await post<{ ok: boolean }>(joinUrl("/y"));
       expect(captured.init?.credentials).toBe("include");
     });
@@ -62,9 +56,7 @@ describe("API client — client.ts", () => {
 
   describe("empty-body POST (riders endpoints)", () => {
     it("sends no Content-Type header and no body when the body argument is omitted", async () => {
-      const captured = installFetch(
-        new Response(JSON.stringify({ riders: [] }), { status: 200 }),
-      );
+      const captured = installFetch(new Response(JSON.stringify({ riders: [] }), { status: 200 }));
       await post(joinUrl("/get-all-riders"));
       expect(captured.init?.body).toBeUndefined();
       const headers = captured.init?.headers as Record<string, string> | undefined;
@@ -75,13 +67,9 @@ describe("API client — client.ts", () => {
 
   describe("JSON body serialisation", () => {
     it("serialises the body and sets Content-Type application/json", async () => {
-      const captured = installFetch(
-        new Response(JSON.stringify({ ok: true }), { status: 200 }),
-      );
+      const captured = installFetch(new Response(JSON.stringify({ ok: true }), { status: 200 }));
       await post(joinUrl("/user-login"), { phone: "0300111111", password: "x" });
-      expect(captured.init?.body).toBe(
-        JSON.stringify({ phone: "0300111111", password: "x" }),
-      );
+      expect(captured.init?.body).toBe(JSON.stringify({ phone: "0300111111", password: "x" }));
       const headers = captured.init?.headers as Record<string, string>;
       expect(headers["Content-Type"]).toBe("application/json");
     });

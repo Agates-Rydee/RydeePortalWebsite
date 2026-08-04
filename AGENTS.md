@@ -33,16 +33,16 @@ src/
 
 ## Commands & gates
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Vite dev server; boots MSW iff `VITE_ENABLE_MSW=true` |
-| `npm run build` | Prod build to `dist/`; MSW absent (verify with `rg msw dist/assets/*.js` → 0 hits) |
-| `npm run lint` | ESLint over `src/` |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run typecheck:strict` | `tsc --noEmit --strict` — must stay at 0 errors |
-| `npm run format` | Prettier |
-| `npm test` | Vitest run — jsdom + RTL + msw/node (reuses `src/mocks/handlers`) |
-| `npm run test:watch` | Vitest watch mode |
+| Command                    | Purpose                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `npm run dev`              | Vite dev server; boots MSW iff `VITE_ENABLE_MSW=true`                              |
+| `npm run build`            | Prod build to `dist/`; MSW absent (verify with `rg msw dist/assets/*.js` → 0 hits) |
+| `npm run lint`             | ESLint over `src/`                                                                 |
+| `npm run typecheck`        | `tsc --noEmit`                                                                     |
+| `npm run typecheck:strict` | `tsc --noEmit --strict` — must stay at 0 errors                                    |
+| `npm run format`           | Prettier                                                                           |
+| `npm test`                 | Vitest run — jsdom + RTL + msw/node (reuses `src/mocks/handlers`)                  |
+| `npm run test:watch`       | Vitest watch mode                                                                  |
 
 **All five gates (lint, typecheck, typecheck:strict, build, test) must be green before every commit.** CI mirrors them.
 
@@ -50,7 +50,7 @@ src/
 
 Break any of these and QA blocks the PR.
 
-- **H1. API contract to the WIP backend is FROZEN**: `POST /user/login` body `{ phone, password }`; `POST /register/user` body `{ name, email, phone, dob, address, password, role }` (backend renamed `phoneNumber` → `phone` on 2026-07-30 — see ADR-0003). All calls include `credentials: 'include'`. Do **not** alter fetch shapes without a new ADR.
+- **H1. API contract to the WIP backend is FROZEN**: `POST /user-login` body `{ phone, password }`; `POST /register-user` body `{ name, email?, phone, dob, address, password, role }` (email optional as of v3, 2026-08-04) (backend renamed `phoneNumber` → `phone` on 2026-07-30; resource paths kebab-cased to match `docs/design/API-Document.pdf` on 2026-08-04 — see ADR-0003 v2 amendment). Rider list endpoints `POST /get-all-inactive-riders` and `POST /get-all-riders` return `{ riders: [{ role, profile: {...} }] }`; the api-client flattens `.profile` before pages see it. All calls include `credentials: 'include'`. Do **not** alter fetch shapes without a new ADR.
 - **H2. Never widen `ROLES`.** It is `["Operator", "Customer", "Rider"]` (see `src/types/profile.ts`). **Never add `Admin` as a creatable role via `/admin/register`** — QA F2 security incident. Product Q tracked as D14.
 - **H3. Never delete the Customer seed user** (`src/mocks/handlers/auth.ts`, phone `0300444444`). It is the QA-F1 regression tripwire: it exercises `PublicOnly`'s unknown-role logout path (`roleHome("Customer") === "/login"` → `logout()` in `useEffect`).
 - **H4. Do not edit `src/components/ui/**`** — generated shadcn primitives, lint-ignored, replace via CLI or full-file rewrite in a scoped commit.

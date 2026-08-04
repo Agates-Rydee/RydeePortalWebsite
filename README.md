@@ -45,23 +45,23 @@ src/
 
 ## Scripts
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Vite development server (http://127.0.0.1:5173). Boots the mock service worker if `VITE_ENABLE_MSW=true`. |
-| `npm run build` | Production build to `dist/`. Excludes the mock worker entirely. |
-| `npm run lint` | ESLint over `src/`. |
-| `npm run typecheck` | `tsc --noEmit` (project's current mode). |
-| `npm run typecheck:strict` | `tsc --noEmit --strict` — must stay at 0 errors. |
-| `npm run format` | Prettier over the repository. |
+| Script                     | What it does                                                                                              |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run dev`              | Vite development server (http://127.0.0.1:5173). Boots the mock service worker if `VITE_ENABLE_MSW=true`. |
+| `npm run build`            | Production build to `dist/`. Excludes the mock worker entirely.                                           |
+| `npm run lint`             | ESLint over `src/`.                                                                                       |
+| `npm run typecheck`        | `tsc --noEmit` (project's current mode).                                                                  |
+| `npm run typecheck:strict` | `tsc --noEmit --strict` — must stay at 0 errors.                                                          |
+| `npm run format`           | Prettier over the repository.                                                                             |
 
 ## Environment (`.env.example`)
 
-| Variable | Purpose |
-|---|---|
-| `VITE_API_LOGIN_URL` | Login endpoint. Leave blank locally to fall back to `http://localhost:3000/user/login`. |
-| `VITE_API_REGISTER_URL` | Register endpoint. Same defaulting. |
-| `VITE_GOOGLE_MAPS_KEY` | Google Maps JavaScript key used by `RiderLocationView`. |
-| `VITE_ENABLE_MSW` | `true` → the mock worker intercepts the two auth endpoints locally (development only). Set to anything else (or unset) to hit the real backend. |
+| Variable                | Purpose                                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_API_LOGIN_URL`    | Login endpoint. Leave blank locally to fall back to `http://localhost:3000/user/login`.                                                         |
+| `VITE_API_REGISTER_URL` | Register endpoint. Same defaulting.                                                                                                             |
+| `VITE_GOOGLE_MAPS_KEY`  | Google Maps JavaScript key used by `RiderLocationView`.                                                                                         |
+| `VITE_ENABLE_MSW`       | `true` → the mock worker intercepts the two auth endpoints locally (development only). Set to anything else (or unset) to hit the real backend. |
 
 Never commit a real `.env`. See `.gitignore`.
 
@@ -73,11 +73,11 @@ Never commit a real `.env`. See `.gitignore`.
 2. `npm run dev` — console shows the mock worker is enabled.
 3. Log in with a seed user (login form takes **phone + password**):
 
-   | Role | Phone | Password | Lands at |
-   |---|---|---|---|
-   | Rider | `0300111111` | `rider` | `/rider` |
-   | Admin | `0300222222` | `admin` | `/admin` |
-   | Operator | `0300333333` | `operator` | `/operator` |
+   | Role     | Phone        | Password   | Lands at                    |
+   | -------- | ------------ | ---------- | --------------------------- |
+   | Rider    | `0300111111` | `rider`    | `/rider`                    |
+   | Admin    | `0300222222` | `admin`    | `/admin`                    |
+   | Operator | `0300333333` | `operator` | `/operator`                 |
    | Customer | `0300444444` | `customer` | back to `/login` (see note) |
 
    The Customer seed intentionally exercises the unknown-role logout

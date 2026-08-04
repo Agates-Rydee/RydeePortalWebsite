@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { Logo, FieldInput, Spinner } from "@/components/shared";
@@ -10,6 +11,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { AuthShell } from "./AuthShell";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,8 +26,8 @@ export default function LoginPage() {
 
   const isValidPhone = (value: string) => /^\d{9,11}$/.test(value);
 
-  const PHONE_ERR = "Please enter a valid phone number.";
-  const PASSWORD_ERR = "Please enter your password.";
+  const PHONE_ERR = t("auth.login.errors.phoneInvalid");
+  const PASSWORD_ERR = t("auth.login.errors.passwordRequired");
 
   const validatePhone = (v: string): string => (isValidPhone(v) ? "" : PHONE_ERR);
   const validatePassword = (v: string): string => (v ? "" : PASSWORD_ERR);
@@ -64,7 +66,7 @@ export default function LoginPage() {
       const profile = data.profile as Profile | undefined;
 
       if (!profile) {
-        throw new Error("Login response missing profile");
+        throw new Error(t("auth.login.errors.missingProfile"));
       }
 
       // Normalise the role at the response boundary so downstream code can trust a single field.
@@ -76,7 +78,7 @@ export default function LoginPage() {
       const dest = fromState && fromState !== "/login" ? fromState : roleHome(canonicalRole);
       navigate(dest, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to sign in");
+      setError(err instanceof Error ? err.message : t("auth.login.errors.fallback"));
     } finally {
       setLoading(false);
     }
@@ -84,18 +86,18 @@ export default function LoginPage() {
 
   return (
     <AuthShell>
-      <Logo subtitle="Electric rides across Karachi" />
+      <Logo subtitle={t("auth.register.loginLogoSubtitle")} />
       <Card className="w-full rounded-2xl card-elevated border-border">
         <CardContent className="p-8">
-          <h2 className="text-xl font-semibold mb-1 text-card-foreground">Sign in</h2>
-          <p className="text-sm mb-7 text-muted-foreground">
-            Welcome back. Enter your credentials to continue.
-          </p>
+          <h2 className="text-xl font-semibold mb-1 text-card-foreground">
+            {t("auth.login.headline")}
+          </h2>
+          <p className="text-sm mb-7 text-muted-foreground">{t("auth.login.subhead")}</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <FieldInput
               id="phone"
-              label="Phone Number"
+              label={t("auth.login.phoneLabel")}
               type="tel"
               placeholder="123-456-7890"
               value={phone}
@@ -110,9 +112,9 @@ export default function LoginPage() {
 
             <FieldInput
               id="password"
-              label="Password"
+              label={t("auth.login.passwordLabel")}
               type={showPw ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder={t("auth.login.passwordPlaceholder")}
               value={password}
               onChange={(v) => {
                 setPassword(v);
@@ -127,7 +129,11 @@ export default function LoginPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowPw((v) => !v)}
-                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-label={
+                  showPw
+                    ? t("auth.register.passwordToggle.hide")
+                    : t("auth.register.passwordToggle.show")
+                }
                 aria-pressed={showPw}
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
               >
@@ -150,10 +156,10 @@ export default function LoginPage() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Spinner /> Signing in…
+                  <Spinner /> {t("auth.login.submitLoading")}
                 </span>
               ) : (
-                "Sign in"
+                t("auth.login.submit")
               )}
             </Button>
           </form>
@@ -164,18 +170,18 @@ export default function LoginPage() {
               variant="link"
               className="text-muted-foreground hover:text-primary-text h-auto p-0"
             >
-              Forgot password?
+              {t("auth.login.forgotPassword")}
             </Button>
             <div className="w-full h-px bg-border" />
             <p className="text-sm text-muted-foreground">
-              {"Don't have an account? "}
+              {t("auth.login.noAccount")}
               <Button
                 type="button"
                 variant="link"
                 onClick={() => navigate("/register")}
                 className="text-primary-text hover:text-primary-hover font-semibold h-auto p-0"
               >
-                Register
+                {t("auth.login.registerLink")}
               </Button>
             </p>
           </div>

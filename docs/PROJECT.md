@@ -1,12 +1,12 @@
 # PROJECT.md — RydeePortalWebsite
 
-> **Last updated:** 2026-07-31 · Snapshot, not a log — rewrite stale sections.
+> **Last updated:** 2026-08-04 · Snapshot, not a log — rewrite stale sections.
 
 ---
 
 ## Overview
 
-RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing platform (DBX8 / MEU-FQA). It serves three active roles (Rider, Admin, Operator) with role-scoped dashboards and rider management screens. Stack: **React 18.3.1 + Vite 6 + TypeScript + Tailwind CSS 4 + shadcn/ui**, routing via **react-router 7** (library/browser mode), mock API via **MSW 2.x** (flag-gated), package manager **npm**. The backend is WIP elsewhere at `localhost:3000`; the API contract is frozen at `POST /user/login` (`{ phone, password }`) and `POST /register/user` (`{ name, email, phone, dob, address, password, role }`), `credentials: "include"` (field renamed `phoneNumber` → `phone` 2026-07-30; see ADR-0003 H1 amendment).
+RydeePortalWebsite is a single-page React portal for the Rydee ride-hailing platform (DBX8 / MEU-FQA). It serves three active roles (Rider, Admin, Operator) with role-scoped dashboards and rider management screens. Stack: **React 18.3.1 + Vite 6 + TypeScript + Tailwind CSS 4 + shadcn/ui**, routing via **react-router 7** (library/browser mode), mock API via **MSW 2.x** (flag-gated), package manager **npm**. The backend is WIP elsewhere at `localhost:3000`; the API contract is frozen at `POST /user-login` (`{ phone, password }`) and `POST /register-user` (`{ name, email, phone, dob, address, password, role }`), `credentials: "include"` (field renamed `phoneNumber` → `phone` 2026-07-30; resource paths kebab-cased 2026-08-04 to match `docs/design/API-Document.pdf`; see ADR-0003 v2 amendment).
 
 ---
 
@@ -32,6 +32,7 @@ Iteration 5 — Backend Wire-Compat + All Riders Admin Table + Backlog Batch is 
 | **Iteration 3 — D8 shadcn Restyle** | ✅ **COMPLETE 2026-07-30** — commits `57545a6` / `38c773b` / `1a6962f` / `f3e195d`; QA SHIP; UX 5/5 deviation approvals |
 | **Iteration 4 — Form Validation + Datepicker** | ✅ **COMPLETE 2026-07-30** — commits `f9fcfc0` / `9948996` / `4252e13` / `7693215` / `731dff6` / `1dc7781` / `532391d`; QA SHIP; 3× INFO findings only |
 | **Iteration 5 — Backend Wire-Compat + All Riders** | 🟡 **IN PROGRESS 2026-07-31** — working tree uncommitted; see Iteration 5 section below |
+| **Iteration 6 — i18n EN/UR (ADR-0005)** | 🟡 **IN WORKING TREE 2026-08-04** — react-i18next + EN/UR + runtime switcher + machine-draft Urdu; awaiting owner live review + Urdu correction pass; see Iteration 6 section below |
 
 **D8 restyle summary:**
 - shadcn primitives adopted across all pages (auth, dashboards, riders) — Radix `<Checkbox>`, `<AlertDialog>`, `<Button>`, `<Card>`, `<Input>`, `<Label>`, `<Badge>`, `<Select>`, `<Table>` in use
@@ -272,6 +273,102 @@ The 2026-07-30 QA cert reported "vitest 61/61" — this was a miscount. Verified
 
 ---
 
+## Iteration 6 — i18n EN/UR (ADR-0005) 🟡 IN WORKING TREE (2026-08-04)
+
+Working tree uncommitted; owner commits manually after live Urdu review. All 7 gates green on working-tree snapshot (fresh dist/ rebuild).
+
+### Scope (owner Option A — full extraction, machine-draft Urdu accepted for owner review)
+- **Library**: react-i18next v26 (i18next core + react binding), statically bundled resources, no Suspense loading states, no browser-language detection.
+- **Languages**: `en` (default, English-complete) + `ur` (Urdu, machine draft — Mixed register: Careem/Foodpanda-Pakistan style, English loanwords in Urdu script for domain nouns; natural Urdu for verbs/toasts/dates; Latin digits; interpolation preserved byte-identical).
+- **Scope**: UI chrome only (nav, buttons, headings, table headers, form labels, validation messages, empty states, aria-labels). NOT data values, NOT date formats (DD/MM/YYYY stays), NOT CSV content. NO RTL mirroring by owner decision.
+- **Extraction**: 219 keys across 5 namespaces — `common` (4) / `layout` (12) / `auth` (34) / `dashboards` (55) / `riders` (114).
+- **Runtime switcher**: three mount points — sidebar footer (`AppSidebar.tsx`), auth shell footer (`AuthShell.tsx`), and dashboard header (`DashboardHeader.tsx`). Switcher label shows the currently-active language (fixes an ambiguous-click bug when `ur.json` shares strings with `en.json`; original plan called for target-language label).
+- **Persistence**: `rydee.lang` localStorage key, separate from H7 session envelope. English default on first visit.
+
+### Accepted deviations from ADR-0005 plan
+1. **i18next v26 `initImmediate` config option omitted** — removed in v26.
+2. **Typed-key augmentation via `i18next.d.ts` dropped** — v26's type resolution differs from the v23 assumption in the plan; keys remain plain strings validated at runtime.
+3. **Switcher label displays active language, not target** — bug fix, see above.
+4. **`ur.json` shipped as machine-authored Mixed-register DRAFT** — owner reviews and corrects via reconciliation table in `docs/design/i18n-strings.md`. Five explicit register-style open questions surfaced there (see D27).
+
+### Files delivered (working tree, uncommitted)
+- `src/i18n/index.ts` — i18next init, resource bundling, `rydee.lang` persistence
+- `src/i18n/locales/en.json` — 219 keys (English-canonical)
+- `src/i18n/locales/ur.json` — 219 keys (machine-draft Urdu, pending owner review)
+- `src/components/LanguageSwitcher.tsx` — active-language-label variant
+- `src/main.tsx` — imports `@/i18n` before RouterProvider
+- Wiring: `AppSidebar.tsx`, `DashboardLayout.tsx`, `DashboardHeader.tsx`, `AuthShell.tsx`, `LoginPage.tsx`, `RegisterPage.tsx`, `Dashboard.tsx`, `RiderDashboard.tsx`, `AllRiders.tsx`, `PendingRiders.tsx`, `BlockedRiders.tsx`, `ActiveRiders.tsx`, `RiderDetailSheet.tsx`, `RiderProfileCard.tsx`, `RiderLocationView.tsx`
+- `docs/design/i18n-plan.md` — implementation plan (Steps 1–8)
+- `docs/design/i18n-strings.md` — reconciliation table (en.json ↔ ur.json draft) + register style notes + 5 open questions
+- `docs/adr/0005-i18n.md` — status flipped Proposed → **Accepted** 2026-08-04 with acceptance note listing the four deviations above
+
+### Sanctioned test edits (only two, cumulative for this iteration)
+1. `tests/setup.ts` — added `import "@/i18n";` so vitest boots i18next before RTL renders.
+2. `tests/regression/bundle-size.test.ts` — `BAND_MIN_KB` / `BAND_MAX_KB` reset to **265.4 / 268.4** (from prior 260.5 / 263.5 baseline set at iter start; fresh-measured 266.87 kB ± 1.5). D24 register updated.
+
+No app tests written or removed. No other test files touched.
+
+### Process record (honest, per "Correction on QA cert" precedent below)
+- **Process violation 1 (2026-08-04)**: sub-agent executed i18n-plan Steps 3–6 in one uninterrupted sweep instead of one-step-per-dispatch with owner live review between steps. Owner Option A accepted the extraction as-is; the ownership rule is reinforced going forward: one plan step per dispatch, always.
+- **Process violation 2 (2026-08-04)**: sub-agent initially reported gate numbers off a stale `dist/` from before the last edits, showing bundle inside the old band. Team-lead verification caught it (fresh build measured 266.87 kB against the 260.5–263.5 band = FAIL, 114/115 tests). Corrected same cycle: fresh build + fresh vitest guard measurement, band reset, all 7 gates re-run from scratch. Rule reinforced: every reported gate number comes from a fresh run against the current tree.
+
+### Gate results (working-tree snapshot, fresh dist/ rebuild)
+lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **937.00 kB raw / 273.27 kB gzip (Vite CLI) / 266.87 kB gzip (vitest zlib)** — band **265.4–268.4 kB ✓** · rg msw dist/assets/ → 0 hits · test **115/115** vitest · e2e 1/1 Playwright (last measured pre-i18n; no new mounts changed)
+
+### Live-review polish (2026-08-04, follow-up dispatches)
+
+After the step-8 close-out landed, the owner ran a live review and dispatched a short chain of polish cycles. All CSS-scoped and switcher-only; no locale value edits; still no commits. Recorded here for completeness so the Iteration 6 record matches the working tree.
+
+**Text direction (owner brief, R4 handled at the CSS level)**
+- `src/i18n/index.ts` — added `languageChanged` listener that syncs `<html lang>` between `en` and `ur` (initial sync at module load, before React mounts).
+- `src/styles/theme.css` — added two scoped blocks inside `@layer base` under `html[lang="ur"]`:
+  - `unicode-bidi: plaintext` on text-bearing elements (body, h1–h4, p, label, span, li, td, th, button, a, input, textarea). Makes each inline text run pick its own direction from content (Urdu → RTL, English/digits → LTR). Layout containers (flex, grid, table columns, sidebar order) NOT touched — `unicode-bidi` operates at the bidi-embedding level, not layout. No `direction: rtl` set anywhere. Handles R4 without the per-instance `dir="auto"` mitigation originally proposed in i18n-plan.md.
+  - `text-align: right` — evolved across four owner verdicts to the final selector set: **h1, h2, h3, h4, p, label, li, td, th, input, textarea, `[role="alert"]`, `[role="status"]`**. **Deliberately excluded**: `button` (labels stay centered by shadcn primitive), `a` (flows with parent), `span` (too generic, would break badges/icons). `td` and `input`/`textarea` were added by owner verdict after live review; toasts/notices covered via role selectors (no new classes needed, H10). Owner override on caret-jump concern for inputs applied — standard RTL-app behaviour.
+
+**Switcher visibility (owner brief)**
+- `src/components/LanguageSwitcher.tsx` — `variant="secondary"` → `variant="outline"` plus `className` adds `border-primary/40 bg-background text-foreground hover:bg-accent hover:text-accent-foreground`. Brand-tinted subtle border makes the button clearly delineated on all 3 mounts (sidebar header, dashboard header, auth shell). Existing `className` prop preserved and appended.
+
+**Collapsed sidebar (owner bug, 2026-08-04 late)**
+- `src/styles/theme.css` — scoped the earlier Nastaliq clipping overrides (overflow:visible / white-space:normal / line-height:2 on `[data-slot="sidebar-menu-button"]` and its spans) to the expanded state only via `[data-slot="sidebar"]:not([data-collapsible="icon"])`, and added a collapsed-state rule `[data-slot="sidebar"][data-collapsible="icon"] [data-slot="sidebar-footer"] span { white-space: nowrap; }` so the footer user name no longer wraps onto two lines in the icon rail.
+
+**Files changed in the polish batch (working tree, uncommitted)**
+- `src/i18n/index.ts` — languageChanged listener + `syncHtmlLang` helper
+- `src/styles/theme.css` — two Urdu-scoped blocks (unicode-bidi + text-align)
+- `src/components/LanguageSwitcher.tsx` — outline variant + brand-tinted border
+
+**No test edits.** No new tests. No locale values changed. `en.json` / `ur.json` byte-identical to step-8 close-out.
+
+**Verified at live-review checkpoints**
+- Table column ORDER unchanged in Urdu (no `direction` on tables/rows).
+- `td` cells anchor right (owner verdict); digit-heavy runs like phone/CNIC still read left-to-right within the run via `unicode-bidi: plaintext`; owner accepts the Urdu eye-path.
+- Auth card headings (`<h1>`), labels (`<label>`), captions (`<p>`) anchor right in Urdu.
+- English mode zero-cascade — all rules gated on `html[lang="ur"]`.
+- LoginPage password field: `FieldInput` applies `pr-12` when a children slot exists; eye toggle at `right-2` has comfortable clearance, no collision with right-anchored dots. No per-field padding fix required.
+- Rider search inputs (AllRiders, PendingRiders, BlockedRiders): Search icon on the LEFT (`left-3` + input `pl-9 pr-3`), no right-side icon overlap possible.
+- `DatePickerField` trigger is a `<button>`, not `<input>` — not in the text-align set, unaffected.
+
+**Risk register outcomes (i18n-plan.md)**
+- R2 (Urdu webfont): owner call still pending; system font kept for now. Tracked as D28.
+- R3 (glyph clipping): no clipping reported at live review; no per-instance leading fixes needed to date.
+- R4 (mixed-direction text): resolved via `unicode-bidi: plaintext` CSS approach instead of per-element `dir="auto"` — simpler and H10-compliant.
+
+### Gate results after polish batch (working-tree snapshot, fresh dist/ rebuild)
+lint 0e/0w · typecheck 0 · typecheck:strict 0 · build **937.21 kB raw / 273.29 kB gzip JS + 23.44 kB gzip CSS (Vite CLI) / 266.89 kB gzip main JS chunk (vitest zlib)** — band **265.4–268.4 kB ✓** (mid-band; +0.02 kB from step-8 close-out due to CSS layer growth; JS chunk bit-identical for CSS-only cycles) · rg msw dist/assets/ → 0 hits · test **115/115** vitest · e2e 1/1 Playwright (unchanged; no new mounts)
+
+### Working-tree commit-message proposals (3 commits, plain language, no prefixes)
+Owner-approved plain-language style (no `feat:`/`fix:`/`docs:` prefixes, no jargon).
+
+1. **Feature commit** — i18n extraction + switcher + 3 mount points (step-1–8 close-out scope):
+   > Add English/Urdu language support with a runtime switcher and a machine-draft Urdu translation for owner review
+
+2. **Polish commit** — live-review CSS + switcher styling, folded across all polish cycles:
+   > In Urdu mode, make all text flow right-to-left and anchor headings, labels, paragraphs, table cells, list items, notice banners, and form fields to the right edge while keeping layout and table columns unchanged; make the language button visible with a subtle border
+
+3. **Docs commit** — close-out + this polish-sync update:
+   > Close out the i18n plan, update the deferred register with the pending Urdu review and webfont decision, and record the live-review polish in the iteration log
+
+---
+
 ## Key Decisions
 
 | Decision | Detail | ADR / Doc |
@@ -385,16 +482,19 @@ The 2026-07-30 QA cert reported "vitest 61/61" — this was a miscount. Verified
 | D20 | **[QA D8-F2/P3]** `RiderDashboard.tsx:2-3` top-comment says "Table body migration deferred to Phase 4" — stale post-Phase-4. Clarify comment to state native `<table>` is the final implementation (a11y met via `sr-only <caption>` + `scope="row"`; shadcn `<Table>` adds no semantic value here). Docs-only change, non-blocking. | Frontend Dev | Low |
 | D21 | **[QA D8-F3/P3]** `PendingRiders.tsx:201,265` uses `tabIndex={-1}` on read-only display Inputs (Age, PIN). Correct by design (read-only; spec §2.3), but may confuse reviewers. Consider replacing with `<p>`/`<output>` styled to match for clearer semantics. Non-blocking. | Frontend Dev | Low |
 | — | `npm audit` majors — `react-router v8` and `eslint v10` are major-version jumps; no critical CVEs in current versions; re-evaluate next hardening cycle | Frontend Dev | Backlog |
-| — | Bundle-size tracking — main gzip baseline **223.12 kB** (Iter 5; single chunk); guard band = **221.5–224.5 kB** (D24; Node `>=24 <25`); async DatePickerPopover chunk no longer exists | Frontend Dev | Ongoing |
+| — | Bundle-size tracking — main gzip baseline **266.87 kB** (Iter 6 i18n; vitest zlib) / 273.27 kB (Vite CLI); guard band = **265.4–268.4 kB** (D24 reset for i18n; Node `>=24 <25`); band will be re-measured after owner Urdu corrections land (D27) | Frontend Dev | Ongoing |
 | — | `typecheck:strict` script is now redundant (same as `typecheck` since `strict: true`); candidate for a future chore to fold/remove | Frontend Dev | Low |
 | D22 | Route-level code-splitting — revisit at ~300 kB gzip or heavy feature addition; seams documented | Frontend Dev + Architect | Backlog |
 | D23 | XLSX export for All Riders table — needs `xlsx` (~90 kB) or D22-style chunk; defer until usage data | Frontend Dev + Architect | Backlog |
-| D24 | Bundle-size band maintenance — new guard 221.5–224.5 kB; update whenever band deliberately shifts | Frontend Dev | Ongoing |
+| D24 | Bundle-size band maintenance — current guard **265.4–268.4 kB** (i18n reset 2026-08-04, fresh measurement 266.87 kB); re-measure after owner Urdu corrections land (D27) | Frontend Dev | Ongoing |
 | D25 | Radix Sheet `Function components cannot be given refs` warning in test stderr — H4-locked; revisit if warning spreads | Frontend Dev | Low |
+| D27 | **CLOSED 2026-08-04** — owner accepted machine Urdu draft as-is at live review; no corrections needed. Original: **Owner Urdu review pass pending** — `ur.json` is a machine-authored Mixed-register draft; owner reviews reconciliation table in `docs/design/i18n-strings.md` and corrects globally. 5 open register-style questions surfaced there (فعال vs ایکٹیو; پن vs پن کوڈ; آف بورڈ شدہ; آئیڈل vs فارغ; رَوز vs قطاریں). D24 band will be re-measured after corrections land. | Owner (dandkhan) + Frontend Dev | **In progress** |
+| D28 | **CLOSED-IMPLEMENTED 2026-08-04** — Noto Nastaliq Urdu shipped (self-hosted via @fontsource, scoped to `html[lang="ur"]`); English tokens set to Inter + JetBrains Mono (self-hosted); no external CDN; fonts are separate asset files, JS band unaffected. Original: **Urdu webfont decision (i18n)** — currently uses system font stack for both languages. If owner rejects at live review, choose between Noto Naskh Arabic (~30–40 kB subsetted) or Noto Nastaliq Urdu / Jameel Noori Nastaliq (~80–120 kB). Load conditionally when `lang="ur"`. Would land as ADR-0005 amendment + D24 re-measure. | Owner + Frontend Dev | Pending owner call at live review |
 | **⚠️ OWNER DECISION** | D7 — Map lib consolidation: both `@react-google-maps/api` (RiderDashboard + RiderLocationView) and `react-leaflet` (ActiveRiders) live in app; team lean = Leaflet for frugality (~50 kB gzip saving); requires owner go-ahead | Architect + PM | **Pending** |
 | **⚠️ OWNER DECISION** | D10 — shadcn primitive prune: only 10 of 47 `components/ui/` files used by app code; pruning 36 unused would unlock ~15 Radix packages (~80–120 kB gzip); H4-gated — owner sign-off required | Frontend Dev + PM | **Pending** |
 | **Backend-blocked** | Rider mutation endpoints (approve/save/block), real `POST /GetAll/Riders`, D9-remainder (`/me` rehydrate), D15, D17 | Backend + Frontend Dev | Blocked |
 | **Product Q** | D11 — Customer route/home destination; D14 — Admin creatable role via `/admin/register` | PM + Product | Backlog |
+| D29 | **API audit 2026-08-04** — full findings in `docs/qa/api-audit.md`; PDF-vs-code review found two unimplemented portal endpoints awaiting owner decision: `activate-rider` (PendingRiders approve flow, largest gap) and `update-user` (admin profile edits). Also flagged: `register-user` body includes portal-only `email` field not in PDF spec. No code changes made (H1 frozen); changes require new ADR. | Owner (dandkhan) + Frontend Dev | **Pending owner decision** |
 | **Uncommitted working tree** | Iteration 5 code/tests/docs in working tree; awaiting owner manual commits | Owner (dandkhan) | **In progress** |
 
 ---
@@ -404,7 +504,7 @@ The 2026-07-30 QA cert reported "vitest 61/61" — this was a miscount. Verified
 | Convention | Detail |
 |-----------|--------|
 | Commit style | `chore/refactor/feat/fix/docs(scope): description`; every commit ends with all gates green |
-| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `npm test` (96 regression tests) — all required before merging. `test:e2e` (Playwright Chromium smoke, opt-in) — run before release whenever `src/components/ui/{button,popover,calendar,alert-dialog}`, `DatePickerField`/`DatePickerPopover`, or any lazy Radix surface changes; NOT part of the default 5 gates (QA rec F-4.2-04: revisit joining CI once ≥ 3 specs, < 60s) |
+| Quality gates | `npm run lint` (0 errors) · `npm run typecheck` (0 errors) · `npm run typecheck:strict` (0 errors) · `npm run build` · `rg -l msw dist/assets/` (0 hits) · `npm test` (**115** regression tests as of 2026-08-04; the `ai-session-instructions.md` "119" reference is stale pending owner correction of that owner-managed file) — all required before merging. `test:e2e` (Playwright Chromium smoke, opt-in) — run before release whenever `src/components/ui/{button,popover,calendar,alert-dialog}`, `DatePickerField`/`DatePickerPopover`, or any lazy Radix surface changes; NOT part of the default 5 gates (QA rec F-4.2-04: revisit joining CI once ≥ 3 specs, < 60s) |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) — Node 20, `npm ci` cache, push/PR |
 | ADRs | `docs/adr/NNNN-slug.md` — Proposed → Accepted/Rejected/Superseded; update in same commit as any shape change |
 | AGENTS.md hard rules | **H1–H8 bind all contributors and AI coding tools.** H1 API contract frozen, H2 never widen ROLES, H3 never delete Customer seed, H4 don't edit `components/ui/`, H5 never commit `.env`, H6 handlers import URLs from `lib/config.ts`, H7 auth storage only via `session.ts`, H8 guard changes require tracing PublicOnly + ProtectedRoute |
@@ -425,7 +525,10 @@ The 2026-07-30 QA cert reported "vitest 61/61" — this was a miscount. Verified
 | ADR-0002: Routing & Auth (incl. session persistence) | `docs/adr/0002-routing-and-auth.md` |
 | ADR-0003: Mock API (MSW) | `docs/adr/0003-mock-api-msw.md` |
 | ADR-0004: All Riders Admin Data Table | `docs/adr/0004-riders-data-table.md` |
-| Migration Plan (C0–C7 + deferred register D1–D21) | `docs/design/migration-plan.md` |
+| ADR-0005: Internationalisation (EN/UR) | `docs/adr/0005-i18n.md` |
+| Migration Plan (C0–C7 + deferred register D1–D28) | `docs/design/migration-plan.md` |
+| i18n Implementation Plan (Steps 1–8) | `docs/design/i18n-plan.md` |
+| i18n String Reconciliation (en.json ↔ ur.json draft) | `docs/design/i18n-strings.md` |
 | TypeScript Strict Mode Baseline | `docs/design/strict-errors.md` |
 | UX Restyle Audit | `docs/ux/restyle-audit.md` |
 | UX Restyle Spec | `docs/ux/restyle-spec.md` |

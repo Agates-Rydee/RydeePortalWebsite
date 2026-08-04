@@ -22,19 +22,15 @@ function runGate(
   root: string,
   extraEnv: Record<string, string> = {},
 ): ReturnType<typeof spawnSync> {
-  return spawnSync(
-    process.execPath,
-    [scriptPath],
-    {
-      cwd: root,
-      env: {
-        ...scrubbedEnvironment(),
-        ...extraEnv,
-        CHECK_ENV_PROJECT_ROOT: root,
-      },
-      encoding: "utf8",
+  return spawnSync(process.execPath, [scriptPath], {
+    cwd: root,
+    env: {
+      ...scrubbedEnvironment(),
+      ...extraEnv,
+      CHECK_ENV_PROJECT_ROOT: root,
     },
-  );
+    encoding: "utf8",
+  });
 }
 
 describe("scripts/check-env.ts", () => {

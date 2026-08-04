@@ -1,8 +1,16 @@
-import { useCallback, useState, useEffect, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  useCallback,
+  useState,
+  useEffect,
+  useMemo,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { Search } from "lucide-react";
-import { getAllRiders } from "@/api/riders";
+import { getAllRiders, updateUser } from "@/api/riders";
 import { mapAllRidersResponse } from "@/features/riders/mapper";
 import type { AllRidersRow, PendingRider } from "@/types/rider";
+import { formatCnic, normalizeCnicInput } from "@/features/riders/cnic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,7 +39,9 @@ import { KARACHI_AREAS } from "@/features/riders/constants";
 import { useDebounced } from "@/features/riders/useDebounced";
 
 const AREA_ITEMS = KARACHI_AREAS.map((a) => (
-  <SelectItem key={a} value={a}>{a}</SelectItem>
+  <SelectItem key={a} value={a}>
+    {a}
+  </SelectItem>
 ));
 
 interface WireResponse {
@@ -44,13 +54,19 @@ const DEFAULT_PAGE_SIZE: PageSize = 10;
 
 type SortKey = "name" | "phone" | "cnic" | "status";
 type SortDir = "asc" | "desc";
-interface SortState { key: SortKey; dir: SortDir }
+interface SortState {
+  key: SortKey;
+  dir: SortDir;
+}
 const DEFAULT_SORT: SortState = { key: "name", dir: "asc" };
 
 function compare(a: PendingRider, b: PendingRider, key: SortKey, dir: SortDir): number {
   const av = key === "status" ? "blocked" : (a[key] ?? "");
   const bv = key === "status" ? "blocked" : (b[key] ?? "");
-  const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: "base" });
+  const cmp = String(av).localeCompare(String(bv), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
   return dir === "asc" ? cmp : -cmp;
 }
 
@@ -73,6 +89,7 @@ interface UnblockActionProps {
 }
 
 function UnblockAction({ riderName, onConfirm }: UnblockActionProps) {
+  const { t } = useTranslation();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -82,20 +99,22 @@ function UnblockAction({ riderName, onConfirm }: UnblockActionProps) {
           size="lg"
           className="rounded-xl px-5 py-3 h-auto text-sm font-semibold bg-success-muted text-success border-success/25 hover:bg-success-muted/80 hover:text-success"
         >
-          Unblock rider
+          {t("riders.blocked.unblock")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unblock rider {riderName}?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("riders.blocked.unblockDialog.title", { name: riderName })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This rider will be able to operate again.
+            {t("riders.blocked.unblockDialog.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("riders.common.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Unblock rider
+            {t("riders.blocked.unblockDialog.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -104,6 +123,7 @@ function UnblockAction({ riderName, onConfirm }: UnblockActionProps) {
 }
 
 export default function BlockedRiders() {
+  const { t } = useTranslation();
   const [riders, setRiders] = useState<PendingRider[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<PendingRider | null>(null);
@@ -155,7 +175,7 @@ export default function BlockedRiders() {
       try {
         const data = (await getAllRiders()) as WireResponse;
         if (!data || !Array.isArray(data.riders)) {
-          throw new Error("Invalid response shape");
+          throw new Error(t("riders.errors.invalidResponse"));
         }
         const blocked = mapAllRidersResponse(data.riders)
           .filter((r) => r.status === "blocked")
@@ -165,7 +185,7 @@ export default function BlockedRiders() {
         setLoadError(null);
       } catch (err) {
         if (cancelled) return;
-        setLoadError(err instanceof Error ? err.message : "Failed to load riders");
+        setLoadError(err instanceof Error ? err.message : t("riders.errors.loadFailed"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -173,12 +193,13 @@ export default function BlockedRiders() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!notice) return;
-    const t = setTimeout(() => setNotice(null), 2000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setNotice(null), 2000);
+    return () => clearTimeout(timer);
   }, [notice]);
 
   const selectRider = (id: number) => {
@@ -187,10 +208,7 @@ export default function BlockedRiders() {
     setForm(rider ? { ...rider } : null);
   };
 
-  const handleRowKeyDown = (
-    e: ReactKeyboardEvent<HTMLTableRowElement>,
-    id: number,
-  ) => {
+  const handleRowKeyDown = (e: ReactKeyboardEvent<HTMLTableRowElement>, id: number) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       selectRider(id);
@@ -202,13 +220,39 @@ export default function BlockedRiders() {
     setRiders((r) => r.filter((x) => x.id !== form.id));
     setSelectedId(null);
     setForm(null);
-    setNotice("Rider unblocked");
+    setNotice(t("riders.blocked.noticeUnblocked"));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form) return;
-    setRiders((r) => r.map((x) => (x.id === form.id ? { ...form } : x)));
-    setNotice("Changes saved");
+    const original = riders.find((x) => x.id === form.id);
+    if (!original) return;
+    const patch: Record<string, unknown> = {};
+    (Object.keys(form) as Array<keyof PendingRider>).forEach((k) => {
+      if (k === "id" || k === "phone") return;
+      const a = form[k];
+      const b = original[k];
+      if (k === "cnic") {
+        if (normalizeCnicInput(String(a)) !== normalizeCnicInput(String(b))) patch[k] = a;
+        return;
+      }
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length || a.some((v, i) => v !== b[i])) patch[k] = a;
+      } else if (a !== b) {
+        patch[k] = a;
+      }
+    });
+    if (Object.keys(patch).length === 0) {
+      setNotice(t("riders.pending.noticeSaved"));
+      return;
+    }
+    try {
+      await updateUser(form.phone, "rider", patch);
+      setRiders((r) => r.map((x) => (x.id === form.id ? { ...form } : x)));
+      setNotice(t("riders.pending.noticeSaved"));
+    } catch {
+      setNotice(t("riders.pending.noticeSaveFailed"));
+    }
   };
 
   const pageCount = Math.max(1, Math.ceil(filteredRiders.length / pageSize));
@@ -225,7 +269,7 @@ export default function BlockedRiders() {
           aria-live="polite"
           className="rounded-2xl border border-border bg-card px-6 py-10 text-center text-sm text-muted-foreground"
         >
-          Loading blocked riders…
+          {t("riders.blocked.loading")}
         </div>
       )}
 
@@ -240,10 +284,8 @@ export default function BlockedRiders() {
 
       {!loading && !loadError && riders.length === 0 && (
         <Card className="rounded-2xl p-10 flex-col items-center justify-center text-center border-border shadow-none">
-          <p className="text-sm font-medium text-foreground">No blocked riders</p>
-          <p className="text-xs mt-1 text-muted-foreground">
-            All riders currently have access.
-          </p>
+          <p className="text-sm font-medium text-foreground">{t("riders.blocked.emptyTitle")}</p>
+          <p className="text-xs mt-1 text-muted-foreground">{t("riders.blocked.emptyHint")}</p>
         </Card>
       )}
 
@@ -253,13 +295,16 @@ export default function BlockedRiders() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative w-full max-w-sm">
                 <Label htmlFor="blocked-search" className="sr-only">
-                  Search blocked riders
+                  {t("riders.blocked.searchSr")}
                 </Label>
-                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" aria-hidden="true" />
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70"
+                  aria-hidden="true"
+                />
                 <Input
                   id="blocked-search"
                   type="search"
-                  placeholder="Search by name, phone, CNIC, or area…"
+                  placeholder={t("riders.blocked.searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="h-9 w-full rounded-lg pl-9 pr-3 text-sm bg-card"
@@ -268,13 +313,13 @@ export default function BlockedRiders() {
               <Select value={areaFilter} onValueChange={setAreaFilter}>
                 <SelectTrigger
                   id="blocked-area"
-                  aria-label="Filter by area"
+                  aria-label={t("riders.common.filterByArea")}
                   className="h-9 w-full max-w-[16rem] rounded-lg border border-input bg-card px-3 text-sm"
                 >
-                  <SelectValue placeholder="All areas" />
+                  <SelectValue placeholder={t("riders.common.allAreas")} />
                 </SelectTrigger>
                 <SelectContent className="duration-0">
-                  <SelectItem value="all">All areas</SelectItem>
+                  <SelectItem value="all">{t("riders.common.allAreas")}</SelectItem>
                   {AREA_ITEMS}
                 </SelectContent>
               </Select>
@@ -282,21 +327,52 @@ export default function BlockedRiders() {
             <Card className="rounded-2xl border-border overflow-hidden p-0">
               {noMatches ? (
                 <div className="px-6 py-12 text-center">
-                  <p className="text-sm font-medium text-foreground">No matches</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("riders.blocked.noMatchesTitle")}
+                  </p>
                   <p className="text-xs mt-1 text-muted-foreground">
-                    No blocked riders match “{debouncedSearch}”.
+                    {t("riders.blocked.noMatchesHint", { q: debouncedSearch })}
                   </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm table-fixed">
-                    <caption className="sr-only">Blocked riders</caption>
+                    <caption className="sr-only">{t("riders.blocked.caption")}</caption>
                     <thead className="bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                       <tr>
-                        <SortableTh sortKey="name" ariaSort={ariaSortFor("name")} onSort={toggleSort} className="pl-6 pr-4 py-3 w-[32%]">Name</SortableTh>
-                        <SortableTh sortKey="phone" ariaSort={ariaSortFor("phone")} onSort={toggleSort} className="px-4 py-3 w-[22%]">Phone</SortableTh>
-                        <SortableTh sortKey="cnic" ariaSort={ariaSortFor("cnic")} onSort={toggleSort} className="px-4 py-3 w-[26%]">CNIC</SortableTh>
-                        <SortableTh sortKey="status" ariaSort={ariaSortFor("status")} onSort={toggleSort} className="pl-4 pr-6 py-3 w-[20%]" align="right">Status</SortableTh>
+                        <SortableTh
+                          sortKey="name"
+                          ariaSort={ariaSortFor("name")}
+                          onSort={toggleSort}
+                          className="pl-6 pr-4 py-3 w-[32%]"
+                        >
+                          {t("riders.common.columns.name")}
+                        </SortableTh>
+                        <SortableTh
+                          sortKey="phone"
+                          ariaSort={ariaSortFor("phone")}
+                          onSort={toggleSort}
+                          className="px-4 py-3 w-[22%]"
+                        >
+                          {t("riders.common.columns.phone")}
+                        </SortableTh>
+                        <SortableTh
+                          sortKey="cnic"
+                          ariaSort={ariaSortFor("cnic")}
+                          onSort={toggleSort}
+                          className="px-4 py-3 w-[26%]"
+                        >
+                          {t("riders.common.columns.cnic")}
+                        </SortableTh>
+                        <SortableTh
+                          sortKey="status"
+                          ariaSort={ariaSortFor("status")}
+                          onSort={toggleSort}
+                          className="pl-4 pr-6 py-3 w-[20%]"
+                          align="right"
+                        >
+                          {t("riders.common.columns.status")}
+                        </SortableTh>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -308,7 +384,9 @@ export default function BlockedRiders() {
                             tabIndex={0}
                             role="button"
                             aria-pressed={selected}
-                            aria-label={`Review blocked rider ${r.name || "rider"}`}
+                            aria-label={t("riders.blocked.rowReviewAria", {
+                              name: r.name || "rider",
+                            })}
                             onClick={() => selectRider(r.id)}
                             onKeyDown={(e) => handleRowKeyDown(e, r.id)}
                             className={
@@ -316,18 +394,26 @@ export default function BlockedRiders() {
                               (selected ? "bg-muted/50 shadow-sm" : "hover:bg-muted/30")
                             }
                           >
-                            <th scope="row" className="pl-6 pr-4 py-3 font-medium text-foreground text-left">
+                            <th
+                              scope="row"
+                              className="pl-6 pr-4 py-3 font-medium text-foreground text-left"
+                            >
                               {r.name || "—"}
                             </th>
                             <td className="px-4 py-3 font-mono text-xs">{r.phone || "—"}</td>
-                            <td className="px-4 py-3 font-mono text-xs">{r.cnic || "—"}</td>
+                            <td className="px-4 py-3 font-mono text-xs">
+                              {r.cnic ? formatCnic(r.cnic) : "—"}
+                            </td>
                             <td className="pl-4 pr-6 py-3 text-right">
                               <Badge
                                 variant="outline"
                                 className="gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full bg-destructive/10 text-destructive border-destructive/25"
                               >
-                                <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
-                                Blocked
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full bg-current"
+                                  aria-hidden="true"
+                                />
+                                {t("riders.common.badges.blocked")}
                               </Badge>
                             </td>
                           </tr>
@@ -341,11 +427,15 @@ export default function BlockedRiders() {
               {!noMatches && (
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-border bg-muted/30 px-4 py-3 text-xs">
                   <p className="text-muted-foreground">
-                    Showing {pageStart + 1}–{Math.min(pageStart + pageSize, filteredRiders.length)} of {filteredRiders.length} riders
+                    {t("riders.common.summary", {
+                      from: pageStart + 1,
+                      to: Math.min(pageStart + pageSize, filteredRiders.length),
+                      count: filteredRiders.length,
+                    })}
                   </p>
                   <div className="flex items-center gap-3">
                     <Label htmlFor="blocked-page-size" className="text-xs text-muted-foreground">
-                      Rows per page:
+                      {t("riders.common.rowsPerPage")}
                     </Label>
                     <select
                       id="blocked-page-size"
@@ -354,7 +444,9 @@ export default function BlockedRiders() {
                       className="h-8 rounded-md border border-input bg-background px-2 text-xs"
                     >
                       {PAGE_SIZES.map((n) => (
-                        <option key={n} value={n}>{n}</option>
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
                       ))}
                     </select>
                     <div className="flex items-center gap-1">
@@ -364,12 +456,12 @@ export default function BlockedRiders() {
                         size="sm"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage <= 1}
-                        aria-label="Previous page"
+                        aria-label={t("riders.common.prevPage")}
                       >
                         ‹
                       </Button>
                       <span className="text-muted-foreground px-2">
-                        Page {currentPage} of {pageCount}
+                        {t("riders.common.page", { cur: currentPage, total: pageCount })}
                       </span>
                       <Button
                         type="button"
@@ -377,7 +469,7 @@ export default function BlockedRiders() {
                         size="sm"
                         onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                         disabled={currentPage >= pageCount}
-                        aria-label="Next page"
+                        aria-label={t("riders.common.nextPage")}
                       >
                         ›
                       </Button>
@@ -400,17 +492,26 @@ export default function BlockedRiders() {
               <Card className="rounded-2xl p-10 flex-col items-center justify-center text-center border-border shadow-none">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-destructive/10">
                   <svg
-                    width="26" height="26" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                    className="text-destructive" aria-hidden="true"
+                    width="26"
+                    height="26"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-destructive"
+                    aria-hidden="true"
                   >
                     <circle cx="12" cy="12" r="10" />
                     <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-foreground">No rider selected</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t("riders.blocked.noSelectedTitle")}
+                </p>
                 <p className="text-xs mt-1 text-muted-foreground">
-                  Choose a rider from the table to view their profile.
+                  {t("riders.blocked.noSelectedHint")}
                 </p>
               </Card>
             )}
@@ -440,7 +541,14 @@ interface SortableThProps {
   children: React.ReactNode;
 }
 
-function SortableTh({ sortKey, ariaSort, onSort, className, align = "left", children }: SortableThProps) {
+function SortableTh({
+  sortKey,
+  ariaSort,
+  onSort,
+  className,
+  align = "left",
+  children,
+}: SortableThProps) {
   const indicator = ariaSort === "ascending" ? "↑" : ariaSort === "descending" ? "↓" : "↕";
   return (
     <th scope="col" aria-sort={ariaSort} className={className}>

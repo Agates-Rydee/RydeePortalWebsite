@@ -3,7 +3,6 @@ import type { Profile } from "@/types/profile";
 import { clearSession, loadSession, saveSession } from "./session";
 import { AuthContext, type AuthContextValue } from "./auth-context";
 
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(loadSession);
 

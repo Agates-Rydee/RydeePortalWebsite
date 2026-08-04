@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  csvFilename,
-  CSV_HEADERS,
-  ridersToCsv,
-  todayIso,
-} from "@/features/riders/csv";
+import { csvFilename, CSV_HEADERS, ridersToCsv, todayIso } from "@/features/riders/csv";
 import type { AllRidersRow } from "@/types/rider";
 
 describe("ridersToCsv", () => {

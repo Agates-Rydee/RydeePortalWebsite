@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { KARACHI_AREAS, VERIFICATION_DOCS } from "@/features/riders/constants";
+import { formatCnic, normalizeCnicInput } from "@/features/riders/cnic";
 import type { PendingRider } from "@/types/rider";
 import { DatePickerField } from "@/components/DatePickerField";
 import { Button } from "@/components/ui/button";
@@ -28,7 +30,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const AREA_ITEMS = KARACHI_AREAS.map((a) => (
-  <SelectItem key={a} value={a}>{a}</SelectItem>
+  <SelectItem key={a} value={a}>
+    {a}
+  </SelectItem>
 ));
 
 function calcAge(dob: string): number {
@@ -48,10 +52,20 @@ export interface RiderProfileCardProps {
   form: PendingRider;
   onChange: (next: PendingRider) => void;
   onSave: () => void;
+  onActivate?: () => void;
+  activating?: boolean;
   actions?: ReactNode;
 }
 
-export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfileCardProps) {
+export function RiderProfileCard({
+  form,
+  onChange,
+  onSave,
+  onActivate,
+  activating = false,
+  actions,
+}: RiderProfileCardProps) {
+  const { t } = useTranslation();
   const setField = (field: keyof PendingRider, value: string | string[]) => {
     onChange({ ...form, [field]: value } as PendingRider);
   };
@@ -67,9 +81,11 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
 
   return (
     <Card className="rounded-2xl p-7 gap-5 card-elevated border-border">
-      <h2 className="text-lg font-semibold text-card-foreground mb-1">Rider Profile</h2>
+      <h2 className="text-lg font-semibold text-card-foreground mb-1">
+        {t("riders.profileCard.heading")}
+      </h2>
 
-      <Field id="pr-name" label="Full name">
+      <Field id="pr-name" label={t("riders.profileCard.fields.fullName")}>
         <Input
           id="pr-name"
           value={form.name}
@@ -78,7 +94,7 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
         />
       </Field>
 
-      <Field id="pr-phone" label="Phone number">
+      <Field id="pr-phone" label={t("riders.profileCard.fields.phoneNumber")}>
         <Input
           id="pr-phone"
           type="tel"
@@ -90,41 +106,40 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="pr-area" className="text-foreground-label">
-          Geographic area of interest
+          {t("riders.profileCard.fields.geographicArea")}
         </Label>
-        <Select
-          value={form.area || undefined}
-          onValueChange={(v) => setField("area", v)}
-        >
-          <SelectTrigger
-            id="pr-area"
-            className="w-full h-auto rounded-xl px-4 py-3 text-sm"
-          >
-            <SelectValue placeholder="Select area…" />
+        <Select value={form.area || undefined} onValueChange={(v) => setField("area", v)}>
+          <SelectTrigger id="pr-area" className="w-full h-auto rounded-xl px-4 py-3 text-sm">
+            <SelectValue placeholder={t("riders.profileCard.selectArea")} />
           </SelectTrigger>
-          <SelectContent className="duration-0">
-            {AREA_ITEMS}
-          </SelectContent>
+          <SelectContent className="duration-0">{AREA_ITEMS}</SelectContent>
         </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field id="pr-dob" label="Date of birth">
+        <Field id="pr-dob" label={t("riders.profileCard.fields.dob")}>
           <DatePickerField
             id="pr-dob"
             value={form.dob ? new Date(form.dob) : undefined}
-            onChange={(d) => setField("dob", d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "")}
+            onChange={(d) =>
+              setField(
+                "dob",
+                d
+                  ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+                  : "",
+              )
+            }
             fromYear={1940}
             toYear={new Date().getFullYear()}
             placeholder="DD/MM/YYYY"
-            ariaLabel="Date of birth"
+            ariaLabel={t("riders.profileCard.fields.dob")}
           />
         </Field>
-        <Field id="pr-age" label="Age (calculated)">
+        <Field id="pr-age" label={t("riders.profileCard.fields.age")}>
           <Input
             id="pr-age"
             readOnly
-            value={form.dob ? `${calcAge(form.dob)} years` : "—"}
+            value={form.dob ? t("riders.profileCard.ageValue", { age: calcAge(form.dob) }) : "—"}
             className="h-auto rounded-xl px-4 py-3 text-sm opacity-70 cursor-default read-only:focus-visible:ring-0 read-only:focus-visible:border-input"
             tabIndex={-1}
             aria-readonly="true"
@@ -132,19 +147,21 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
         </Field>
       </div>
 
-      <Field id="pr-cnic" label="CNIC number">
+      <Field id="pr-cnic" label={t("riders.profileCard.fields.cnic")}>
         <Input
           id="pr-cnic"
-          value={form.cnic}
-          onChange={(e) => setField("cnic", e.target.value)}
+          value={formatCnic(form.cnic)}
+          onChange={(e) => setField("cnic", normalizeCnicInput(e.target.value))}
           placeholder="XXXXX-XXXXXXX-X"
+          inputMode="numeric"
+          maxLength={15}
           className="h-auto rounded-xl px-4 py-3 text-sm"
         />
       </Field>
 
       <fieldset className="flex flex-col gap-2 border-0 p-0 m-0">
         <legend className="text-sm font-medium text-foreground-label mb-1">
-          Verification documents
+          {t("riders.profileCard.fields.verificationDocs")}
         </legend>
         <div className="rounded-xl p-4 flex flex-col gap-2.5 bg-input-background border border-border">
           {VERIFICATION_DOCS.map((doc) => {
@@ -152,11 +169,7 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
             const checked = form.documents.includes(doc);
             return (
               <div key={doc} className="flex items-center gap-3">
-                <Checkbox
-                  id={cid}
-                  checked={checked}
-                  onCheckedChange={() => toggleDoc(doc)}
-                />
+                <Checkbox id={cid} checked={checked} onCheckedChange={() => toggleDoc(doc)} />
                 <Label
                   htmlFor={cid}
                   className={
@@ -164,14 +177,14 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
                     (checked ? "text-foreground" : "text-muted-foreground")
                   }
                 >
-                  {doc}
+                  {t(`riders.profileCard.docLabels.${doc}`)}
                 </Label>
                 {checked && (
                   <Badge
                     variant="secondary"
                     className="ml-auto rounded-full px-2 py-0.5 text-xs bg-[color:var(--brand-bright)]/12 text-primary border-transparent"
                   >
-                    Received
+                    {t("riders.profileCard.received")}
                   </Badge>
                 )}
               </div>
@@ -180,12 +193,12 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
         </div>
       </fieldset>
 
-      <Field id="pr-pin" label="Access PIN">
+      <Field id="pr-pin" label={t("riders.profileCard.fields.accessPin")}>
         <Input
           id="pr-pin"
           value={form.pin}
           readOnly
-          placeholder="Not yet generated"
+          placeholder={t("riders.profileCard.pinNotGenerated")}
           className={
             "h-auto rounded-xl px-4 py-3 text-sm font-mono tracking-[0.25em] cursor-default read-only:focus-visible:ring-0 read-only:focus-visible:border-input " +
             (form.pin ? "" : "opacity-50")
@@ -201,7 +214,7 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
           size="lg"
           className="flex-1 rounded-xl py-3 h-auto text-sm font-semibold shadow-[0_4px_20px_rgba(13,143,110,0.30)] hover:bg-primary-hover active:bg-primary-active hover:shadow-[0_4px_28px_rgba(13,143,110,0.45)]"
         >
-          {form.pin ? "Regenerate PIN" : "Generate PIN"}
+          {form.pin ? t("riders.profileCard.regeneratePin") : t("riders.profileCard.generatePin")}
         </Button>
 
         <Button
@@ -211,8 +224,22 @@ export function RiderProfileCard({ form, onChange, onSave, actions }: RiderProfi
           onClick={onSave}
           className="flex-1 rounded-xl py-3 h-auto text-sm font-semibold bg-muted hover:bg-secondary text-foreground"
         >
-          Save changes
+          {t("riders.profileCard.saveChanges")}
         </Button>
+
+        {onActivate && (
+          <Button
+            type="button"
+            size="lg"
+            onClick={onActivate}
+            disabled={activating || !/^\d{6}$/.test(form.pin)}
+            className="flex-1 rounded-xl py-3 h-auto text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {activating
+              ? t("riders.profileCard.activating")
+              : t("riders.profileCard.activateRider")}
+          </Button>
+        )}
 
         {actions}
       </div>
@@ -226,6 +253,7 @@ export interface BlockRiderActionProps {
 }
 
 export function BlockRiderAction({ riderName, onConfirm }: BlockRiderActionProps) {
+  const { t } = useTranslation();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -235,23 +263,25 @@ export function BlockRiderAction({ riderName, onConfirm }: BlockRiderActionProps
           size="lg"
           className="rounded-xl px-5 py-3 h-auto text-sm font-semibold bg-destructive/10 text-destructive border-destructive/25 hover:bg-destructive/20 hover:text-destructive"
         >
-          Block rider
+          {t("riders.profileCard.blockRider")}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Block rider {riderName}?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("riders.profileCard.blockDialog.title", { name: riderName })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This rider will not be able to register. This action cannot be undone.
+            {t("riders.profileCard.blockDialog.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("riders.common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className="bg-destructive text-white hover:bg-destructive/90"
           >
-            Block rider
+            {t("riders.profileCard.blockDialog.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

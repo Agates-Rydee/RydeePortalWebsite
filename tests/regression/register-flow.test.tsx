@@ -66,7 +66,7 @@ function buildRouter() {
   );
 }
 
-// ~25 years ago in ISO; passes 18–100 validator regardless of test date.
+// ~25 years ago in ISO; passes 0–100 validator regardless of test date.
 function isoDobFor25(): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - 25);

@@ -39,8 +39,7 @@ export function DatePickerField({
   const derivedErrorId = errorId ?? `${id}-error`;
   const display = value ? formatDobDisplay(value) : placeholder;
   // When no date is selected, anchor the calendar on the latest allowed year
-  // instead of the react-day-picker default of today, which for a date-of-birth
-  // field always falls outside the age-18 boundary and shows an empty month.
+  // instead of the react-day-picker default of today.
   const defaultMonth = value ?? new Date(toYear, 0, 1);
 
   return (

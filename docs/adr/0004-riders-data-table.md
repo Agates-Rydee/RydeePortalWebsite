@@ -80,5 +80,10 @@ sequenceDiagram
 - Band risk: if hand-rolled + page code exceeds 227.9 kB, bump the band in the same commit with attribution (never silently widen tests).
 - Actions-column content (spec §10.2) unresolved — MVP ships View-only or empty; not blocking this ADR.
 
+## Band history
+- **219.0–227.9 kB** (baseline, 2026-07-31): hand-rolled data table shipped inside 223.43 kB baseline.
+- **235.5–238.5 kB** (2026-08-xx): search-and-density UX critique (composed cards, lucide Search icon, card-footer pager, density fixes) — +8–11 kB gzip absorbed at owner sign-off.
+- **243.5–246.5 kB** (2026-08-03): area-filter dropdown via **shadcn Select (Radix)** on AllRiders/PendingRiders/BlockedRiders. Owner-directed after being informed the native `<select>` would fit the previous band. Radix Select adds ~6 kB gzip (`@radix-ui/react-select` + its dependencies); measured 238.38 → 244.68 kB main-chunk gzip. New band ±1.5 kB around 244.68, matching the tightness style of prior bands (never widen without attribution).
+
 ## References
 UX spec `docs/ux/riders-table-spec.md` · ADR-0001/0002/0003 · `docs/design/migration-plan.md` (D18 done, D22, new D23) · commit 0f79f7e (lazy-loading drop)

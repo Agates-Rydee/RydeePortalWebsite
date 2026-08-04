@@ -31,7 +31,7 @@ test.describe("DOB datepicker (P1 regression)", () => {
     const popover = page.locator("[data-radix-popper-content-wrapper]");
     await expect(popover).toBeVisible();
 
-    // Pick a fixed month and a year that sits inside the age-18 window so the
+    // Pick a fixed month and a year that sits inside the past year so the
     // assertion below matches deterministically regardless of the wall clock.
     const currentYear = new Date().getFullYear();
     const pickYear = String(currentYear - 25);

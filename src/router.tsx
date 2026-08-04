@@ -12,6 +12,7 @@ import {
 import {
   ActiveRidersRoute,
   AllRidersRoute,
+  BlockedRidersRoute,
   PendingRidersRoute,
 } from "@/features/riders/routes";
 
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "admin/active-riders",             element: <ActiveRidersRoute /> },
               { path: "admin/pending-riders",            element: <PendingRidersRoute /> },
+              { path: "admin/blocked-riders",            element: <BlockedRidersRoute /> },
               { path: "admin/all-riders",                element: <AllRidersRoute /> },
               { path: "admin/riders/:riderId/location",  element: <RiderLocationView /> },
             ],

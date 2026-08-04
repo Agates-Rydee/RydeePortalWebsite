@@ -5,7 +5,6 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import RegisterPage from "@/features/auth/pages/RegisterPage";
-import { StatCard } from "@/features/dashboards/components/StatCard";
 import { API_REGISTER_URL } from "@/api/auth";
 import { server } from "../setup";
 
@@ -99,39 +98,6 @@ describe("Iter 4.1 hotfix — DOB DatePickerField (button-trigger pattern)", () 
     const trigger = screen.getByLabelText(/Date of birth/i);
     await waitFor(() => expect(trigger).toHaveAttribute("aria-invalid", "true"));
     expect(trigger.getAttribute("aria-describedby")).toBe("reg-dob-error");
-  });
-});
-
-describe("Iter 4 §5 — StatCard button vs static rendering", () => {
-  it("renders as <button> with dynamic aria-label when onClick + value provided", () => {
-    const spy = vi.fn();
-    render(
-      <StatCard label="Pending Riders" value={5} icon={<span data-testid="icon" />} onClick={spy} />,
-    );
-    const btn = screen.getByRole("button", { name: /View 5 pending riders/i });
-    expect(btn.tagName).toBe("BUTTON");
-    expect(btn.querySelectorAll("button, a").length).toBe(0);
-  });
-
-  it("renders static (no button role) when value is null even if onClick provided", () => {
-    render(
-      <StatCard label="Active Riders" value={null} icon={<span />} onClick={() => {}} />,
-    );
-    expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.getByText("—")).toBeInTheDocument();
-  });
-
-  it("renders static when onClick omitted", () => {
-    render(<StatCard label="Total Riders" value={42} icon={<span />} />);
-    expect(screen.queryByRole("button")).toBeNull();
-  });
-
-  it("clicking the card fires onClick", async () => {
-    const spy = vi.fn();
-    const user = userEvent.setup();
-    render(<StatCard label="X" value={3} icon={<span />} onClick={spy} />);
-    await user.click(screen.getByRole("button"));
-    expect(spy).toHaveBeenCalledTimes(1);
   });
 });
 

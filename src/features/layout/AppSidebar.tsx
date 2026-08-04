@@ -4,6 +4,7 @@ import {
   UserPlus,
   Users,
   Activity,
+  Ban,
   Clock,
   LogOut,
   ChevronsUpDown,
@@ -54,13 +55,14 @@ export function AppSidebar() {
     { label: "Total riders",    to: "/admin/all-riders",     icon: Users,    active: pathname === "/admin/all-riders" },
     { label: "Active riders",   to: "/admin/active-riders",  icon: Activity, active: pathname === "/admin/active-riders" },
     { label: "Pending riders",  to: "/admin/pending-riders", icon: Clock,    active: pathname === "/admin/pending-riders" },
+    { label: "Blocked riders",  to: "/admin/blocked-riders", icon: Ban,      active: pathname === "/admin/blocked-riders" },
   ];
 
   const name = profile?.name ?? "";
   const initials = initialsOf(name);
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="p-3">
         <Link
           to={home}

@@ -27,7 +27,7 @@ src/
 │   │       ├── LoginPage.tsx  # POST /user/login
 │   │       └── RegisterPage.tsx  # POST /register/user (+ /admin/register variant)
 │   ├── dashboards/            # RiderDashboard, AdminDashboard, OperatorDashboard
-│   └── riders/                # ActiveRiders, PendingRiders, RiderLocationView
+│   └── riders/                # ActiveRiders, PendingRiders, BlockedRiders, AllRiders
 ├── lib/
 │   └── config.ts              # API endpoint constants (environment-driven)
 ├── mocks/                     # mock service worker handlers (development only, tree-shaken from production)
@@ -60,7 +60,6 @@ src/
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VITE_API_LOGIN_URL`    | Login endpoint. Leave blank locally to fall back to `http://localhost:3000/user/login`.                                                         |
 | `VITE_API_REGISTER_URL` | Register endpoint. Same defaulting.                                                                                                             |
-| `VITE_GOOGLE_MAPS_KEY`  | Google Maps JavaScript key used by `RiderLocationView`.                                                                                         |
 | `VITE_ENABLE_MSW`       | `true` → the mock worker intercepts the two auth endpoints locally (development only). Set to anything else (or unset) to hit the real backend. |
 
 Never commit a real `.env`. See `.gitignore`.

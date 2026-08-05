@@ -1,7 +1,7 @@
 # Auth Mocks (MSW 2.x)
 
 Developer guide for the MSW handlers under this directory. Living contract
-is [ADR-0003](../../docs/adr/0003-mock-api-msw.md); this file is the
+is [ADR-0003](../../local-docs/adr/0003-mock-api-msw.md); this file is the
 practical how-to.
 
 ## What MSW does here
@@ -85,7 +85,7 @@ read/write helpers. Consequences for local mock-based dev:
 
 Server-side revocation (`/me`) and real token-based auth are still
 deferred (D9-remainder + D17 in
-[`docs/design/migration-plan.md`](../../docs/design/migration-plan.md)).
+[`local-docs/design/migration-plan.md`](../../local-docs/design/migration-plan.md)).
 
 ## Mocked endpoint contract
 
@@ -116,7 +116,7 @@ session cookies MSW must simulate.
    export const handlers = [...authHandlers, ...ridersHandlers];
    ```
 4. Update the contract table in
-   [ADR-0003](../../docs/adr/0003-mock-api-msw.md) — the ADR is the
+   [ADR-0003](../../local-docs/adr/0003-mock-api-msw.md) — the ADR is the
    living contract and must not drift from the code.
 5. If your handler introduces new response shapes, mirror them in
    [`src/types/`](../types/) so the app + tests share types.
@@ -161,6 +161,6 @@ real network request is failing (not MSW-related).
 
 ## References
 
-- [ADR-0003 — Mock API via MSW 2.x](../../docs/adr/0003-mock-api-msw.md) — living contract
-- [ADR-0002 — Routing & Auth](../../docs/adr/0002-routing-and-auth.md) — role → route table
+- [ADR-0003 — Mock API via MSW 2.x](../../local-docs/adr/0003-mock-api-msw.md) — living contract
+- [ADR-0002 — Routing & Auth](../../local-docs/adr/0002-routing-and-auth.md) — role → route table
 - [MSW docs](https://mswjs.io/docs/) — official 2.x reference

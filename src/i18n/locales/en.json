@@ -17,8 +17,7 @@
       "allRiders": "All riders",
       "activeRiders": "Active riders",
       "pendingRiders": "Pending riders",
-      "blockedRiders": "Blocked riders",
-      "riderLocation": "Rider location"
+      "blockedRiders": "Blocked riders"
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -277,10 +276,6 @@
         "description": "This rider will not be able to register. This action cannot be undone.",
         "confirm": "Block rider"
       }
-    },
-    "location": {
-      "unavailable": "Rider {{riderId}} — location unavailable. Open this view from the Active Riders list to see live coordinates.",
-      "mapLoading": "Loading map…"
     },
     "active": {
       "total": "Total:",

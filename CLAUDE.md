@@ -14,6 +14,6 @@ The four hard rules most easily broken (full list in AGENTS.md):
 4. **All four gates green before every commit**: lint, typecheck,
    typecheck:strict, build.
 
-Read [`docs/PROJECT.md`](docs/PROJECT.md) for current state and
-[`docs/design/migration-plan.md`](docs/design/migration-plan.md)
+Read [`local-docs/PROJECT.md`](local-docs/PROJECT.md) for current state and
+[`local-docs/design/migration-plan.md`](local-docs/design/migration-plan.md)
 §"Deferred Work Register" for known debt before starting work.

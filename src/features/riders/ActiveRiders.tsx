@@ -2,15 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTranslation } from "react-i18next";
-import { getActiveRiders } from "@/api/riders";
+import { getAllRiders } from "@/api/riders";
 import type { ActiveRider, RiderState } from "@/types/rider";
 import { Badge } from "@/components/ui/badge";
 
-// The Leaflet Popup only accepts inline styles, so these AA-safe hex values are copied from the theme tokens.
 const STATE_HEX: Record<RiderState, string> = {
-  dispatching: "#15803d", // --success
-  arriving: "#a16207", // --state-arriving
-  idle: "#dc2626", // --state-idle / --destructive
+  dispatching: "#15803d",
+  arriving: "#a16207",
+  idle: "#dc2626",
 };
 
 const STATE_BADGE_CLASS: Record<RiderState, string> = {
@@ -32,6 +31,37 @@ function randomState(current: RiderState): RiderState {
   return STATES[Math.floor(Math.random() * STATES.length)];
 }
 
+function toStatus(r: Record<string, unknown>): string {
+  const s = r.activationStatus ?? r.activation_status;
+  return typeof s === "string" ? s.toLowerCase() : "";
+}
+
+function toCoords(r: Record<string, unknown>): { lat: number; lon: number } | null {
+  const loc = r.currentLocation;
+  if (!loc || typeof loc !== "object") return null;
+  const { lat, lon } = loc as { lat?: unknown; lon?: unknown };
+  if (typeof lat !== "number" || typeof lon !== "number") return null;
+  return { lat, lon };
+}
+
+function mapToActive(r: Record<string, unknown>, idx: number): ActiveRider | null {
+  if (toStatus(r) !== "active") return null;
+  const coords = toCoords(r);
+  if (!coords) return null;
+  const id = typeof r.id === "number" ? r.id : idx + 1;
+  const name = typeof r.name === "string" ? r.name : "";
+  const area = typeof r.area === "string" ? r.area : typeof r.rideArea === "string" ? r.rideArea : "";
+  return {
+    id,
+    name,
+    lat: coords.lat,
+    lng: coords.lon,
+    state: "idle",
+    bike: "",
+    area,
+  };
+}
+
 export default function ActiveRiders() {
   const { t } = useTranslation();
   const stateLabel = (s: RiderState): string => t(`riders.active.states.${s}`);
@@ -40,9 +70,14 @@ export default function ActiveRiders() {
 
   useEffect(() => {
     let cancelled = false;
-    getActiveRiders()
+    getAllRiders()
       .then((data) => {
-        if (!cancelled) setRiders(data);
+        if (cancelled) return;
+        const rows = data.riders ?? [];
+        const mapped = rows
+          .map((r, i) => mapToActive(r, i))
+          .filter((r): r is ActiveRider => r !== null);
+        setRiders(mapped);
       })
       .catch(() => {
         if (!cancelled) setRiders([]);
@@ -109,7 +144,7 @@ export default function ActiveRiders() {
 
       <div
         dir="ltr"
-        className="flex-1 relative rounded-xl overflow-hidden border border-border"
+        className="flex-1 relative rounded-xl overflow-hidden border border-border isolate"
         style={{ minHeight: 0 }}
       >
         <MapContainer
@@ -135,7 +170,7 @@ export default function ActiveRiders() {
               }}
             >
               <Popup>
-                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", minWidth: 160 }}>
+                <div style={{ fontFamily: "Plus Jakarta Sans, sans-serif", minWidth: 160 }}>
                   <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{rider.name}</p>
                   <p style={{ fontSize: 12, color: "#4a6b5e", marginBottom: 2 }}>📍 {rider.area}</p>
                   <p style={{ fontSize: 12, color: "#4a6b5e", marginBottom: 6 }}>🛵 {rider.bike}</p>

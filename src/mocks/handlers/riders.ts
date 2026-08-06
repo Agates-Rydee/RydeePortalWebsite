@@ -1,12 +1,10 @@
 import { http, HttpResponse } from "msw";
 import {
   API_ACTIVATE_RIDER_URL,
-  API_GET_ACTIVE_RIDERS_URL,
   API_GET_ALL_RIDERS_URL,
   API_GET_UNREGISTERED_RIDERS_URL,
   API_UPDATE_USER_URL,
 } from "@/api/riders";
-import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
 
 interface RiderProfile {
   name: string;
@@ -196,6 +194,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     rideArea: "Clifton",
     joinedAt: "2026-07-15",
+    currentLocation: { lat: 24.8157, lon: 67.0235 },
   },
   {
     id: 203,
@@ -241,6 +240,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "North Karachi",
     joinedAt: "2026-07-05",
+    currentLocation: { lat: 24.87, lon: 67.05 },
   },
   {
     id: 208,
@@ -259,6 +259,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "Landhi",
     joinedAt: "2026-07-01",
+    currentLocation: { lat: 24.82, lon: 67.13 },
   },
   {
     id: 210,
@@ -277,6 +278,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "Saddar",
     joinedAt: "2026-06-15",
+    currentLocation: { lat: 24.8607, lon: 67.0011 },
   },
   {
     id: 212,
@@ -295,6 +297,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "Gulshan-e-Iqbal",
     joinedAt: "2026-07-08",
+    currentLocation: { lat: 24.9215, lon: 67.0897 },
   },
   {
     id: 214,
@@ -313,6 +316,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "Nazimabad",
     joinedAt: "2026-07-12",
+    currentLocation: { lat: 24.95, lon: 67.02 },
   },
   {
     id: 216,
@@ -331,6 +335,7 @@ const allRidersSeeds: RiderProfile[] = [
     activationStatus: "active",
     area: "Gulistan-e-Johar",
     joinedAt: "2026-06-25",
+    currentLocation: { lat: 24.89, lon: 67.2 },
   },
   {
     id: 218,
@@ -358,9 +363,6 @@ export const ridersHandlers = [
   }),
   http.post(API_GET_ALL_RIDERS_URL, async () => {
     return HttpResponse.json({ riders: allRidersSeeds.map(envelope) });
-  }),
-  http.post(API_GET_ACTIVE_RIDERS_URL, async () => {
-    return HttpResponse.json({ riders: INITIAL_ACTIVE_RIDERS });
   }),
   http.post(API_ACTIVATE_RIDER_URL, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as ActivateBody;

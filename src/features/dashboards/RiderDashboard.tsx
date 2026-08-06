@@ -171,7 +171,7 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
 
           <div
             dir="ltr"
-            className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden border border-border"
+            className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden border border-border isolate"
           >
             <MapContainer
               center={center}

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTranslation } from "react-i18next";
-import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
+import { getActiveRiders } from "@/api/riders";
 import type { ActiveRider, RiderState } from "@/types/rider";
 import { Badge } from "@/components/ui/badge";
 
@@ -35,10 +35,26 @@ function randomState(current: RiderState): RiderState {
 export default function ActiveRiders() {
   const { t } = useTranslation();
   const stateLabel = (s: RiderState): string => t(`riders.active.states.${s}`);
-  const [riders, setRiders] = useState<ActiveRider[]>(INITIAL_ACTIVE_RIDERS);
+  const [riders, setRiders] = useState<ActiveRider[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    getActiveRiders()
+      .then((data) => {
+        if (!cancelled) setRiders(data);
+      })
+      .catch(() => {
+        if (!cancelled) setRiders([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const hasRiders = riders.length > 0;
+  useEffect(() => {
+    if (!hasRiders) return;
     intervalRef.current = setInterval(() => {
       setRiders((prev) =>
         prev.map((r) => ({
@@ -52,7 +68,7 @@ export default function ActiveRiders() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [hasRiders]);
 
   const counts = {
     dispatching: riders.filter((r) => r.state === "dispatching").length,
@@ -80,7 +96,7 @@ export default function ActiveRiders() {
           {t("riders.active.total")} <strong className="text-foreground">{riders.length}</strong>
         </Badge>
         <Badge
-          className="ml-auto bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25 gap-2 px-3 py-1.5 text-xs font-semibold rounded-full"
+          className="ms-auto bg-[color:var(--success-muted)] text-[color:var(--success)] border-[color:var(--success)]/25 gap-2 px-3 py-1.5 text-xs font-semibold rounded-full"
           aria-live="polite"
         >
           <span className="relative flex h-2 w-2" aria-hidden="true">
@@ -92,6 +108,7 @@ export default function ActiveRiders() {
       </div>
 
       <div
+        dir="ltr"
         className="flex-1 relative rounded-xl overflow-hidden border border-border"
         style={{ minHeight: 0 }}
       >

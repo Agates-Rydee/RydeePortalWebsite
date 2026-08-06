@@ -182,7 +182,7 @@ export function RiderProfileCard({
                 {checked && (
                   <Badge
                     variant="secondary"
-                    className="ml-auto rounded-full px-2 py-0.5 text-xs bg-[color:var(--brand-bright)]/12 text-primary border-transparent"
+                    className="ms-auto rounded-full px-2 py-0.5 text-xs bg-[color:var(--brand-bright)]/12 text-primary border-transparent"
                   >
                     {t("riders.profileCard.received")}
                   </Badge>

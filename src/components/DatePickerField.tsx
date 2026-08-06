@@ -64,11 +64,11 @@ export function DatePickerField({
             // open; the class list below pins the background and text colour to
             // stop that flash without touching the shared Button primitive.
             className={
-              "w-full h-auto justify-start text-left font-normal rounded-xl px-4 py-3 text-sm border-input bg-background hover:bg-background hover:text-inherit data-[state=open]:bg-background data-[state=open]:text-inherit " +
+              "w-full h-auto justify-start text-start font-normal rounded-xl px-4 py-3 text-sm border-input bg-background hover:bg-background hover:text-inherit data-[state=open]:bg-background data-[state=open]:text-inherit " +
               (value ? "text-card-foreground" : "text-muted-foreground")
             }
           >
-            <CalendarIcon size={16} aria-hidden="true" className="mr-2" />
+            <CalendarIcon size={16} aria-hidden="true" className="me-2" />
             {display}
           </Button>
         </PopoverTrigger>

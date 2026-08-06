@@ -33,8 +33,7 @@ interface Props {
 }
 
 export default function RiderDashboard({ onLogout, profile }: Props) {
-  const { t, i18n } = useTranslation();
-  const isUrdu = i18n.language === "ur";
+  const { t } = useTranslation();
 
   const lat = Number(profile?.currentLocation?.lat);
   const lon = Number(profile?.currentLocation?.lon);
@@ -45,7 +44,6 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
     <div
       className="min-h-screen w-full flex flex-col bg-background"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-      dir={isUrdu ? "rtl" : undefined}
     >
       <DashboardHeader onLogout={onLogout} />
 
@@ -171,7 +169,10 @@ export default function RiderDashboard({ onLogout, profile }: Props) {
             </table>
           </Card>
 
-          <div className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden border border-border">
+          <div
+            dir="ltr"
+            className="w-full max-w-[850px] h-[400px] lg:h-[600px] rounded-xl overflow-hidden border border-border"
+          >
             <MapContainer
               center={center}
               zoom={16}

@@ -20,12 +20,14 @@ void i18n.use(initReactI18next).init({
   },
   lng: readInitialLanguage(),
   fallbackLng: "en",
-  interpolation: { escapeValue: false },
+  interpolation: { escapeValue: true },
 });
 
 function syncHtmlLang(lang: string): void {
   if (typeof document === "undefined") return;
-  document.documentElement.lang = lang === "ur" ? "ur" : "en";
+  const isUrdu = lang === "ur";
+  document.documentElement.lang = isUrdu ? "ur" : "en";
+  document.documentElement.dir = isUrdu ? "rtl" : "ltr";
 }
 
 syncHtmlLang(i18n.language);

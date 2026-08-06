@@ -1,10 +1,12 @@
 import { http, HttpResponse } from "msw";
 import {
   API_ACTIVATE_RIDER_URL,
+  API_GET_ACTIVE_RIDERS_URL,
   API_GET_ALL_RIDERS_URL,
   API_GET_UNREGISTERED_RIDERS_URL,
   API_UPDATE_USER_URL,
 } from "@/api/riders";
+import { INITIAL_ACTIVE_RIDERS } from "@/mocks/data/riders";
 
 interface RiderProfile {
   name: string;
@@ -356,6 +358,9 @@ export const ridersHandlers = [
   }),
   http.post(API_GET_ALL_RIDERS_URL, async () => {
     return HttpResponse.json({ riders: allRidersSeeds.map(envelope) });
+  }),
+  http.post(API_GET_ACTIVE_RIDERS_URL, async () => {
+    return HttpResponse.json({ riders: INITIAL_ACTIVE_RIDERS });
   }),
   http.post(API_ACTIVATE_RIDER_URL, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as ActivateBody;

@@ -37,7 +37,8 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({ showRole = false, backTo }: RegisterPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isUrdu = i18n.language === "ur";
   const navigate = useNavigate();
   const goBack = () => navigate(backTo ?? "/login");
 
@@ -279,11 +280,11 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               required
               aria-invalid={fieldErrors.role ? true : undefined}
               aria-describedby={fieldErrors.role ? "reg-role-error" : undefined}
-              className="w-full rounded-xl px-4 py-3 pr-10 text-sm bg-input-background border border-input text-card-foreground appearance-none outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              className="w-full rounded-xl px-4 py-3 pe-10 text-sm bg-input-background border border-input text-card-foreground appearance-none outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a6b5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
                 backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 14px center",
+                backgroundPosition: isUrdu ? "left 14px center" : "right 14px center",
               }}
             >
               <option value="" disabled>
@@ -328,7 +329,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                 : t("auth.register.passwordToggle.show")
             }
             aria-pressed={showPw}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+            className="absolute end-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
           >
             {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
           </Button>
@@ -352,7 +353,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                 set("confirmPassword")(e.target.value);
                 setPwMismatch(false);
               }}
-              className="h-auto rounded-xl px-4 py-3 pr-12 text-sm"
+              className="h-auto rounded-xl px-4 py-3 pe-12 text-sm"
             />
             <Button
               type="button"
@@ -365,7 +366,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
                   : t("auth.register.passwordToggle.show")
               }
               aria-pressed={showConfirm}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
+              className="absolute end-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary hover:bg-transparent"
             >
               {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </Button>
@@ -444,7 +445,7 @@ export default function RegisterPage({ showRole = false, backTo }: RegisterPageP
               {t("auth.register.headline")}
             </h2>
           </div>
-          <p className="text-sm mb-7 ml-8 text-muted-foreground">{t("auth.register.subhead")}</p>
+          <p className="text-sm mb-7 ms-8 text-muted-foreground">{t("auth.register.subhead")}</p>
           {formBody}
           <div className="mt-5 text-center">
             <p className="text-sm text-muted-foreground">

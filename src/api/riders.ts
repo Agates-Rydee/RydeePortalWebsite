@@ -1,7 +1,9 @@
 import { joinUrl, post } from "./client";
+import type { ActiveRider } from "@/types/rider";
 
 export const API_GET_UNREGISTERED_RIDERS_URL = joinUrl("/get-all-inactive-riders");
 export const API_GET_ALL_RIDERS_URL = joinUrl("/get-all-riders");
+export const API_GET_ACTIVE_RIDERS_URL = joinUrl("/get-active-riders");
 export const API_ACTIVATE_RIDER_URL = joinUrl("/activate-rider");
 export const API_UPDATE_USER_URL = joinUrl("/update-user");
 
@@ -68,4 +70,9 @@ export function updateUser(
   fields: Record<string, unknown>,
 ): Promise<UpdateUserResponse> {
   return post<UpdateUserResponse>(API_UPDATE_USER_URL, { phone, role, ...fields });
+}
+
+export async function getActiveRiders(): Promise<ActiveRider[]> {
+  const raw = await post<{ riders?: ActiveRider[] }>(API_GET_ACTIVE_RIDERS_URL);
+  return Array.isArray(raw?.riders) ? raw.riders : [];
 }

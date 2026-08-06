@@ -52,7 +52,7 @@ function StatCard({ label, value, valueClassName, hint, ariaLabel, onClick, icon
   const display = value ?? "—";
   const interactive = value != null;
   const cardClasses =
-    "rounded-xl gap-0 py-4 text-left w-full transition-shadow " +
+    "rounded-xl gap-0 py-4 text-start w-full transition-shadow " +
     "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
   const content = (
     <>
@@ -75,7 +75,7 @@ function StatCard({ label, value, valueClassName, hint, ariaLabel, onClick, icon
         onClick={onClick}
         aria-label={ariaLabel}
         className={
-          "bg-card text-card-foreground flex flex-col gap-0 rounded-xl border py-4 text-left w-full transition-shadow " +
+          "bg-card text-card-foreground flex flex-col gap-0 rounded-xl border py-4 text-start w-full transition-shadow " +
           "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         }
       >
@@ -251,16 +251,16 @@ export default function Dashboard() {
             <table className="w-full text-sm">
               <thead className="bg-switch-background text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left font-medium">
+                  <th scope="col" className="px-4 py-3 text-start font-medium">
                     {t("dashboards.activeRidersSection.columns.name")}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium">
+                  <th scope="col" className="px-4 py-3 text-start font-medium">
                     {t("dashboards.activeRidersSection.columns.phone")}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium">
+                  <th scope="col" className="px-4 py-3 text-start font-medium">
                     {t("dashboards.activeRidersSection.columns.area")}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left font-medium">
+                  <th scope="col" className="px-4 py-3 text-start font-medium">
                     {t("dashboards.activeRidersSection.columns.joined")}
                   </th>
                 </tr>
@@ -268,7 +268,7 @@ export default function Dashboard() {
               <tbody>
                 {activeRows.map((r) => (
                   <tr key={r.id} className="border-t border-border">
-                    <th scope="row" className="px-4 py-3 font-medium text-foreground text-left">
+                    <th scope="row" className="px-4 py-3 font-medium text-foreground text-start">
                       {r.name || "—"}
                     </th>
                     <td className="px-4 py-3 font-mono text-xs">{r.phone || "—"}</td>

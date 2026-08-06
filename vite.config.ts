@@ -1,6 +1,9 @@
 import { defineConfig } from "vitest/config";
 import { loadEnv } from "vite";
-import path from "path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 

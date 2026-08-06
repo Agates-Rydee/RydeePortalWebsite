@@ -32,7 +32,7 @@ export function DashboardLayout() {
           <SidebarTrigger />
           <Separator orientation="vertical" className="mx-1 h-5" />
           <h1 className="text-sm font-medium text-foreground">{title}</h1>
-          <LanguageSwitcher className="ml-auto" />
+          <LanguageSwitcher className="ms-auto" />
         </header>
         <div className="flex-1">
           <Outlet />

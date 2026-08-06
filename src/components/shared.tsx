@@ -127,7 +127,7 @@ export function FieldInput({
           onBlur={onBlur}
           className={
             "h-auto rounded-xl px-4 py-3 text-sm" +
-            (children ? " pr-12" : "") +
+            (children ? " pe-12" : "") +
             (readOnly
               ? " opacity-70 cursor-default read-only:focus-visible:ring-0 read-only:focus-visible:border-input"
               : "")

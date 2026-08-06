@@ -287,7 +287,7 @@ export default function PendingRiders() {
                   {t("riders.pending.searchSr")}
                 </Label>
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70"
+                  className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70"
                   aria-hidden="true"
                 />
                 <Input
@@ -296,7 +296,7 @@ export default function PendingRiders() {
                   placeholder={t("riders.pending.searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="h-9 w-full rounded-lg pl-9 pr-3 text-sm bg-card"
+                  className="h-9 w-full rounded-lg ps-9 pe-3 text-sm bg-card"
                 />
               </div>
               <Select value={areaFilter} onValueChange={setAreaFilter}>
@@ -327,13 +327,13 @@ export default function PendingRiders() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm table-fixed">
                     <caption className="sr-only">{t("riders.pending.caption")}</caption>
-                    <thead className="bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
+                    <thead className="bg-switch-background text-start text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
                       <tr>
                         <SortableTh
                           sortKey="name"
                           ariaSort={ariaSortFor("name")}
                           onSort={toggleSort}
-                          className="pl-6 pr-4 py-3 w-[32%]"
+                          className="ps-6 pe-4 py-3 w-[32%]"
                         >
                           {t("riders.common.columns.name")}
                         </SortableTh>
@@ -357,8 +357,8 @@ export default function PendingRiders() {
                           sortKey="status"
                           ariaSort={ariaSortFor("status")}
                           onSort={toggleSort}
-                          className="pl-4 pr-6 py-3 w-[20%]"
-                          align="right"
+                          className="ps-4 pe-6 py-3 w-[20%]"
+                          align="end"
                         >
                           {t("riders.common.columns.status")}
                         </SortableTh>
@@ -385,7 +385,7 @@ export default function PendingRiders() {
                           >
                             <th
                               scope="row"
-                              className="pl-6 pr-4 py-3 font-medium text-foreground text-left"
+                              className="ps-6 pe-4 py-3 font-medium text-foreground text-start"
                             >
                               {r.name || "—"}
                             </th>
@@ -393,7 +393,7 @@ export default function PendingRiders() {
                             <td className="px-4 py-3 font-mono text-xs">
                               {r.cnic ? formatCnic(r.cnic) : "—"}
                             </td>
-                            <td className="pl-4 pr-6 py-3 text-right">
+                            <td className="ps-4 pe-6 py-3 text-end">
                               <Badge
                                 variant="outline"
                                 className="gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full bg-warning-muted text-warning border-warning/25"
@@ -515,7 +515,7 @@ export default function PendingRiders() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 rounded-md border bg-success-muted text-success border-success/25 px-4 py-2 text-sm font-medium shadow-md"
+          className="fixed bottom-6 end-6 z-50 rounded-md border bg-success-muted text-success border-success/25 px-4 py-2 text-sm font-medium shadow-md"
         >
           {notice}
         </div>
@@ -529,7 +529,7 @@ interface SortableThProps {
   ariaSort: "ascending" | "descending" | "none";
   onSort: (key: SortKey) => void;
   className: string;
-  align?: "left" | "right";
+  align?: "start" | "end";
   children: React.ReactNode;
 }
 
@@ -538,7 +538,7 @@ function SortableTh({
   ariaSort,
   onSort,
   className,
-  align = "left",
+  align = "start",
   children,
 }: SortableThProps) {
   const indicator = ariaSort === "ascending" ? "↑" : ariaSort === "descending" ? "↓" : "↕";
@@ -549,7 +549,7 @@ function SortableTh({
         onClick={() => onSort(sortKey)}
         className={
           "inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded " +
-          (align === "right" ? "ml-auto" : "")
+          (align === "end" ? "ms-auto" : "")
         }
       >
         {children}

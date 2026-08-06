@@ -42,7 +42,8 @@ function initialsOf(name: string | undefined | null): string {
 }
 
 export function AppSidebar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isUrdu = i18n.language === "ur";
   const { pathname } = useLocation();
   const { profile, logout } = useAuth();
   const { isMobile } = useSidebar();
@@ -97,7 +98,7 @@ export function AppSidebar() {
   const initials = initialsOf(name);
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="inset" side={isUrdu ? "right" : "left"}>
       <SidebarHeader className="p-3">
         <Link
           to={home}
@@ -149,7 +150,7 @@ export function AppSidebar() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="truncate font-medium">{name || t("common.account")}</span>
-                  <ChevronsUpDown className="ml-auto size-4 opacity-60" />
+                  <ChevronsUpDown className="ms-auto size-4 opacity-60" />
                 </DropdownMenuTrigger>
               </SidebarMenuButton>
               <DropdownMenuContent

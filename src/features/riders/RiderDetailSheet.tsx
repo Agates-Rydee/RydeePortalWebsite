@@ -41,7 +41,8 @@ export interface RiderDetailSheetProps {
 }
 
 export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isUrdu = i18n.language === "ur";
   const fields: Field[] = row
     ? [
         { label: t("riders.detailSheet.fields.fullName"), value: row.name || "—" },
@@ -61,7 +62,7 @@ export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetPr
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        side="right"
+        side={isUrdu ? "left" : "right"}
         className="w-full sm:max-w-md overflow-y-auto data-[state=open]:duration-0 data-[state=closed]:duration-0"
         data-testid="fqa-rider-detail-sheet"
       >
@@ -108,7 +109,7 @@ export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetPr
                 </dt>
                 <dd className="text-foreground text-base" data-fqa-field-value>
                   {row.documents && row.documents.length > 0 ? (
-                    <ul className="list-disc pl-5 space-y-1">
+                    <ul className="list-disc ps-5 space-y-1">
                       {row.documents.map((d) => (
                         <li key={d} className="text-base">
                           {d}

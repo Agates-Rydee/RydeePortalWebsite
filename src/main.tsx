@@ -1,10 +1,32 @@
+import { useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
+import { DirectionProvider } from "@radix-ui/react-direction";
 import { environmentValidation, EXPECTED_FORMATS, type EnvironmentProblem } from "./lib/env";
 // Router is imported STATICALLY so the whole app graph lands in the same main chunk (bundle-size guard enforces a single gzip band on it). Consumers of env values must therefore tolerate an invalid environment at import time — the guard below is what stops them from running.
 import { router } from "./router";
-import "@/i18n";
+import i18n from "@/i18n";
 import "./styles/index.css";
+
+function subscribeToLanguage(callback: () => void): () => void {
+  i18n.on("languageChanged", callback);
+  return () => i18n.off("languageChanged", callback);
+}
+
+function getLanguage(): string {
+  return i18n.language;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function AppShell() {
+  const lang = useSyncExternalStore(subscribeToLanguage, getLanguage, getLanguage);
+  const dir = lang === "ur" ? "rtl" : "ltr";
+  return (
+    <DirectionProvider dir={dir}>
+      <RouterProvider router={router} />
+    </DirectionProvider>
+  );
+}
 
 // Uses only raw DOM primitives — no router, no shadcn, no feature modules — so a broken environment never pulls the mocks tree or an app feature into a state where a stray env consumer would crash on import.
 function renderEnvironmentErrorScreen(problems: EnvironmentProblem[]): void {
@@ -117,6 +139,6 @@ if (!environmentValidation.ok) {
 } else {
   void (async () => {
     await enableMockingIfConfigured();
-    createRoot(document.getElementById("root")!).render(<RouterProvider router={router} />);
+    createRoot(document.getElementById("root")!).render(<AppShell />);
   })();
 }

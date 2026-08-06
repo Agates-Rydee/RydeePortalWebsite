@@ -345,7 +345,7 @@ export default function AllRiders() {
                 >
                   {tabLabel(tab)}
                   <span
-                    className="ml-2 inline-flex items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-muted-foreground"
+                    className="ms-2 inline-flex items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-muted-foreground"
                     data-testid={`fqa-count-${tab}`}
                   >
                     {counts[tab]}
@@ -359,7 +359,7 @@ export default function AllRiders() {
               {t("riders.common.search")}
             </Label>
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70"
+              className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70"
               aria-hidden="true"
             />
             <Input
@@ -368,7 +368,7 @@ export default function AllRiders() {
               placeholder={t("riders.common.searchPlaceholder")}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="h-9 w-full rounded-lg pl-9 pr-3 text-sm bg-card"
+              className="h-9 w-full rounded-lg ps-9 pe-3 text-sm bg-card"
             />
           </div>
           <Select value={areaFilter} onValueChange={setAreaFilter}>
@@ -448,7 +448,7 @@ export default function AllRiders() {
               <caption className="sr-only">{t("riders.all.caption")}</caption>
               {/* Explicit background and inset border on the sticky header keep
                     scrolling row content from bleeding through underneath it. */}
-              <thead className="sticky top-0 z-10 bg-switch-background text-left text-[11px] font-semibold text-foreground/70 uppercase tracking-wider shadow-[inset_0_-1px_0_hsl(var(--border))]">
+              <thead className="sticky top-0 z-10 bg-switch-background text-start text-[11px] font-semibold text-foreground/70 uppercase tracking-wider shadow-[inset_0_-1px_0_hsl(var(--border))]">
                 <tr>
                   <SortableTh
                     sortKey="name"
@@ -498,7 +498,7 @@ export default function AllRiders() {
                   >
                     {t("riders.common.columns.joined")}
                   </SortableTh>
-                  <th scope="col" className="pl-4 pr-6 py-3 w-[80px] text-center">
+                  <th scope="col" className="ps-4 pe-6 py-3 w-[80px] text-center">
                     {t("riders.common.columns.actions")}
                   </th>
                 </tr>
@@ -515,7 +515,7 @@ export default function AllRiders() {
                   >
                     <th
                       scope="row"
-                      className="pl-6 pr-4 py-3 font-medium text-foreground text-left"
+                      className="ps-6 pe-4 py-3 font-medium text-foreground text-start"
                     >
                       {r.name || "—"}
                     </th>
@@ -534,7 +534,7 @@ export default function AllRiders() {
                     </td>
                     <td className="px-4 py-3">{r.area || "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatJoined(r.joinedAt)}</td>
-                    <td className="pl-4 pr-6 py-3 text-center text-xs text-muted-foreground">—</td>
+                    <td className="ps-4 pe-6 py-3 text-center text-xs text-muted-foreground">—</td>
                   </tr>
                 ))}
               </tbody>
@@ -614,7 +614,7 @@ function SortableTh({ sortKey, ariaSort, onSort, minWidth, children }: SortableT
     <th
       scope="col"
       aria-sort={ariaSort}
-      className={`${sortKey === "name" ? "pl-6 pr-4" : "px-4"} py-3 ${minWidth}`}
+      className={`${sortKey === "name" ? "ps-6 pe-4" : "px-4"} py-3 ${minWidth}`}
     >
       <button
         type="button"

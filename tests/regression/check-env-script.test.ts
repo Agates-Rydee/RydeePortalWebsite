@@ -57,7 +57,7 @@ describe("scripts/check-env.ts", () => {
     try {
       writeFileSync(
         path.join(tempRoot, ".env"),
-        "VITE_API_BASE_URL=not-a-url\nVITE_ENABLE_MSW=true\n",
+        "VITE_API_BASE_URL=not-a-url\nVITE_ENABLE_MSW=false\n",
         "utf8",
       );
       const result = runGate(tempRoot);

@@ -11,7 +11,7 @@ describe("validateEnvironment", () => {
     const result = validateEnvironment(validSource);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.values.VITE_API_BASE_URL).toBe("http://localhost:3000");
+      expect(result.values.VITE_API_BASE_URL).toBe("");
       expect(result.values.VITE_ENABLE_MSW).toBe("true");
     }
   });
@@ -43,6 +43,7 @@ describe("validateEnvironment", () => {
     const result = validateEnvironment({
       ...validSource,
       VITE_API_BASE_URL: "not-a-url",
+      VITE_ENABLE_MSW: "false",
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -58,6 +59,7 @@ describe("validateEnvironment", () => {
     const result = validateEnvironment({
       ...validSource,
       VITE_API_BASE_URL: "ftp://example.com",
+      VITE_ENABLE_MSW: "false",
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {

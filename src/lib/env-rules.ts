@@ -1,6 +1,6 @@
 export const EXPECTED_FORMATS: Record<string, string> = {
   VITE_API_BASE_URL:
-    "empty (same-origin — required for the dev proxy mode) OR an http:// or https:// URL",
+    "empty (same-origin — required for the dev proxy mode) OR an http:// or https:// URL. When VITE_ENABLE_MSW=true the value may be omitted entirely and is ignored if present.",
   VITE_ENABLE_MSW: "the literal string true or false",
 };
 
@@ -54,18 +54,22 @@ function classifyBoolean(name: string, raw: string | undefined): EnvironmentProb
 export function validateEnvironment(source: Record<string, string | undefined>): ValidationResult {
   const problems: EnvironmentProblem[] = [];
 
-  const urlProblem = classifyBaseUrl("VITE_API_BASE_URL", source.VITE_API_BASE_URL);
-  if (urlProblem) problems.push(urlProblem);
-
   const booleanProblem = classifyBoolean("VITE_ENABLE_MSW", source.VITE_ENABLE_MSW);
   if (booleanProblem) problems.push(booleanProblem);
+
+  const mswOn = source.VITE_ENABLE_MSW === "true";
+
+  if (!mswOn) {
+    const urlProblem = classifyBaseUrl("VITE_API_BASE_URL", source.VITE_API_BASE_URL);
+    if (urlProblem) problems.push(urlProblem);
+  }
 
   if (problems.length > 0) return { ok: false, problems };
 
   return {
     ok: true,
     values: {
-      VITE_API_BASE_URL: source.VITE_API_BASE_URL as string,
+      VITE_API_BASE_URL: mswOn ? "" : (source.VITE_API_BASE_URL ?? ""),
       VITE_ENABLE_MSW: source.VITE_ENABLE_MSW as "true" | "false",
     },
   };

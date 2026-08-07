@@ -6,7 +6,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { getAllRiders } from "@/api/riders";
 import type { AllRidersRow, RiderStatus } from "@/types/rider";
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Pencil, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -126,6 +126,7 @@ const AREA_ITEMS = KARACHI_AREAS.map((a) => (
 
 export default function AllRiders() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const tabLabel = (tab: StatusTab): string =>
     tab === "all" ? t("riders.common.tabs.all") : t(`riders.common.badges.${tab}`);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -534,7 +535,24 @@ export default function AllRiders() {
                     </td>
                     <td className="px-4 py-3">{r.area || "—"}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatJoined(r.joinedAt)}</td>
-                    <td className="ps-4 pe-6 py-3 text-center text-xs text-muted-foreground">—</td>
+                    <td className="ps-4 pe-6 py-3 text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/admin/riders/${encodeURIComponent(r.phone)}/edit`, { state: { row: r } });
+                        }}
+                        aria-label={t("riders.all.editRiderAria", { name: r.name || "rider" })}
+                        title={t("riders.edit.editRider")}
+                        disabled={!r.phone}
+                        className="h-8 w-8 p-0"
+                        data-testid={`fqa-edit-row-${r.id}`}
+                      >
+                        <Pencil size={14} aria-hidden="true" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -17,7 +17,8 @@
       "allRiders": "تمام رائیڈرز",
       "activeRiders": "ایکٹو رائیڈرز",
       "pendingRiders": "پینڈنگ رائیڈرز",
-      "blockedRiders": "بلاک شدہ رائیڈرز"
+      "blockedRiders": "بلاک شدہ رائیڈرز",
+      "editRider": "رائیڈر ترمیم کریں"
     },
     "nav": {
       "dashboard": "ڈیش بورڈ",
@@ -226,11 +227,11 @@
       "exportCsvAria": "CSV ایکسپورٹ کریں ({{count}} رَوز)",
       "emptyTitle": "کوئی رائیڈر نہیں ملا",
       "emptyHint": "اپنے فلٹرز یا سرچ ٹرم کو ایڈجسٹ کر کے دیکھیں۔",
-      "clearFilters": "فلٹرز صاف کریں"
+      "clearFilters": "فلٹرز صاف کریں",
+      "editRiderAria": "{{name}} کو ترمیم کریں"
     },
     "detailSheet": {
       "title": "رائیڈر کی تفصیلات",
-      "description": "رائیڈر کے مکمل ریکارڈ کا صرف پڑھنے والا ویو۔",
       "documents": "ڈاکومنٹس",
       "fields": {
         "fullName": "پورا نام",
@@ -240,6 +241,190 @@
         "joined": "شامل ہوئے",
         "dob": "تاریخ پیدائش",
         "pin": "پن"
+      }
+    },
+    "edit": {
+      "editRider": "رائیڈر میں ترمیم کریں",
+      "backToAll": "تمام رائیڈرز پر واپس",
+      "notFoundTitle": "رائیڈر نہیں ملا",
+      "notFoundHint": "کوئی رائیڈر اس فون نمبر سے مطابقت نہیں رکھتا۔",
+      "loading": "رائیڈر لوڈ ہو رہا ہے…",
+      "phoneImmutable": "فون نمبر تبدیل نہیں کیا جا سکتا۔",
+      "fields": {
+        "fullName": "پورا نام",
+        "phone": "فون",
+        "role": "کردار",
+        "joined": "شامل ہوئے",
+        "area": "علاقہ",
+        "address": "پتہ",
+        "cnic": "شناختی کارڈ",
+        "dob": "تاریخ پیدائش"
+      },
+      "placeholders": {
+        "fullName": "پورا نام",
+        "area": "علاقہ منتخب کریں…",
+        "address": "گلی، مکان نمبر، لینڈ مارک…",
+        "cnic": "XXXXX-XXXXXXX-X"
+      },
+      "validation": {
+        "nameRequired": "پورا نام درکار ہے",
+        "cnicRequired": "شناختی کارڈ درکار ہے",
+        "cnicLength": "شناختی کارڈ 13 ہندسوں کا ہونا چاہیے",
+        "areaRequired": "علاقہ درکار ہے",
+        "dobRequired": "تاریخ پیدائش درکار ہے"
+      },
+      "save": "تبدیلیاں محفوظ کریں",
+      "saving": "محفوظ ہو رہا ہے…",
+      "cancel": "منسوخ کریں",
+      "saved": "تبدیلیاں محفوظ ہو گئیں",
+      "saveFailed": "تبدیلیاں محفوظ کرنے میں ناکام",
+      "discardDialog": {
+        "title": "غیر محفوظ تبدیلیاں ضائع کریں؟",
+        "description": "آپ کی ترامیم ضائع ہو جائیں گی۔",
+        "confirm": "ضائع کریں",
+        "cancel": "ترمیم جاری رکھیں"
+      },
+      "documents": {
+        "heading": "تصدیقی دستاویزات",
+        "unavailable": "دستاویزات کا انتظام عارضی طور پر دستیاب نہیں۔",
+        "summary": "{{total}} میں سے {{received}} ضروری دستاویزات موصول",
+        "listAria": "تصدیقی دستاویزات کی فہرست",
+        "actionsAria": "{{type}} کے لیے اعمال",
+        "avatarCameraAria": "پروفائل کی تصویر تبدیل کریں",
+        "types": {
+          "cnic_front": "شناختی کارڈ (سامنے)",
+          "cnic_back": "شناختی کارڈ (پیچھے)",
+          "profile_photo": "پروفائل کی تصویر",
+          "bike_registration": "بائیک رجسٹریشن",
+          "driving_license": "ڈرائیونگ لائسنس",
+          "utility_bill": "یوٹیلٹی بل",
+          "other": "دیگر (نام بتائیں)"
+        },
+        "badge": {
+          "received": "موصول",
+          "missing": "غائب"
+        },
+        "view": "دیکھیں",
+        "download": "ڈاؤن لوڈ",
+        "delete": "حذف کریں",
+        "viewAria": "{{type}} دیکھیں",
+        "downloadAria": "{{type}} ڈاؤن لوڈ کریں",
+        "deleteAria": "{{type}} حذف کریں",
+        "uploadSection": "دستاویز اپ لوڈ کریں",
+        "typeLabel": "دستاویز کی قسم",
+        "typePlaceholder": "دستاویز کی قسم منتخب کریں",
+        "otherNameLabel": "دستاویز کا نام",
+        "otherNamePlaceholder": "مثلاً ٹیکس سرٹیفکیٹ",
+        "otherNameRequired": "اس دستاویز کا نام درج کریں۔",
+        "otherNameTooLong": "نام 40 حروف یا کم ہونا ضروری ہے۔",
+        "noTypeHint": "پہلے دستاویز کی قسم منتخب کریں",
+        "dropzoneHint": "فائل یہاں چھوڑیں یا براؤز کرنے کے لیے کلک کریں",
+        "dropzoneFormats": "PDF، JPG یا PNG · زیادہ سے زیادہ 2 MB",
+        "dropzoneAriaEnabled": "{{type}} اپ لوڈ کریں — فائل یہاں چھوڑیں یا Enter دبائیں",
+        "dropzoneAriaDisabled": "دستاویز اپ لوڈ کریں — پہلے قسم منتخب کریں",
+        "upload": {
+          "heading": "{{type}} اپ لوڈ ہو رہا ہے",
+          "cancel": "منسوخ کریں",
+          "cancelAria": "{{type}} کی اپ لوڈ منسوخ کریں",
+          "retry": "دوبارہ کوشش",
+          "done": "اپ لوڈ ہو گیا",
+          "progressAria": "{{type}} اپ لوڈ ہو رہا ہے"
+        },
+        "errors": {
+          "tooLarge": "فائل {{size}} MB ہے — زیادہ سے زیادہ 2 MB۔",
+          "unsupportedType": "صرف PDF، JPG یا PNG فائلیں قبول ہیں۔",
+          "uploadFailed": "اپ لوڈ ناکام ہو گیا۔"
+        },
+        "announce": {
+          "started": "{{type}} کے لیے اپ لوڈ شروع ہو گیا",
+          "done": "{{type}} کے لیے اپ لوڈ مکمل",
+          "failed": "{{type}} کے لیے اپ لوڈ ناکام"
+        },
+        "replaceDialog": {
+          "title": "{{type}} تبدیل کریں؟",
+          "description": "موجودہ فائل ({{name}}، {{size}}) کو اووررائٹ کر دیا جائے گا اور بحال نہیں کیا جا سکتا۔",
+          "cancel": "منسوخ کریں",
+          "confirm": "تبدیل کریں"
+        },
+        "deleteDialog": {
+          "title": "{{type}} حذف کریں؟",
+          "description": "یہ دستاویز مستقل طور پر ہٹا دی جائے گی۔ یہ عمل واپس نہیں لیا جا سکتا۔",
+          "cancel": "منسوخ کریں",
+          "confirm": "حذف کریں",
+          "deleting": "حذف ہو رہا ہے…"
+        }
+      },
+      "status": {
+        "heading": "اسٹیٹس",
+        "current": "موجودہ اسٹیٹس",
+        "unavailable": "اسٹیٹس تبدیل کرنا فی الحال دستیاب نہیں",
+        "pinLabel": "6 ہندسوں کا پن",
+        "pinPlaceholder": "••••••",
+        "pinHelp": "رائیڈر کے لیے ابتدائی 6 ہندسوں کا پن مقرر کریں۔",
+        "pinInvalid": "6 ہندسوں کا پن درج کریں۔",
+        "saved": {
+          "active": "رائیڈر اب فعال ہے",
+          "blocked": "رائیڈر بلاک کر دیا گیا",
+          "offboarded": "رائیڈر آف بورڈ کر دیا گیا"
+        },
+        "saveFailed": "اسٹیٹس تبدیل نہیں کیا جا سکا۔",
+        "buttons": {
+          "activate": "رائیڈر فعال کریں",
+          "block": "رائیڈر بلاک کریں",
+          "unblock": "رائیڈر ان بلاک کریں",
+          "offboard": "رائیڈر آف بورڈ کریں",
+          "reactivate": "رائیڈر دوبارہ فعال کریں"
+        },
+        "confirm": {
+          "block": {
+            "title": "اس رائیڈر کو بلاک کریں؟",
+            "description": "ان کی رسائی فوراً ختم ہو جائے گی جب تک ان بلاک نہ کیا جائے۔",
+            "confirm": "رائیڈر بلاک کریں",
+            "cancel": "منسوخ کریں"
+          },
+          "unblock": {
+            "title": "اس رائیڈر کو ان بلاک کریں؟",
+            "description": "ان کی رسائی فوراً بحال ہو جائے گی۔",
+            "confirm": "رائیڈر ان بلاک کریں",
+            "cancel": "منسوخ کریں"
+          },
+          "offboard": {
+            "title": "اس رائیڈر کو آف بورڈ کریں؟",
+            "description": "وہ فعال فہرست سے ہٹا دیے جائیں گے۔ آپ انہیں بعد میں دوبارہ فعال کر سکتے ہیں۔",
+            "confirm": "رائیڈر آف بورڈ کریں",
+            "cancel": "منسوخ کریں"
+          },
+          "reactivate": {
+            "title": "اس رائیڈر کو دوبارہ فعال کریں؟",
+            "description": "وہ واپس فعال فہرست میں شامل ہو جائیں گے۔",
+            "confirm": "رائیڈر دوبارہ فعال کریں",
+            "cancel": "منسوخ کریں"
+          }
+        }
+      },
+      "pin": {
+        "heading": "پن",
+        "current": "موجودہ پن",
+        "masked": "••••••",
+        "lastReset": "آخری بار ری سیٹ: {{date}}",
+        "reset": "پن ری سیٹ کریں",
+        "resetting": "ری سیٹ ہو رہا ہے…",
+        "unavailable": "پن ری سیٹ فی الحال دستیاب نہیں",
+        "resetFailed": "پن ری سیٹ نہیں ہو سکا۔",
+        "confirm": {
+          "title": "{{name}} کا پن ری سیٹ کریں؟",
+          "description": "موجودہ پن فوراً کام کرنا بند کر دے گا۔",
+          "confirm": "پن ری سیٹ کریں",
+          "cancel": "منسوخ کریں"
+        },
+        "result": {
+          "title": "نیا پن جاری",
+          "description": "یہ پن ابھی رائیڈر کے ساتھ شیئر کریں۔ دوبارہ نہیں دکھایا جائے گا۔",
+          "copy": "کاپی کریں",
+          "copied": "کاپی ہو گیا",
+          "done": "ہو گیا",
+          "pinLabel": "نیا پن"
+        }
       }
     },
     "profileCard": {

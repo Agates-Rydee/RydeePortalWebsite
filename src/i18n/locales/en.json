@@ -17,7 +17,8 @@
       "allRiders": "All riders",
       "activeRiders": "Active riders",
       "pendingRiders": "Pending riders",
-      "blockedRiders": "Blocked riders"
+      "blockedRiders": "Blocked riders",
+      "editRider": "Edit rider"
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -226,11 +227,11 @@
       "exportCsvAria": "Export CSV ({{count}} rows)",
       "emptyTitle": "No riders found",
       "emptyHint": "Try adjusting your filters or search term.",
-      "clearFilters": "Clear filters"
+      "clearFilters": "Clear filters",
+      "editRiderAria": "Edit {{name}}"
     },
     "detailSheet": {
       "title": "Rider details",
-      "description": "Read-only view of the rider's full record.",
       "documents": "Documents",
       "fields": {
         "fullName": "Full name",
@@ -240,6 +241,190 @@
         "joined": "Joined",
         "dob": "Date of birth",
         "pin": "PIN"
+      }
+    },
+    "edit": {
+      "editRider": "Edit rider",
+      "backToAll": "Back to All Riders",
+      "notFoundTitle": "Rider not found",
+      "notFoundHint": "No rider matches that phone number.",
+      "loading": "Loading rider…",
+      "phoneImmutable": "Phone number cannot be changed.",
+      "fields": {
+        "fullName": "Full name",
+        "phone": "Phone",
+        "role": "Role",
+        "joined": "Joined",
+        "area": "Area",
+        "address": "Address",
+        "cnic": "CNIC",
+        "dob": "Date of birth"
+      },
+      "placeholders": {
+        "fullName": "Full name",
+        "area": "Select area…",
+        "address": "Street, house number, landmark…",
+        "cnic": "XXXXX-XXXXXXX-X"
+      },
+      "validation": {
+        "nameRequired": "Full name is required",
+        "cnicRequired": "CNIC is required",
+        "cnicLength": "CNIC must be 13 digits",
+        "areaRequired": "Area is required",
+        "dobRequired": "Date of birth is required"
+      },
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saved": "Changes saved",
+      "saveFailed": "Failed to save changes",
+      "discardDialog": {
+        "title": "Discard unsaved changes?",
+        "description": "Your edits will be lost.",
+        "confirm": "Discard",
+        "cancel": "Keep editing"
+      },
+      "documents": {
+        "heading": "Verification documents",
+        "unavailable": "Document management is temporarily unavailable.",
+        "summary": "{{received}} of {{total}} required documents received",
+        "listAria": "List of verification documents",
+        "actionsAria": "Actions for {{type}}",
+        "avatarCameraAria": "Change profile photo",
+        "types": {
+          "cnic_front": "CNIC Front",
+          "cnic_back": "CNIC Back",
+          "profile_photo": "Profile photo",
+          "bike_registration": "Bike Registration",
+          "driving_license": "Driving License",
+          "utility_bill": "Utility Bill",
+          "other": "Other (specify name)"
+        },
+        "badge": {
+          "received": "Received",
+          "missing": "Missing"
+        },
+        "view": "View",
+        "download": "Download",
+        "delete": "Delete",
+        "viewAria": "View {{type}}",
+        "downloadAria": "Download {{type}}",
+        "deleteAria": "Delete {{type}}",
+        "uploadSection": "Upload a document",
+        "typeLabel": "Document type",
+        "typePlaceholder": "Select document type",
+        "otherNameLabel": "Custom document name",
+        "otherNamePlaceholder": "e.g. Tax certificate",
+        "otherNameRequired": "Enter a name for this document.",
+        "otherNameTooLong": "Name must be 40 characters or fewer.",
+        "noTypeHint": "Select a document type first",
+        "dropzoneHint": "Drop a file here or click to browse",
+        "dropzoneFormats": "PDF, JPG or PNG · max 2 MB",
+        "dropzoneAriaEnabled": "Upload {{type}} — drop a file here or press Enter to browse",
+        "dropzoneAriaDisabled": "Upload a document — select a document type first",
+        "upload": {
+          "heading": "Uploading {{type}}",
+          "cancel": "Cancel",
+          "cancelAria": "Cancel upload of {{type}}",
+          "retry": "Retry",
+          "done": "Uploaded",
+          "progressAria": "Uploading {{type}}"
+        },
+        "errors": {
+          "tooLarge": "File is {{size}} MB — max 2 MB per file.",
+          "unsupportedType": "Accepts PDF, JPG or PNG only.",
+          "uploadFailed": "Upload failed."
+        },
+        "announce": {
+          "started": "Upload started for {{type}}",
+          "done": "Upload complete for {{type}}",
+          "failed": "Upload failed for {{type}}"
+        },
+        "replaceDialog": {
+          "title": "Replace {{type}}?",
+          "description": "The current file ({{name}}, {{size}}) will be overwritten and cannot be recovered.",
+          "cancel": "Cancel",
+          "confirm": "Replace"
+        },
+        "deleteDialog": {
+          "title": "Delete {{type}}?",
+          "description": "This document will be permanently removed. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete",
+          "deleting": "Deleting…"
+        }
+      },
+      "status": {
+        "heading": "Status",
+        "current": "Current status",
+        "unavailable": "Status changes temporarily unavailable",
+        "pinLabel": "6-digit PIN",
+        "pinPlaceholder": "••••••",
+        "pinHelp": "Set an initial 6-digit PIN for the rider.",
+        "pinInvalid": "Enter a 6-digit PIN.",
+        "saved": {
+          "active": "Rider is now active",
+          "blocked": "Rider blocked",
+          "offboarded": "Rider offboarded"
+        },
+        "saveFailed": "Could not change status.",
+        "buttons": {
+          "activate": "Activate rider",
+          "block": "Block rider",
+          "unblock": "Unblock rider",
+          "offboard": "Offboard rider",
+          "reactivate": "Reactivate rider"
+        },
+        "confirm": {
+          "block": {
+            "title": "Block this rider?",
+            "description": "They will lose access immediately until unblocked.",
+            "confirm": "Block rider",
+            "cancel": "Cancel"
+          },
+          "unblock": {
+            "title": "Unblock this rider?",
+            "description": "They will regain access immediately.",
+            "confirm": "Unblock rider",
+            "cancel": "Cancel"
+          },
+          "offboard": {
+            "title": "Offboard this rider?",
+            "description": "They will be removed from active rosters. You can reactivate them later.",
+            "confirm": "Offboard rider",
+            "cancel": "Cancel"
+          },
+          "reactivate": {
+            "title": "Reactivate this rider?",
+            "description": "They will be moved back to the active roster.",
+            "confirm": "Reactivate rider",
+            "cancel": "Cancel"
+          }
+        }
+      },
+      "pin": {
+        "heading": "PIN",
+        "current": "Current PIN",
+        "masked": "••••••",
+        "lastReset": "Last reset: {{date}}",
+        "reset": "Reset PIN",
+        "resetting": "Resetting…",
+        "unavailable": "Reset PIN is temporarily unavailable",
+        "resetFailed": "Could not reset PIN.",
+        "confirm": {
+          "title": "Reset PIN for {{name}}?",
+          "description": "The current PIN will stop working immediately.",
+          "confirm": "Reset PIN",
+          "cancel": "Cancel"
+        },
+        "result": {
+          "title": "New PIN generated",
+          "description": "Share this PIN with the rider now. It will not be shown again.",
+          "copy": "Copy",
+          "copied": "Copied",
+          "done": "Done",
+          "pinLabel": "New PIN"
+        }
       }
     },
     "profileCard": {

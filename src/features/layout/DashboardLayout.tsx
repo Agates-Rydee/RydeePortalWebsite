@@ -16,7 +16,11 @@ const TITLE_KEYS: Record<string, string> = {
 };
 
 function titleKeyFor(pathname: string): string | null {
-  return TITLE_KEYS[pathname] ?? null;
+  if (TITLE_KEYS[pathname]) return TITLE_KEYS[pathname];
+  if (pathname.startsWith("/admin/riders/") && pathname.endsWith("/edit")) {
+    return "layout.title.editRider";
+  }
+  return null;
 }
 
 export function DashboardLayout() {

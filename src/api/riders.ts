@@ -4,6 +4,7 @@ export const API_GET_UNREGISTERED_RIDERS_URL = joinUrl("/get-all-inactive-riders
 export const API_GET_ALL_RIDERS_URL = joinUrl("/get-all-riders");
 export const API_ACTIVATE_RIDER_URL = joinUrl("/activate-rider");
 export const API_UPDATE_USER_URL = joinUrl("/update-user");
+export const API_RESET_RIDER_PIN_URL = joinUrl("/reset-rider-pin");
 
 interface RidersResponse {
   riders?: Array<Record<string, unknown>>;
@@ -85,5 +86,16 @@ export function updateUser(
   fields: Record<string, unknown>,
 ): Promise<UpdateUserResponse> {
   return post<UpdateUserResponse>(API_UPDATE_USER_URL, { phone, role, ...fields });
+}
+
+export interface ResetRiderPinResponse {
+  success: boolean;
+  pin?: string;
+  lastResetAt?: string;
+  error?: string;
+}
+
+export function resetRiderPin(phone: string, role: string): Promise<ResetRiderPinResponse> {
+  return post<ResetRiderPinResponse>(API_RESET_RIDER_PIN_URL, { phone, role });
 }
 

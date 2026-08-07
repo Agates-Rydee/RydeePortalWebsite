@@ -10,6 +10,7 @@ import {
   AllRidersRoute,
   BlockedRidersRoute,
   PendingRidersRoute,
+  RiderEditRoute,
 } from "@/features/riders/routes";
 
 export const router = createBrowserRouter([
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
               { path: "admin/pending-riders", element: <PendingRidersRoute /> },
               { path: "admin/blocked-riders", element: <BlockedRidersRoute /> },
               { path: "admin/all-riders", element: <AllRidersRoute /> },
+              { path: "admin/riders/:phone/edit", element: <RiderEditRoute /> },
             ],
           },
           {

@@ -1,12 +1,9 @@
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { AllRidersRow, RiderStatus } from "@/types/rider";
 import { formatCnic } from "@/features/riders/cnic";
 
@@ -21,11 +18,7 @@ function formatDate(iso: string | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
 }
 
 interface Field {
@@ -42,6 +35,7 @@ export interface RiderDetailSheetProps {
 
 export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const isUrdu = i18n.language === "ur";
   const fields: Field[] = row
     ? [
@@ -59,16 +53,36 @@ export function RiderDetailSheet({ row, open, onOpenChange }: RiderDetailSheetPr
       ]
     : [];
 
+  const handleEdit = () => {
+    if (!row?.phone) return;
+    onOpenChange(false);
+    navigate(`/admin/riders/${encodeURIComponent(row.phone)}/edit`, { state: { row } });
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isUrdu ? "left" : "right"}
+        aria-describedby={undefined}
         className="w-full sm:max-w-md overflow-y-auto data-[state=open]:duration-0 data-[state=closed]:duration-0"
         data-testid="fqa-rider-detail-sheet"
       >
-        <SheetHeader>
+        <SheetHeader className="flex-row items-center justify-between gap-3 space-y-0">
           <SheetTitle>{row?.name || t("riders.detailSheet.title")}</SheetTitle>
-          <SheetDescription>{t("riders.detailSheet.description")}</SheetDescription>
+          {row?.phone && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+              aria-label={t("riders.edit.editRider")}
+              title={t("riders.edit.editRider")}
+              data-testid="fqa-rider-edit-btn"
+              className="me-8"
+            >
+              <Pencil size={14} aria-hidden="true" />
+            </Button>
+          )}
         </SheetHeader>
 
         {row && (

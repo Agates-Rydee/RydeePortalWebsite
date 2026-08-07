@@ -64,3 +64,38 @@ export function put<T>(url: string, body?: unknown): Promise<T> {
 export function del<T>(url: string): Promise<T> {
   return request<T>("DELETE", url);
 }
+
+export interface UploadHandle<T> {
+  promise: Promise<T>;
+  abort: () => void;
+}
+
+export function postMultipartWithProgress<T>(
+  url: string,
+  form: FormData,
+  onProgress: (percent: number) => void,
+): UploadHandle<T> {
+  const xhr = new XMLHttpRequest();
+  const promise = new Promise<T>((resolve, reject) => {
+    xhr.open("POST", url, true);
+    xhr.withCredentials = true;
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText) as T);
+        } catch {
+          reject(new ApiError(xhr.status, xhr.responseText, "Invalid JSON"));
+        }
+      } else {
+        reject(new ApiError(xhr.status, xhr.responseText, xhr.statusText));
+      }
+    };
+    xhr.onerror = () => reject(new ApiError(0, "", "Network error"));
+    xhr.onabort = () => reject(new ApiError(0, "", "Aborted"));
+    xhr.send(form);
+  });
+  return { promise, abort: () => xhr.abort() };
+}

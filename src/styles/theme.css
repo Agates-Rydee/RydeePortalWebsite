@@ -331,6 +331,22 @@
   html[lang="ur"] [data-slot="sidebar"][data-collapsible="icon"] [data-slot="sidebar-footer"] span {
     white-space: nowrap;
   }
+
+  html[lang="ur"] .truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  html[lang="ur"] [data-slot="select-trigger"] {
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+  html[lang="ur"] [data-slot="select-value"] {
+    -webkit-line-clamp: unset !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
 }
 
 @layer components {

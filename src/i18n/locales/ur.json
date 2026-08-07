@@ -5,7 +5,8 @@
     "accountMenu": "اکاؤنٹ مینو",
     "languageSwitcher": {
       "ariaLabel": "زبان تبدیل کریں"
-    }
+    },
+    "localeCode": "ur-PK"
   },
   "layout": {
     "brand": {
@@ -18,7 +19,9 @@
       "activeRiders": "ایکٹو رائیڈرز",
       "pendingRiders": "پینڈنگ رائیڈرز",
       "blockedRiders": "بلاک شدہ رائیڈرز",
-      "editRider": "رائیڈر ترمیم کریں"
+      "editRider": "رائیڈر ترمیم کریں",
+      "rides": "سواریاں",
+      "rideView": "سواری"
     },
     "nav": {
       "dashboard": "ڈیش بورڈ",
@@ -26,7 +29,8 @@
       "totalRiders": "کل رائیڈرز",
       "activeRiders": "ایکٹو رائیڈرز",
       "pendingRiders": "پینڈنگ رائیڈرز",
-      "blockedRiders": "بلاک شدہ رائیڈرز"
+      "blockedRiders": "بلاک شدہ رائیڈرز",
+      "rides": "سواریاں"
     }
   },
   "auth": {
@@ -132,20 +136,6 @@
         "aria": "{{count}} بلاک شدہ رائیڈرز دیکھیں"
       }
     },
-    "activeRidersSection": {
-      "heading": "ایکٹو رائیڈرز",
-      "subheading": "{{total}} میں سے تازہ ترین {{shown}}",
-      "viewAll": "سب دیکھیں ←",
-      "loading": "ایکٹو رائیڈرز لوڈ ہو رہے ہیں…",
-      "empty": "ابھی کوئی ایکٹو رائیڈر نہیں۔",
-      "columns": {
-        "name": "نام",
-        "phone": "فون",
-        "area": "علاقہ",
-        "joined": "شامل ہوا"
-      },
-      "emptyCell": "—"
-    },
     "errors": {
       "loadFailed": "Dashboard: failed to load riders",
       "invalidResponse": "Invalid response shape"
@@ -176,6 +166,41 @@
         "active": "ایکٹو",
         "inactive": "غیر فعال"
       }
+    },
+    "activeRidesSection": {
+      "heading": "ایکٹو رائیڈز",
+      "subheading": "تازہ ترین {{shown}} دکھائے جا رہے ہیں",
+      "caption": "ایکٹو رائیڈز",
+      "viewAll": "سب دیکھیں ←",
+      "loading": "ایکٹو رائیڈز لوڈ ہو رہی ہیں…",
+      "empty": "ابھی کوئی ایکٹو رائیڈ نہیں۔"
+    },
+    "ridesOverview": {
+      "title": "رائیڈز کا جائزہ",
+      "subtitle": "نتیجے کے حساب سے تقسیم",
+      "slices": {
+        "completed": "مکمل",
+        "canceled": "منسوخ",
+        "live": "لائیو",
+        "upcoming": "آنے والی"
+      },
+      "trendUp": "اس مہینے {{pct}}% اضافہ",
+      "trendDown": "اس مہینے {{pct}}% کمی",
+      "trendFlat": "اس مہینے مستحکم",
+      "caption": "اب تک کی تمام {{total}} رائیڈز دکھائی جا رہی ہیں",
+      "empty": "ابھی کوئی ڈیٹا نہیں",
+      "srSummary": "{{completed}} مکمل، {{canceled}} منسوخ، {{live}} لائیو، {{upcoming}} آنے والی۔",
+      "range": "{{from}} تا {{to}}"
+    },
+    "busyAreas": {
+      "title": "مصروف علاقے",
+      "subtitle": "سرِفہرست پک اپ علاقے",
+      "axisLabel": "رائیڈز",
+      "caption": "اب تک رائیڈز کے حساب سے سرِفہرست علاقے",
+      "empty": "ابھی کوئی ڈیٹا نہیں",
+      "srItem": "{{label}}: {{count}} رائیڈز",
+      "legendBusiest": "سب سے مصروف علاقہ",
+      "legendOther": "دوسرے علاقے"
     }
   },
   "riders": {
@@ -508,6 +533,108 @@
         "description": "یہ رائیڈر دوبارہ آپریٹ کر سکے گا۔",
         "confirm": "رائیڈر کو ان بلاک کریں"
       }
+    }
+  },
+  "rides": {
+    "loading": "سواریاں لوڈ ہو رہی ہیں…",
+    "retry": "دوبارہ کوشش کریں",
+    "filterByStatus": "اسٹیٹس کے لحاظ سے فلٹر کریں",
+    "rowsPerPage": "فی صفحہ رَوز:",
+    "prevPage": "پچھلا صفحہ",
+    "nextPage": "اگلا صفحہ",
+    "page": "صفحہ {{cur}} از {{total}}",
+    "summary": "{{count}} سواریوں میں سے {{from}}–{{to}} دکھائی جا رہی ہیں",
+    "liveCount": "{{count}} لائیو سواریاں",
+    "stalled": "رکی ہوئی",
+    "leavingIn": "{{time}} میں فہرست سے نکلے گی",
+    "minutesShort": "{{n}} منٹ",
+    "viewRide": "سواری دیکھیں",
+    "viewRideAria": "سواری {{id}} دیکھیں",
+    "rowAria": "سواری {{id}}",
+    "rowStalledAria": "سواری {{id}}، رکی ہوئی",
+    "unavailableTitle": "سواریوں کا ڈیٹا ابھی دستیاب نہیں ہے",
+    "unavailableHint": "اس فیچر کے لیے بیک اینڈ ڈپلائمنٹ درکار ہے۔",
+    "tabs": {
+      "live": "لائیو",
+      "upcoming": "آنے والی",
+      "completed": "مکمل ہو چکی",
+      "canceled": "منسوخ شدہ"
+    },
+    "columns": {
+      "rideId": "سواری ID",
+      "rider": "رائیڈر",
+      "customer": "کسٹمر",
+      "pickup": "پک اپ",
+      "dropoff": "ڈراپ آف",
+      "status": "اسٹیٹس",
+      "fare": "کرایہ",
+      "elapsed": "گزرا وقت",
+      "scheduledAt": "شیڈولڈ",
+      "completedAt": "مکمل ہوا",
+      "canceledBy": "منسوخ کرنے والا",
+      "actions": "ایکشنز"
+    },
+    "status": {
+      "goingToPick": "پک اپ کی طرف جا رہا ہے",
+      "waitingForRide": "سواری کا انتظار",
+      "inTransit": "ٹرانزٹ میں",
+      "arrived": "پہنچ گیا",
+      "scheduled": "شیڈولڈ",
+      "completed": "مکمل",
+      "canceled": "منسوخ"
+    },
+    "canceledBy": {
+      "rider": "رائیڈر",
+      "customer": "کسٹمر"
+    },
+    "search": {
+      "label": "سواریاں تلاش کریں",
+      "placeholder": "سواری ID، رائیڈر، کسٹمر یا مقام سے تلاش کریں…"
+    },
+    "caption": {
+      "live": "لائیو سواریاں",
+      "upcoming": "آنے والی سواریاں",
+      "completed": "مکمل شدہ سواریاں",
+      "canceled": "منسوخ شدہ سواریاں"
+    },
+    "empty": {
+      "live": "ابھی کوئی لائیو سواری نہیں",
+      "upcoming": "کوئی آنے والی سواری نہیں",
+      "completed": "ابھی تک کوئی مکمل سواری نہیں",
+      "canceled": "کوئی منسوخ شدہ سواری نہیں"
+    },
+    "errors": {
+      "loadFailed": "سواریاں لوڈ کرنے میں ناکامی"
+    },
+    "viewRidePage": {
+      "back": "سواریوں پر واپس جائیں",
+      "mapPlaceholder": "میپ جلد آ رہا ہے",
+      "mapAria": "سواری {{id}} کا میپ",
+      "notFoundTitle": "سواری نہیں ملی",
+      "notFoundHint": "اس ID سے کوئی سواری نہیں ملتی۔",
+      "stalled": "مقام پرانا ہے",
+      "tileError": "نقشے کی ٹائلز لوڈ نہیں ہو سکیں۔ اپنا کنکشن چیک کریں۔",
+      "geometryUnavailable": "راستہ دستیاب نہیں — سیدھی لکیر دکھائی جا رہی ہے",
+      "lastUpdate": "آخری اپڈیٹ",
+      "detailsTitle": "رائیڈ کی تفصیلات",
+      "completion": "تکمیل کا وقت",
+      "distanceTraveled": "طے شدہ فاصلہ",
+      "plannedDistance": "منصوبہ بند فاصلہ",
+      "waitingTime": "انتظار کا وقت",
+      "estCompletion": "متوقع تکمیل",
+      "minutesValue": "{{count}} منٹ",
+      "kmValue": "{{km}} کلومیٹر"
+    },
+    "markers": {
+      "pickup": "پک اپ",
+      "dropoff": "ڈراپ آف",
+      "rider": "رائیڈر کا مقام",
+      "updatedAgo": "{{value}} {{unit}} پہلے اپڈیٹ",
+      "units": {
+        "sec": "سیکنڈ",
+        "min": "منٹ"
+      },
+      "riderWithEta": "رائیڈر — {{minutes}} منٹ ({{km}} کلومیٹر)"
     }
   }
 }

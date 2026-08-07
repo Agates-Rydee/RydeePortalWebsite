@@ -5,7 +5,8 @@
     "accountMenu": "Account menu",
     "languageSwitcher": {
       "ariaLabel": "Change language"
-    }
+    },
+    "localeCode": "en-US"
   },
   "layout": {
     "brand": {
@@ -18,7 +19,9 @@
       "activeRiders": "Active riders",
       "pendingRiders": "Pending riders",
       "blockedRiders": "Blocked riders",
-      "editRider": "Edit rider"
+      "editRider": "Edit rider",
+      "rides": "Rides",
+      "rideView": "Ride"
     },
     "nav": {
       "dashboard": "Dashboard",
@@ -26,7 +29,8 @@
       "totalRiders": "Total riders",
       "activeRiders": "Active riders",
       "pendingRiders": "Pending riders",
-      "blockedRiders": "Blocked riders"
+      "blockedRiders": "Blocked riders",
+      "rides": "Rides"
     }
   },
   "auth": {
@@ -132,20 +136,6 @@
         "aria": "View {{count}} blocked riders"
       }
     },
-    "activeRidersSection": {
-      "heading": "Active riders",
-      "subheading": "Latest {{shown}} of {{total}}",
-      "viewAll": "View all →",
-      "loading": "Loading active riders…",
-      "empty": "No active riders yet.",
-      "columns": {
-        "name": "Name",
-        "phone": "Phone",
-        "area": "Area",
-        "joined": "Joined"
-      },
-      "emptyCell": "—"
-    },
     "errors": {
       "loadFailed": "Dashboard: failed to load riders",
       "invalidResponse": "Invalid response shape"
@@ -176,6 +166,41 @@
         "active": "Active",
         "inactive": "Inactive"
       }
+    },
+    "activeRidesSection": {
+      "heading": "Active rides",
+      "subheading": "Showing latest {{shown}}",
+      "caption": "Active rides",
+      "viewAll": "View all →",
+      "loading": "Loading active rides…",
+      "empty": "No active rides right now."
+    },
+    "ridesOverview": {
+      "title": "Rides overview",
+      "subtitle": "Distribution by outcome",
+      "slices": {
+        "completed": "Completed",
+        "canceled": "Canceled",
+        "live": "Live",
+        "upcoming": "Upcoming"
+      },
+      "trendUp": "Trending up {{pct}}% this month",
+      "trendDown": "Trending down {{pct}}% this month",
+      "trendFlat": "Steady this month",
+      "caption": "Showing all {{total}} rides to date",
+      "empty": "No ride data yet",
+      "srSummary": "{{completed}} completed, {{canceled}} canceled, {{live}} live, {{upcoming}} upcoming.",
+      "range": "{{from}} – {{to}}"
+    },
+    "busyAreas": {
+      "title": "Busy areas",
+      "subtitle": "Top pickup areas",
+      "axisLabel": "Rides",
+      "caption": "Top areas by rides to date",
+      "empty": "No area data yet",
+      "srItem": "{{label}}: {{count}} rides",
+      "legendBusiest": "Busiest area",
+      "legendOther": "Other areas"
     }
   },
   "riders": {
@@ -508,6 +533,108 @@
         "description": "This rider will be able to operate again.",
         "confirm": "Unblock rider"
       }
+    }
+  },
+  "rides": {
+    "loading": "Loading rides…",
+    "retry": "Retry",
+    "filterByStatus": "Filter by status",
+    "rowsPerPage": "Rows per page:",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "page": "Page {{cur}} of {{total}}",
+    "summary": "Showing {{from}}–{{to}} of {{count}} rides",
+    "liveCount": "{{count}} live rides",
+    "stalled": "Stalled",
+    "leavingIn": "Leaving list in {{time}}",
+    "minutesShort": "{{n}} min",
+    "viewRide": "View ride",
+    "viewRideAria": "View ride {{id}}",
+    "rowAria": "Ride {{id}}",
+    "rowStalledAria": "Ride {{id}}, stalled",
+    "unavailableTitle": "Rides data is not yet available",
+    "unavailableHint": "This feature requires backend deployment.",
+    "tabs": {
+      "live": "Live",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "canceled": "Canceled"
+    },
+    "columns": {
+      "rideId": "Ride ID",
+      "rider": "Rider",
+      "customer": "Customer",
+      "pickup": "Pickup",
+      "dropoff": "Dropoff",
+      "status": "Status",
+      "fare": "Fare",
+      "elapsed": "Elapsed",
+      "scheduledAt": "Scheduled",
+      "completedAt": "Completed",
+      "canceledBy": "Canceled by",
+      "actions": "Actions"
+    },
+    "status": {
+      "goingToPick": "Going to pick",
+      "waitingForRide": "Waiting for ride",
+      "inTransit": "In-transit",
+      "arrived": "Arrived",
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "canceled": "Canceled"
+    },
+    "canceledBy": {
+      "rider": "Rider",
+      "customer": "Customer"
+    },
+    "search": {
+      "label": "Search rides",
+      "placeholder": "Search by ride ID, rider, customer, or location…"
+    },
+    "caption": {
+      "live": "Live rides",
+      "upcoming": "Upcoming rides",
+      "completed": "Completed rides",
+      "canceled": "Canceled rides"
+    },
+    "empty": {
+      "live": "No live rides right now",
+      "upcoming": "No upcoming rides",
+      "completed": "No completed rides yet",
+      "canceled": "No canceled rides"
+    },
+    "errors": {
+      "loadFailed": "Failed to load rides"
+    },
+    "viewRidePage": {
+      "back": "Back to Rides",
+      "mapPlaceholder": "Map coming soon",
+      "mapAria": "Map for ride {{id}}",
+      "notFoundTitle": "Ride not found",
+      "notFoundHint": "No ride matches that ID.",
+      "stalled": "Location stale",
+      "tileError": "Map tiles failed to load. Check your connection.",
+      "geometryUnavailable": "Route unavailable — showing straight line",
+      "lastUpdate": "Last update",
+      "detailsTitle": "Ride Details",
+      "completion": "Completion time",
+      "distanceTraveled": "Distance travelled",
+      "plannedDistance": "Planned distance",
+      "waitingTime": "Waiting time",
+      "estCompletion": "Estimated completion",
+      "minutesValue": "{{count}} min",
+      "kmValue": "{{km}} km"
+    },
+    "markers": {
+      "pickup": "Pickup",
+      "dropoff": "Dropoff",
+      "rider": "Rider location",
+      "updatedAgo": "Updated {{value}} {{unit}} ago",
+      "units": {
+        "sec": "sec",
+        "min": "min"
+      },
+      "riderWithEta": "Rider — {{minutes}} min ({{km}} km)"
     }
   }
 }

@@ -12,6 +12,7 @@ import {
   PendingRidersRoute,
   RiderEditRoute,
 } from "@/features/riders/routes";
+import { RidesRoute, RideViewRoute } from "@/features/rides/routes";
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,8 @@ export const router = createBrowserRouter([
               { path: "admin/blocked-riders", element: <BlockedRidersRoute /> },
               { path: "admin/all-riders", element: <AllRidersRoute /> },
               { path: "admin/riders/:phone/edit", element: <RiderEditRoute /> },
+              { path: "admin/rides", element: <RidesRoute /> },
+              { path: "admin/rides/:rideId", element: <RideViewRoute /> },
             ],
           },
           {

@@ -6,6 +6,7 @@ import {
   Activity,
   Ban,
   Clock,
+  Car,
   LogOut,
   ChevronsUpDown,
 } from "lucide-react";
@@ -79,6 +80,12 @@ export function AppSidebar() {
         to: "/admin/active-riders",
         icon: Activity,
         active: pathname === "/admin/active-riders",
+      },
+      {
+        label: t("layout.nav.rides"),
+        to: "/admin/rides",
+        icon: Car,
+        active: pathname.startsWith("/admin/rides"),
       },
       {
         label: t("layout.nav.pendingRiders"),

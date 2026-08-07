@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import {
@@ -12,30 +12,28 @@ import {
 import { getAllRiders } from "@/api/riders";
 import { mapAllRidersResponse } from "@/features/riders/mapper";
 import type { AllRidersRow } from "@/types/rider";
+import {
+  getRides,
+  getRidesSummary,
+  LIVE_POLL_MS,
+  type Ride,
+  type RidesSummary,
+} from "@/api/rides";
+import { RidesTable } from "@/features/rides/components/RidesTable";
+
+const RidesCharts = lazy(() =>
+  import("./RidesCharts").then((m) => ({
+    default: ({ summary }: { summary: RidesSummary }) => (
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <m.RidesOverviewChart summary={summary} />
+        <m.BusyAreasChart summary={summary} />
+      </div>
+    ),
+  })),
+);
 
 interface WireResponse {
   riders?: Array<Record<string, unknown>>;
-}
-
-function formatJoined(iso: string): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 interface StatCardProps {
@@ -50,7 +48,7 @@ interface StatCardProps {
 
 function StatCard({ label, value, valueClassName, hint, ariaLabel, onClick, icon }: StatCardProps) {
   const display = value ?? "—";
-  const interactive = value != null;
+  const interactive = value != null && value !== "—";
   const cardClasses =
     "rounded-xl gap-0 py-4 text-start w-full transition-shadow " +
     "hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -86,11 +84,20 @@ function StatCard({ label, value, valueClassName, hint, ariaLabel, onClick, icon
   return <Card className={cardClasses}>{content}</Card>;
 }
 
+function tsOrNaN(iso: string | undefined): number {
+  if (!iso) return Number.NaN;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? Number.NaN : t;
+}
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [rows, setRows] = useState<AllRidersRow[] | null>(null);
+  const [liveRides, setLiveRides] = useState<Ride[] | null>(null);
+  const [summary, setSummary] = useState<RidesSummary | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -112,11 +119,50 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    const fetchLive = async () => {
+      try {
+        const data = await getRides({ tab: "live" });
+        if (!cancelled) setLiveRides(data.rides);
+      } catch {
+        if (!cancelled) setLiveRides([]);
+      }
+    };
+    void fetchLive();
+    const id = window.setInterval(fetchLive, LIVE_POLL_MS);
+    const tickId = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.clearInterval(tickId);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getRidesSummary();
+        if (!cancelled) setSummary(data);
+      } catch {
+        if (!cancelled) setSummary(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const total = rows?.length ?? null;
   const active = rows ? rows.filter((r) => r.status === "active").length : null;
   const pending = rows ? rows.filter((r) => r.status === "pending").length : null;
   const blocked = rows ? rows.filter((r) => r.status === "blocked").length : null;
-  const activeRows = (rows ?? []).filter((r) => r.status === "active").slice(0, 10);
+
+  const topLive = (liveRides ?? [])
+    .slice()
+    .sort((a, b) => tsOrNaN(b.startedAt) - tsOrNaN(a.startedAt))
+    .slice(0, 10);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
@@ -128,17 +174,7 @@ export default function Dashboard() {
           ariaLabel={t("dashboards.stats.totalRiders.aria", { count: total ?? "—" })}
           onClick={() => navigate("/admin/all-riders")}
           icon={
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
@@ -169,17 +205,7 @@ export default function Dashboard() {
           ariaLabel={t("dashboards.stats.pendingRiders.aria", { count: pending ?? "—" })}
           onClick={() => navigate("/admin/pending-riders")}
           icon={
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -195,17 +221,7 @@ export default function Dashboard() {
           ariaLabel={t("dashboards.stats.blockedRiders.aria", { count: blocked ?? "—" })}
           onClick={() => navigate("/admin/blocked-riders")}
           icon={
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
               <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
             </svg>
@@ -213,72 +229,53 @@ export default function Dashboard() {
         />
       </div>
 
+      {summary && (
+        <Suspense
+          fallback={
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2" aria-hidden="true">
+              <Card className="rounded-xl h-[360px] animate-pulse bg-muted/40" />
+              <Card className="rounded-xl h-[360px] animate-pulse bg-muted/40" />
+            </div>
+          }
+        >
+          <RidesCharts summary={summary} />
+        </Suspense>
+      )}
+
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-base font-semibold text-foreground">
-            {t("dashboards.activeRidersSection.heading")}
+            {t("dashboards.activeRidesSection.heading")}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {t("dashboards.activeRidersSection.subheading", {
-              shown: activeRows.length,
-              total: active ?? 0,
-            })}
+            {t("dashboards.activeRidesSection.subheading", { shown: topLive.length })}
           </p>
         </div>
         <Link
-          to="/admin/active-riders"
+          to="/admin/rides?tab=live"
           className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md px-2 py-1"
         >
-          {t("dashboards.activeRidersSection.viewAll")}
+          {t("dashboards.activeRidesSection.viewAll")}
         </Link>
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {rows === null ? (
-          <div
-            className="px-6 py-10 text-sm text-muted-foreground"
-            role="status"
-            aria-live="polite"
-          >
-            {t("dashboards.activeRidersSection.loading")}
+        {liveRides === null ? (
+          <div className="px-6 py-10 text-sm text-muted-foreground" role="status" aria-live="polite">
+            {t("dashboards.activeRidesSection.loading")}
           </div>
-        ) : activeRows.length === 0 ? (
+        ) : topLive.length === 0 ? (
           <div className="px-6 py-10 text-sm text-muted-foreground">
-            {t("dashboards.activeRidersSection.empty")}
+            {t("dashboards.activeRidesSection.empty")}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-switch-background text-[11px] font-semibold text-foreground/70 uppercase tracking-wider">
-                <tr>
-                  <th scope="col" className="px-4 py-3 text-start font-medium">
-                    {t("dashboards.activeRidersSection.columns.name")}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-start font-medium">
-                    {t("dashboards.activeRidersSection.columns.phone")}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-start font-medium">
-                    {t("dashboards.activeRidersSection.columns.area")}
-                  </th>
-                  <th scope="col" className="px-4 py-3 text-start font-medium">
-                    {t("dashboards.activeRidersSection.columns.joined")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeRows.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <th scope="row" className="px-4 py-3 font-medium text-foreground text-start">
-                      {r.name || "—"}
-                    </th>
-                    <td className="px-4 py-3 font-mono text-xs">{r.phone || "—"}</td>
-                    <td className="px-4 py-3">{r.area || "—"}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatJoined(r.joinedAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <RidesTable
+            rides={topLive}
+            tab="live"
+            now={nowTick}
+            caption={t("dashboards.activeRidesSection.caption")}
+            compact
+          />
         )}
       </div>
     </div>
